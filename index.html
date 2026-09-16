@@ -520,104 +520,107 @@
         recognition.onresult = function(event) {
             const rawTranscript = event.results[0][0].transcript;
             
-            if (continuousModeCheckbox.checked) {
-                if (!currentFocusedInput) {
-                    showToast(`❌ 請先點擊一個欄位以鎖定區域！`);
-                    return;
-                }
-
-                // 1. 判斷目前所在的「區域」
-                let section = "";
-                if (currentFocusedInput.classList.contains('mayor-input')) section = 'mayor';
-                else if (currentFocusedInput.classList.contains('councilor-input')) section = 'councilor';
-                else if (currentFocusedInput.classList.contains('flatland-input')) section = 'flatland';
-                else if (currentFocusedInput.classList.contains('mountain-input')) section = 'mountain';
-                else if (currentFocusedInput.classList.contains('village-input')) section = 'village';
-
-                if (!section) return;
-
-                // 2. 尋找語句中是否包含「號碼」或「名字」
-                let candIndex = -1;
-                let matchType = ""; 
-                
-                // 嘗試配對號碼 (例如: 1號, 一號)
-                let candMatch = rawTranscript.match(/(?:第)?(\d+|[一二三四五六七八九十]+)\s*(號|号)/);
-                if (candMatch) {
-                    candIndex = parseInt(extractNumberFromText(candMatch[1])) - 1; 
-                    matchType = "號碼";
-                } else {
-                    // 嘗試模糊配對名字 (限定在目前區域內)
-                    const candidates = {
-                        'mayor': ['張家豪', '王文娟', '鄭匡宇', '黃聖峰', '童文薰', '蔣萬安', '蘇煥智', '黃珊珊', '施奉先', '唐新民', '謝立康', '陳時中'],
-                        'councilor': ['劉耀仁', '郭智亭', '鍾小平', '吳沛憶', '徐立信', '吳志剛', '曾琳詒', '吳怡萱', '邵維倫', '李有宜', '張榮法', '應曉薇'],
-                        'flatland': ['倪零一', '吳零二'],
-                        'mountain': ['秋零零', '梁零二', '韋零三'],
-                        'village': ['吳淑芬', '張政保']
-                    };
-                    let sectionCands = candidates[section] || [];
-                    for (let i = 0; i < sectionCands.length; i++) {
-                        let name = sectionCands[i];
-                        let matchCount = 0;
-                        for (let char of name) {
-                            if (rawTranscript.includes(char)) matchCount++;
-                        }
-                        if (matchCount >= 2) {
-                            candIndex = i;
-                            matchType = "名字";
-                            break;
-                        }
-                    }
-                }
-
-                // 3. 擷取票數 (避開號碼的數字)
-                let transcriptForVotes = rawTranscript;
-                if (matchType === "號碼" && candMatch) {
-                    transcriptForVotes = rawTranscript.replace(candMatch[0], ''); // 刪除 "1號"，避免誤判為票數
-                }
-                let votes = extractNumberFromText(transcriptForVotes);
-                if (votes === null) votes = extractNumberFromText(rawTranscript); // 備用方案
-
-                if (votes === null) {
-                    showToast(`❌ 沒聽到數字: "${rawTranscript}"`);
-                    return;
-                }
-
-                // 4. 執行填寫與跳格邏輯
-                const sectionInputs = Array.from(document.querySelectorAll(`.${section}-cand`));
-                
-                if (candIndex >= 0 && candIndex < sectionInputs.length) {
-                    // 【情境 A：有指定候選人 (跳躍填寫)】
-                    let targetInput = sectionInputs[candIndex];
-                    targetInput.value = votes;
-                    targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    
-                    // 將焦點(紅框)移過去，等待下一次語音
-                    currentFocusedInput.classList.remove('focused-cell');
-                    targetInput.click();
-                    showToast(`🎯 鎖定配對: 第 ${candIndex + 1} 號 獲得 ${votes} 票`);
-
-                } else {
-                    // 【情境 B：沒指定候選人，單純說數字 (自動往右跳格)】
-                    currentFocusedInput.value = votes;
-                    currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    
-                    let orderedInputs = [];
-                    orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand`)));
-                    orderedInputs.push(document.getElementById(`${section}_invalid`));
-                    orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
-                    orderedInputs.push(document.getElementById(`${section}_remaining`));
-                    
-                    let currentIndex = orderedInputs.indexOf(currentFocusedInput);
-                    if (currentIndex >= 0 && currentIndex < orderedInputs.length - 1) {
-                        let nextInput = orderedInputs[currentIndex + 1];
-                        currentFocusedInput.classList.remove('focused-cell');
-                        nextInput.click();
-                        showToast(`✅ 已填入: ${votes}，自動跳下一格`);
-                    } else {
-                        showToast(`✅ 已填入: ${votes} (該區域已達最後一格)`);
-                    }
-                }
+            // 只要沒有點擊格子鎖定區域，一律擋下並提示
+            if (!currentFocusedInput) {
+                showToast(`❌ 請先點擊一個欄位以鎖定區域！`);
                 return;
+            }
+
+            // 1. 判斷目前所在的「區域」
+            let section = "";
+            if (currentFocusedInput.classList.contains('mayor-input')) section = 'mayor';
+            else if (currentFocusedInput.classList.contains('councilor-input')) section = 'councilor';
+            else if (currentFocusedInput.classList.contains('flatland-input')) section = 'flatland';
+            else if (currentFocusedInput.classList.contains('mountain-input')) section = 'mountain';
+            else if (currentFocusedInput.classList.contains('village-input')) section = 'village';
+
+            if (!section) return;
+
+            // 2. 尋找語句中是否包含「號碼」或「名字」
+            let candIndex = -1;
+            let matchType = ""; 
+            
+            // 嘗試配對號碼 (例如: 1號, 一號)
+            let candMatch = rawTranscript.match(/(?:第)?(\d+|[一二三四五六七八九十]+)\s*(號|号)/);
+            if (candMatch) {
+                candIndex = parseInt(extractNumberFromText(candMatch[1])) - 1; 
+                matchType = "號碼";
+            } else {
+                // 嘗試模糊配對名字 (限定在目前區域內，並補齊18位議員名單)
+                const candidates = {
+                    'mayor': ['張家豪', '王文娟', '鄭匡宇', '黃聖峰', '童文薰', '蔣萬安', '蘇煥智', '黃珊珊', '施奉先', '唐新民', '謝立康', '陳時中'],
+                    'councilor': ['劉耀仁', '郭智亭', '鍾小平', '吳沛憶', '徐立信', '吳志剛', '曾琳詒', '吳怡萱', '邵維倫', '李有宜', '張榮法', '應曉薇', '李菁琪', '王麒傑', '陳樹霖', '郭昭巖', '洪婉臻', '呂增塔'],
+                    'flatland': ['倪零一', '吳零二'],
+                    'mountain': ['秋零零', '梁零二', '韋零三'],
+                    'village': ['吳淑芬', '張政保']
+                };
+                let sectionCands = candidates[section] || [];
+                for (let i = 0; i < sectionCands.length; i++) {
+                    let name = sectionCands[i];
+                    let matchCount = 0;
+                    for (let char of name) {
+                        if (rawTranscript.includes(char)) matchCount++;
+                    }
+                    if (matchCount >= 2) {
+                        candIndex = i;
+                        matchType = "名字";
+                        break;
+                    }
+                }
+            }
+
+            // 3. 擷取票數 (避開號碼的數字)
+            let transcriptForVotes = rawTranscript;
+            if (matchType === "號碼" && candMatch) {
+                transcriptForVotes = rawTranscript.replace(candMatch[0], ''); 
+            }
+            let votes = extractNumberFromText(transcriptForVotes);
+            if (votes === null) votes = extractNumberFromText(rawTranscript); // 備用方案
+
+            if (votes === null) {
+                showToast(`❌ 沒聽到數字: "${rawTranscript}"`);
+                return;
+            }
+
+            // 4. 執行填寫邏輯 (核心區塊移出 if 外，確保任何模式皆可運作)
+            const sectionInputs = Array.from(document.querySelectorAll(`.${section}-cand`));
+            let targetInput = null;
+            
+            if (candIndex >= 0 && candIndex < sectionInputs.length) {
+                // 有指定號碼或名字 (跳躍填寫)
+                targetInput = sectionInputs[candIndex];
+                targetInput.value = votes;
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                showToast(`🎯 配對成功: 獲得 ${votes} 票`);
+            } else {
+                // 沒指定候選人，單純說數字 (填入當前格子)
+                targetInput = currentFocusedInput;
+                targetInput.value = votes;
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                showToast(`✅ 已填入: ${votes} 票`);
+            }
+
+            // 5. 處理後續動作 (只有連續模式才自動跳格)
+            if (continuousModeCheckbox.checked) {
+                let orderedInputs = [];
+                orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand`)));
+                orderedInputs.push(document.getElementById(`${section}_invalid`));
+                orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
+                orderedInputs.push(document.getElementById(`${section}_remaining`));
+                
+                let currentIndex = orderedInputs.indexOf(targetInput);
+                if (currentIndex >= 0 && currentIndex < orderedInputs.length - 1) {
+                    let nextInput = orderedInputs[currentIndex + 1];
+                    currentFocusedInput.classList.remove('focused-cell');
+                    nextInput.click(); // 自動點擊下一格
+                } else {
+                    currentFocusedInput.classList.remove('focused-cell');
+                    targetInput.click(); // 已經是最後一格，停留在原地
+                }
+            } else {
+                // 非連續模式：將紅框焦點移至剛剛被填入數字的格子
+                currentFocusedInput.classList.remove('focused-cell');
+                targetInput.click();
             }
         };
 

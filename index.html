@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 修改此處：強制允許使用者在手機上雙指縮放 (user-scalable=yes, maximum-scale=5.0) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>111年地方公職人員選舉 - 投開票所報告表</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -89,7 +90,7 @@
         }
         input[type="number"]:focus, input.focused-cell {
             outline: none;
-            border: 2px solid #ef4444 !important; 
+            border: 3px solid #ef4444 !important; 
             background-color: #fef2f2 !important;
             border-radius: 4px;
         }
@@ -423,19 +424,16 @@
             if (prefix) calculateTotals(prefix);
         });
 
-        // 修改1：修正點擊的阻擋條件，讓受保護的格子也能被我們用 JavaScript 點擊選取
         input.addEventListener('click', function() {
-            if (this.classList.contains('stats-input')) return; // 只阻擋系統自己算的總計欄位
-            
+            if (this.classList.contains('stats-input')) return; 
             allInputs.forEach(el => el.classList.remove('focused-cell'));
             this.classList.add('focused-cell');
             currentFocusedInput = this;
         });
 
-        // 修改2：終極防鍵盤黑魔法 - 只要取得焦點，立刻強制失焦
         input.addEventListener('focus', function(e) {
             if (document.getElementById('continuous-mode').checked) {
-                e.target.blur(); // 秒殺虛擬鍵盤，但上方 click 事件依然會幫我們加上紅框！
+                e.target.blur(); 
             }
         });
     });
@@ -446,18 +444,14 @@
     continuousModeCheckbox.addEventListener('change', function() {
         if (this.checked) {
             modeToggleLabel.classList.add('active');
-            showToast('已開啟「連續點讀模式」。點擊欄位不會彈出鍵盤，直接念出數字即可填入！', 4000);
-            
-            // 雙重防護設定
+            showToast('已開啟「連續點讀模式」。', 4000);
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
                 el.setAttribute('inputmode', 'none'); 
-                el.setAttribute('readonly', 'true'); // 徹底封鎖手機鍵盤
+                el.setAttribute('readonly', 'true'); 
             });
         } else {
             modeToggleLabel.classList.remove('active');
-            showToast('已關閉點讀模式，恢復一般鍵盤輸入。');
-            
-            // 恢復正常設定
+            showToast('已關閉點讀模式。');
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
                 el.removeAttribute('inputmode');
                 el.removeAttribute('readonly'); 
@@ -496,11 +490,7 @@
         recognition.onstart = function() {
             isRecording = true;
             voiceBtn.classList.add('recording');
-            if (continuousModeCheckbox.checked) {
-                showToast('⚡ 點讀模式運作中... 請點擊欄位並念出數字');
-            } else {
-                showToast('聆聽中... 請說「市長 1號 50票」');
-            }
+            showToast('⚡ 點擊欄位鎖定區域，可說「姓名 票數」、「號碼 票數」或直接唸「票數」自動跳格');
         };
 
         recognition.onend = function() {
@@ -531,36 +521,103 @@
             const rawTranscript = event.results[0][0].transcript;
             
             if (continuousModeCheckbox.checked) {
-                let num = extractNumberFromText(rawTranscript);
-                if (num !== null && currentFocusedInput) {
-                    currentFocusedInput.value = num;
+                if (!currentFocusedInput) {
+                    showToast(`❌ 請先點擊一個欄位以鎖定區域！`);
+                    return;
+                }
+
+                // 1. 判斷目前所在的「區域」
+                let section = "";
+                if (currentFocusedInput.classList.contains('mayor-input')) section = 'mayor';
+                else if (currentFocusedInput.classList.contains('councilor-input')) section = 'councilor';
+                else if (currentFocusedInput.classList.contains('flatland-input')) section = 'flatland';
+                else if (currentFocusedInput.classList.contains('mountain-input')) section = 'mountain';
+                else if (currentFocusedInput.classList.contains('village-input')) section = 'village';
+
+                if (!section) return;
+
+                // 2. 尋找語句中是否包含「號碼」或「名字」
+                let candIndex = -1;
+                let matchType = ""; 
+                
+                // 嘗試配對號碼 (例如: 1號, 一號)
+                let candMatch = rawTranscript.match(/(?:第)?(\d+|[一二三四五六七八九十]+)\s*(號|号)/);
+                if (candMatch) {
+                    candIndex = parseInt(extractNumberFromText(candMatch[1])) - 1; 
+                    matchType = "號碼";
+                } else {
+                    // 嘗試模糊配對名字 (限定在目前區域內)
+                    const candidates = {
+                        'mayor': ['張家豪', '王文娟', '鄭匡宇', '黃聖峰', '童文薰', '蔣萬安', '蘇煥智', '黃珊珊', '施奉先', '唐新民', '謝立康', '陳時中'],
+                        'councilor': ['劉耀仁', '郭智亭', '鍾小平', '吳沛憶', '徐立信', '吳志剛', '曾琳詒', '吳怡萱', '邵維倫', '李有宜', '張榮法', '應曉薇'],
+                        'flatland': ['倪零一', '吳零二'],
+                        'mountain': ['秋零零', '梁零二', '韋零三'],
+                        'village': ['吳淑芬', '張政保']
+                    };
+                    let sectionCands = candidates[section] || [];
+                    for (let i = 0; i < sectionCands.length; i++) {
+                        let name = sectionCands[i];
+                        let matchCount = 0;
+                        for (let char of name) {
+                            if (rawTranscript.includes(char)) matchCount++;
+                        }
+                        if (matchCount >= 2) {
+                            candIndex = i;
+                            matchType = "名字";
+                            break;
+                        }
+                    }
+                }
+
+                // 3. 擷取票數 (避開號碼的數字)
+                let transcriptForVotes = rawTranscript;
+                if (matchType === "號碼" && candMatch) {
+                    transcriptForVotes = rawTranscript.replace(candMatch[0], ''); // 刪除 "1號"，避免誤判為票數
+                }
+                let votes = extractNumberFromText(transcriptForVotes);
+                if (votes === null) votes = extractNumberFromText(rawTranscript); // 備用方案
+
+                if (votes === null) {
+                    showToast(`❌ 沒聽到數字: "${rawTranscript}"`);
+                    return;
+                }
+
+                // 4. 執行填寫與跳格邏輯
+                const sectionInputs = Array.from(document.querySelectorAll(`.${section}-cand`));
+                
+                if (candIndex >= 0 && candIndex < sectionInputs.length) {
+                    // 【情境 A：有指定候選人 (跳躍填寫)】
+                    let targetInput = sectionInputs[candIndex];
+                    targetInput.value = votes;
+                    targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    
+                    // 將焦點(紅框)移過去，等待下一次語音
+                    currentFocusedInput.classList.remove('focused-cell');
+                    targetInput.click();
+                    showToast(`🎯 鎖定配對: 第 ${candIndex + 1} 號 獲得 ${votes} 票`);
+
+                } else {
+                    // 【情境 B：沒指定候選人，單純說數字 (自動往右跳格)】
+                    currentFocusedInput.value = votes;
                     currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
                     
-                    const prefixes = ['mayor', 'councilor', 'flatland', 'mountain', 'village'];
                     let orderedInputs = [];
-                    prefixes.forEach(prefix => {
-                        orderedInputs.push(...Array.from(document.querySelectorAll(`.${prefix}-cand`)));
-                        orderedInputs.push(document.getElementById(`${prefix}_invalid`));
-                        orderedInputs.push(document.getElementById(`${prefix}_issued_not_voted`));
-                        orderedInputs.push(document.getElementById(`${prefix}_remaining`));
-                    });
+                    orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand`)));
+                    orderedInputs.push(document.getElementById(`${section}_invalid`));
+                    orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
+                    orderedInputs.push(document.getElementById(`${section}_remaining`));
                     
                     let currentIndex = orderedInputs.indexOf(currentFocusedInput);
                     if (currentIndex >= 0 && currentIndex < orderedInputs.length - 1) {
                         let nextInput = orderedInputs[currentIndex + 1];
                         currentFocusedInput.classList.remove('focused-cell');
-                        // 先移除 focus，改用 click 觸發我們自己的邏輯
-                        nextInput.click(); 
-                        showToast(`✅ 已填入: ${num}，自動跳下一格`);
+                        nextInput.click();
+                        showToast(`✅ 已填入: ${votes}，自動跳下一格`);
                     } else {
-                        showToast(`✅ 已填入: ${num} (已達最後一格)`);
+                        showToast(`✅ 已填入: ${votes} (該區域已達最後一格)`);
                     }
-                } else if (!currentFocusedInput) {
-                    showToast(`❌ 請先點擊一個欄位讓它亮起紅框！`);
-                } else {
-                    showToast(`❌ 沒聽到數字，系統聽到: "${rawTranscript}"`);
                 }
-                return; 
+                return;
             }
         };
 

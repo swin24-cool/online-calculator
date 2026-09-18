@@ -201,6 +201,53 @@
             box-shadow: 0 0 0 #a16207;
         }
 
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: white;
+            border: 2px solid black;
+            padding: 4px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #333;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+        .mode-toggle.active {
+            background-color: #bbf7d0; /* 啟動時變成淺綠色 */
+        }
+
+        .voice-btn-small {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background-color: #ef4444; /* 預設紅色底色 */
+            border: 2px solid black;   /* 黑色圓形邊框 */
+            border-radius: 50%;        /* 完美圓形 */
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .voice-btn-small:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+        .voice-btn-small.recording {
+            background-color: #22c55e; /* 錄音中變成亮綠色 */
+            animation: pulse 1.5s infinite; /* 增加呼吸燈效果 */
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
         .toast-msg {
             position: fixed;
             bottom: 120px;

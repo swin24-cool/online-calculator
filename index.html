@@ -181,6 +181,78 @@
         .toast-msg.show {
             opacity: 1;
         }
+        
+        .virtual-keyboard {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #7dd3fc; /* 淺藍底色 */
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: flex;
+            gap: 8px;
+            z-index: 900;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .virtual-keyboard.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+        .vk-numbers {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+        .vk-btn {
+            background-color: #fef08a; /* 黃色按鍵 */
+            color: #dc2626; /* 紅色文字 */
+            font-weight: 900;
+            font-size: 22px;
+            border: 2px solid #ca8a04;
+            border-radius: 6px;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            box-shadow: 0 3px 0 #a16207;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .vk-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #a16207;
+        }
+        .vk-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .vk-action-btn {
+            background-color: #fef08a;
+            color: #dc2626;
+            font-weight: 900;
+            font-size: 16px;
+            border: 2px solid #ca8a04;
+            border-radius: 6px;
+            flex: 1;
+            padding: 0 12px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #a16207;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .vk-action-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #a16207;
+        }
+
     </style>
 </head>
 <body>
@@ -372,13 +444,73 @@
     <label class="mode-toggle" id="mode-toggle-label">
         <input type="checkbox" id="continuous-mode" class="hidden">
         <span class="text-xl">⚡</span> 
-        <span>連續點讀模式 (防鍵盤干擾)</span>
+        <span>連續點讀模式</span>
     </label>
     <button class="voice-btn" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
 </div>
+
+<div id="virtual-keyboard" class="virtual-keyboard">
+    <div class="vk-numbers">
+        <button class="vk-btn num-btn">1</button>
+        <button class="vk-btn num-btn">2</button>
+        <button class="vk-btn num-btn">3</button>
+        <button class="vk-btn num-btn">4</button>
+        <button class="vk-btn num-btn">5</button>
+        <button class="vk-btn num-btn">6</button>
+        <button class="vk-btn num-btn">7</button>
+        <button class="vk-btn num-btn">8</button>
+        <button class="vk-btn num-btn">9</button>
+        <button class="vk-btn num-btn">0</button>
+    </div>
+    <div class="vk-actions">
+        <button id="vk-del" class="vk-action-btn">⌫</button>
+        <button id="vk-tab" class="vk-action-btn">TAB</button>
+    </div>
+</div>
+
 <div class="toast-msg" id="toast"></div>
 
 <script>
+    function autoTabToNextCell(currentInput) {
+        if (!currentInput) return;
+        let section = "";
+        if (currentInput.classList.contains('mayor-input')) section = 'mayor';
+        else if (currentInput.classList.contains('councilor-input')) section = 'councilor';
+        else if (currentInput.classList.contains('flatland-input')) section = 'flatland';
+        else if (currentInput.classList.contains('mountain-input')) section = 'mountain';
+        else if (currentInput.classList.contains('village-input')) section = 'village';
+
+        if (!section) return;
+
+        let orderedInputs = [];
+        orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand`)));
+        orderedInputs.push(document.getElementById(`${section}_invalid`));
+        orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
+        orderedInputs.push(document.getElementById(`${section}_remaining`));
+        
+        let currentIndex = orderedInputs.indexOf(currentInput);
+        let nextInput = null;
+
+        if (currentIndex >= 0 && currentIndex < orderedInputs.length - 1) {
+            nextInput = orderedInputs[currentIndex + 1];
+        } else {
+            // 自動跨區：跳到下一個選舉種類的第 1 位候選人
+            const sections = ['mayor', 'councilor', 'flatland', 'mountain', 'village'];
+            let sectionIndex = sections.indexOf(section);
+            if (sectionIndex >= 0 && sectionIndex < sections.length - 1) {
+                let nextSection = sections[sectionIndex + 1];
+                nextInput = document.querySelector(`.${nextSection}-cand`);
+            }
+        }
+
+        if (nextInput) {
+            currentInput.classList.remove('focused-cell');
+            nextInput.click(); 
+            // 神奇魔法：讓螢幕自動平滑捲動，把目標格子置於畫面正中央
+            nextInput.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        }
+    }
+
     function calculateTotals(prefix) {
         let validVotes = 0;
         const candInputs = document.querySelectorAll(`.${prefix}-cand`);
@@ -440,23 +572,55 @@
 
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
+    const virtualKeyboard = document.getElementById('virtual-keyboard');
     
     continuousModeCheckbox.addEventListener('change', function() {
         if (this.checked) {
             modeToggleLabel.classList.add('active');
-            showToast('已開啟「連續點讀模式」。', 4000);
+            virtualKeyboard.classList.add('show'); // 顯示虛擬鍵盤
+            showToast('已開啟連續模式與虛擬鍵盤。', 4000);
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
                 el.setAttribute('inputmode', 'none'); 
                 el.setAttribute('readonly', 'true'); 
             });
         } else {
             modeToggleLabel.classList.remove('active');
+            virtualKeyboard.classList.remove('show'); // 隱藏虛擬鍵盤
             showToast('已關閉點讀模式。');
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
                 el.removeAttribute('inputmode');
                 el.removeAttribute('readonly'); 
             });
         }
+    });
+
+    document.querySelectorAll('.num-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!currentFocusedInput) {
+                showToast('請先點擊一個欄位');
+                return;
+            }
+            let currentVal = currentFocusedInput.value;
+            // 若為0則清除重新輸入，避免出現 05 的狀況
+            if (currentVal === "0") currentVal = ""; 
+            currentFocusedInput.value = currentVal + e.target.textContent;
+            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    });
+
+    document.getElementById('vk-del').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!currentFocusedInput) return;
+        let currentVal = currentFocusedInput.value;
+        currentFocusedInput.value = currentVal.slice(0, -1);
+        currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    document.getElementById('vk-tab').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!currentFocusedInput) return;
+        autoTabToNextCell(currentFocusedInput);
     });
 
     const toast = document.getElementById('toast');
@@ -587,36 +751,20 @@
             let targetInput = null;
             
             if (candIndex >= 0 && candIndex < sectionInputs.length) {
-                // 有指定號碼或名字 (跳躍填寫)
                 targetInput = sectionInputs[candIndex];
                 targetInput.value = votes;
                 targetInput.dispatchEvent(new Event('input', { bubbles: true }));
                 showToast(`🎯 配對成功: 獲得 ${votes} 票`);
             } else {
-                // 沒指定候選人，單純說數字 (填入當前格子)
                 targetInput = currentFocusedInput;
                 targetInput.value = votes;
                 targetInput.dispatchEvent(new Event('input', { bubbles: true }));
                 showToast(`✅ 已填入: ${votes} 票`);
             }
 
-            // 5. 處理後續動作 (只有連續模式才自動跳格)
+            // 5. 處理連續模式下的自動跳格 (改用統一的跳格與捲動函數)
             if (continuousModeCheckbox.checked) {
-                let orderedInputs = [];
-                orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand`)));
-                orderedInputs.push(document.getElementById(`${section}_invalid`));
-                orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
-                orderedInputs.push(document.getElementById(`${section}_remaining`));
-                
-                let currentIndex = orderedInputs.indexOf(targetInput);
-                if (currentIndex >= 0 && currentIndex < orderedInputs.length - 1) {
-                    let nextInput = orderedInputs[currentIndex + 1];
-                    currentFocusedInput.classList.remove('focused-cell');
-                    nextInput.click(); // 自動點擊下一格
-                } else {
-                    currentFocusedInput.classList.remove('focused-cell');
-                    targetInput.click(); // 已經是最後一格，停留在原地
-                }
+                autoTabToNextCell(targetInput);
             } else {
                 // 非連續模式：將紅框焦點移至剛剛被填入數字的格子
                 currentFocusedInput.classList.remove('focused-cell');

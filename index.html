@@ -137,56 +137,37 @@
             align-items: center;
             gap: 30px; /* 調整間距以適應縮小後的鍵盤寬度 */
             width: 100%;
+            cursor: grab;
         }
-
-        .mode-toggle {
-            background-color: white;
-            padding: 4px 12px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 900;
-            font-size: 16px;
-            border: 2px solid #1e293b;
-            cursor: pointer;
-            transition: all 0.2s;
+        .cp-header:active {
+            cursor: grabbing;
         }
-        .mode-toggle.active {
-            background-color: #fef08a; /* 啟動時變黃色 */
-            color: #dc2626;
-            border-color: #ca8a04;
-        }
-
-        .voice-btn-small {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background-color: #ef4444;
-            color: white;
-            border: 2px solid #991b1b;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-        .voice-btn-small.recording {
-            animation: pulse 1.5s infinite;
-            background-color: #22c55e;
-            border-color: #166534;
+        
+        .drag-indicator {
+            width: 40px;
+            height: 5px;
+            background-color: #0284c7;
+            border-radius: 3px;
+            margin: 0 auto 8px auto;
+            opacity: 0.5;
+            cursor: grab;
         }
 
         .vk-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+        
+        .vk-row {
+            display: flex;
             gap: 4px;
             width: 100%;
         }
         
         .vk-btn, .vk-action-btn {
+            flex: 1; /* 預設均分寬度 */
             background-color: #fef08a; /* 黃色按鍵 */
             color: #dc2626; /* 紅色文字 */
             font-weight: 900;
@@ -202,6 +183,11 @@
             box-shadow: 0 3px 0 #a16207;
             -webkit-tap-highlight-color: transparent;
         }
+        
+        .wide-btn {
+            flex: 1.4; /* 讓特定的功能鍵變寬 */
+        }
+        
         .vk-action-btn {
             font-size: 16px;
             padding: 0 4px;
@@ -238,8 +224,8 @@
 <body>
 
 <div class="report-container">
-    <div class="flex flex-wrap justify-between items-center mb-1 px-4 py-1 bg-white font-bold text-lg md:text-xl">
-        <h1 class="tracking-widest text-xl mr-4">111年地方公職人員選舉</h1>
+    <div class="flex flex-wrap justify-between items-center px-4 py-1 bg-white font-bold text-[15px] border-b border-gray-300">
+        <h1 class="tracking-widest mr-4">111年地方公職人員選舉</h1>
         <div>臺北市萬華區</div>
         <div>第 1329 投開票所</div>
         <div>111年11月26日</div>
@@ -416,8 +402,9 @@
     </div>
 </div>
 
-<div class="control-panel">
-    <div class="cp-header">
+<div class="control-panel" id="draggable-panel">
+    <div class="drag-indicator"></div>
+    <div class="cp-header" id="panel-header">
         <label class="mode-toggle" id="mode-toggle-label">
             <input type="checkbox" id="continuous-mode" class="hidden">
             <span class="text-2xl">⚡</span> 
@@ -427,27 +414,92 @@
     </div>
     
     <div class="vk-grid">
-        <button class="vk-btn num-btn">1</button>
-        <button class="vk-btn num-btn">2</button>
-        <button class="vk-btn num-btn">3</button>
-        <button class="vk-btn num-btn">4</button>
-        <button class="vk-btn num-btn">5</button>
-        <button id="vk-del-left" class="vk-action-btn icon-btn" title="倒退刪除">&lt;X</button>
-        <button id="vk-del-right" class="vk-action-btn icon-btn" title="清空此格">X&gt;</button>
-        
-        <button class="vk-btn num-btn">6</button>
-        <button class="vk-btn num-btn">7</button>
-        <button class="vk-btn num-btn">8</button>
-        <button class="vk-btn num-btn">9</button>
-        <button class="vk-btn num-btn">0</button>
-        <button id="vk-tab" class="vk-action-btn" style="font-size: 18px;">tab</button>
-        <button id="vk-clear" class="vk-action-btn" style="font-size: 16px;">清空</button>
+        <div class="vk-row">
+            <button class="vk-btn num-btn">1</button>
+            <button class="vk-btn num-btn">2</button>
+            <button class="vk-btn num-btn">3</button>
+            <button class="vk-btn num-btn">4</button>
+            <button class="vk-btn num-btn">5</button>
+            <button id="vk-del-left" class="vk-action-btn icon-btn wide-btn" title="倒退刪除">&lt;X</button>
+            <button id="vk-del-right" class="vk-action-btn icon-btn wide-btn" title="清空此格">X&gt;</button>
+        </div>
+        <div class="vk-row">
+            <button class="vk-btn num-btn">6</button>
+            <button class="vk-btn num-btn">7</button>
+            <button class="vk-btn num-btn">8</button>
+            <button class="vk-btn num-btn">9</button>
+            <button class="vk-btn num-btn">0</button>
+            <button id="vk-tab" class="vk-action-btn wide-btn" style="font-size: 18px;">tab</button>
+            <button id="vk-clear" class="vk-action-btn wide-btn" style="font-size: 16px;">清空</button>
+        </div>
     </div>
 </div>
 
 <div class="toast-msg" id="toast"></div>
 
 <script>
+    // === 虛擬鍵盤自由拖曳功能 ===
+    const draggablePanel = document.getElementById('draggable-panel');
+    const panelHeader = document.getElementById('panel-header');
+    const dragIndicator = document.querySelector('.drag-indicator');
+    
+    let isDragging = false;
+    let initialX, initialY;
+
+    function startDrag(e) {
+        // 如果點到的是按鈕或勾選框，不要觸發拖曳
+        if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input' || e.target.closest('label')) return;
+        
+        // 將原本置中的 CSS 轉換為絕對座標，防止拖曳時瞬間瞬移
+        if (!draggablePanel.style.top) {
+            const rect = draggablePanel.getBoundingClientRect();
+            draggablePanel.style.left = rect.left + 'px';
+            draggablePanel.style.top = rect.top + 'px';
+            draggablePanel.style.bottom = 'auto'; // 解除底部鎖定
+            draggablePanel.style.transform = 'none'; // 解除水平置中偏移
+        }
+
+        initialX = e.clientX || (e.touches && e.touches[0].clientX);
+        initialY = e.clientY || (e.touches && e.touches[0].clientY);
+        isDragging = true;
+    }
+
+    function drag(e) {
+        if (!isDragging) return;
+        e.preventDefault(); // 防止手機畫面跟著滾動
+        
+        const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+        const currentY = e.clientY || (e.touches && e.touches[0].clientY);
+        
+        const dx = currentX - initialX;
+        const dy = currentY - initialY;
+        
+        initialX = currentX;
+        initialY = currentY;
+        
+        const currentLeft = parseFloat(draggablePanel.style.left) || 0;
+        const currentTop = parseFloat(draggablePanel.style.top) || 0;
+        
+        draggablePanel.style.left = (currentLeft + dx) + 'px';
+        draggablePanel.style.top = (currentTop + dy) + 'px';
+    }
+
+    function endDrag() {
+        isDragging = false;
+    }
+
+    // 將滑鼠與觸控事件綁定到拖曳熱區 (橫條與頂部藍色區域)
+    [panelHeader, dragIndicator].forEach(el => {
+        el.addEventListener('mousedown', startDrag);
+        el.addEventListener('touchstart', startDrag, { passive: false });
+    });
+
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+
+
     function autoTabToNextCell(currentInput) {
         if (!currentInput) return;
         let section = "";

@@ -111,17 +111,20 @@
         }
 
         body {
-            padding-bottom: 150px; /* 預留底部鍵盤空間，避免表格被遮擋 */
+            padding-bottom: 120px; /* 預留底部鍵盤空間 */
         }
         
         .control-panel {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
+            bottom: 15px; /* 稍微懸浮，不要貼死底部 */
+            left: 50%;
+            transform: translateX(-50%); /* 完美水平置中 */
+            width: clamp(320px, 33vw, 450px); /* 螢幕的 1/3 寬，且設定上下限避免變形 */
             background-color: #7dd3fc; /* 淺藍底色 */
-            padding: 10px 5px 15px 5px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 12px; /* 圓角浮動鍵盤 */
+            border: 2px solid #38bdf8; /* 加深邊框增加立體感 */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3); /* 加深陰影使其更像浮出畫面的工具 */
             z-index: 9999;
             display: flex;
             flex-direction: column;
@@ -132,21 +135,19 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
-            max-width: 800px;
-            margin: 0 auto;
+            gap: 30px; /* 調整間距以適應縮小後的鍵盤寬度 */
             width: 100%;
         }
 
         .mode-toggle {
             background-color: white;
-            padding: 6px 16px;
+            padding: 4px 12px;
             border-radius: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
             font-weight: 900;
-            font-size: 18px;
+            font-size: 16px;
             border: 2px solid #1e293b;
             cursor: pointer;
             transition: all 0.2s;
@@ -158,14 +159,14 @@
         }
 
         .voice-btn-small {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             background-color: #ef4444;
             color: white;
             border: 2px solid #991b1b;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -181,21 +182,18 @@
         .vk-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
-            max-width: 800px;
-            margin: 0 auto;
+            gap: 4px;
             width: 100%;
-            padding: 0 5px;
         }
         
         .vk-btn, .vk-action-btn {
             background-color: #fef08a; /* 黃色按鍵 */
             color: #dc2626; /* 紅色文字 */
             font-weight: 900;
-            font-size: 22px;
+            font-size: 18px; /* 稍微縮小字體以配合較緊湊的按鍵 */
             border: 2px solid #ca8a04;
             border-radius: 6px;
-            height: 45px;
+            height: 36px; /* 稍微縮小高度，讓整體更精巧 */
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -240,8 +238,8 @@
 <body>
 
 <div class="report-container">
-    <div class="flex flex-wrap justify-between items-center mb-4 px-4 py-3 border-2 border-slate-800 bg-white font-bold text-lg md:text-xl shadow-sm">
-        <h1 class="tracking-widest text-2xl mr-4">111年地方公職人員選舉</h1>
+    <div class="flex flex-wrap justify-between items-center mb-1 px-4 py-1 bg-white font-bold text-lg md:text-xl">
+        <h1 class="tracking-widest text-xl mr-4">111年地方公職人員選舉</h1>
         <div>臺北市萬華區</div>
         <div>第 1329 投開票所</div>
         <div>111年11月26日</div>

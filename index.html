@@ -110,58 +110,113 @@
             background-color: #fdfdfd;
         }
 
-        .voice-controls {
+        body {
+            padding-bottom: 150px; /* 預留底部鍵盤空間，避免表格被遮擋 */
+        }
+        
+        .control-panel {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #7dd3fc; /* 淺藍底色 */
+            padding: 10px 5px 15px 5px;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+            z-index: 9999;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            gap: 15px;
-            z-index: 1000;
+            gap: 10px;
         }
+        
+        .cp-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
         .mode-toggle {
             background-color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 6px 16px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: bold;
-            border: 2px solid #e5e7eb;
+            font-weight: 900;
+            font-size: 18px;
+            border: 2px solid #1e293b;
             cursor: pointer;
             transition: all 0.2s;
         }
         .mode-toggle.active {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-            color: #1e3a8a;
+            background-color: #fef08a; /* 啟動時變黃色 */
+            color: #dc2626;
+            border-color: #ca8a04;
         }
-        .voice-btn {
-            width: 65px;
-            height: 65px;
+
+        .voice-btn-small {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background-color: #ef4444;
             color: white;
-            border: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            font-size: 28px;
+            border: 2px solid #991b1b;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            font-size: 24px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
         }
-        .voice-btn.recording {
+        .voice-btn-small.recording {
             animation: pulse 1.5s infinite;
             background-color: #22c55e;
+            border-color: #166534;
         }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+
+        .vk-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 5px;
         }
+        
+        .vk-btn, .vk-action-btn {
+            background-color: #fef08a; /* 黃色按鍵 */
+            color: #dc2626; /* 紅色文字 */
+            font-weight: 900;
+            font-size: 22px;
+            border: 2px solid #ca8a04;
+            border-radius: 6px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            box-shadow: 0 3px 0 #a16207;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .vk-action-btn {
+            font-size: 16px;
+            padding: 0 4px;
+        }
+        .vk-action-btn.icon-btn {
+            font-size: 14px;
+            letter-spacing: -1px;
+        }
+        .vk-btn:active, .vk-action-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #a16207;
+        }
+
         .toast-msg {
             position: fixed;
             bottom: 120px;
@@ -180,91 +235,16 @@
         .toast-msg.show {
             opacity: 1;
         }
-        
-        .virtual-keyboard {
-            position: fixed;
-            bottom: 35px; /* 稍微調高，避免被手機底部導航列遮擋 */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #7dd3fc; /* 淺藍底色 */
-            padding: 8px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            display: flex;
-            gap: 8px;
-            z-index: 9999; /* 確保絕對在最上層 */
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .virtual-keyboard.show {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateX(-50%) translateY(0);
-        }
-        .vk-numbers {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
-        }
-        .vk-btn {
-            background-color: #fef08a; /* 黃色按鍵 */
-            color: #dc2626; /* 紅色文字 */
-            font-weight: 900;
-            font-size: 22px;
-            border: 2px solid #ca8a04;
-            border-radius: 6px;
-            width: 45px;
-            height: 45px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            box-shadow: 0 3px 0 #a16207;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .vk-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 0 0 #a16207;
-        }
-        .vk-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .vk-action-btn {
-            background-color: #fef08a;
-            color: #dc2626;
-            font-weight: 900;
-            font-size: 16px;
-            border: 2px solid #ca8a04;
-            border-radius: 6px;
-            flex: 1;
-            padding: 0 12px;
-            cursor: pointer;
-            box-shadow: 0 3px 0 #a16207;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .vk-action-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 0 0 #a16207;
-        }
     </style>
 </head>
 <body>
 
 <div class="report-container">
-    <div class="text-center mb-6 relative">
-        <h1 class="text-3xl font-bold tracking-widest">111年地方公職人員選舉</h1>
-    </div>
-    
-    <div class="flex justify-between items-end mb-2 px-2 text-lg">
-        <div>臺北市</div>
-        <div>萬華區</div>
+    <div class="flex flex-wrap justify-between items-center mb-4 px-4 py-3 border-2 border-slate-800 bg-white font-bold text-lg md:text-xl shadow-sm">
+        <h1 class="tracking-widest text-2xl mr-4">111年地方公職人員選舉</h1>
+        <div>臺北市萬華區</div>
         <div>第 1329 投開票所</div>
-        <div>投票日期：111年11月26日</div>
+        <div>111年11月26日</div>
     </div>
 
     <div class="table-wrapper">
@@ -438,31 +418,32 @@
     </div>
 </div>
 
-<div class="voice-controls">
-    <label class="mode-toggle" id="mode-toggle-label">
-        <input type="checkbox" id="continuous-mode" class="hidden">
-        <span class="text-xl">⚡</span> 
-        <span>連續點讀模式</span>
-    </label>
-    <button class="voice-btn" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
-</div>
-
-<div id="virtual-keyboard" class="virtual-keyboard">
-    <div class="vk-numbers">
+<div class="control-panel">
+    <div class="cp-header">
+        <label class="mode-toggle" id="mode-toggle-label">
+            <input type="checkbox" id="continuous-mode" class="hidden">
+            <span class="text-2xl">⚡</span> 
+            <span>連續模式</span>
+        </label>
+        <button class="voice-btn-small" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
+    </div>
+    
+    <div class="vk-grid">
         <button class="vk-btn num-btn">1</button>
         <button class="vk-btn num-btn">2</button>
         <button class="vk-btn num-btn">3</button>
         <button class="vk-btn num-btn">4</button>
         <button class="vk-btn num-btn">5</button>
+        <button id="vk-del-left" class="vk-action-btn icon-btn" title="倒退刪除">&lt;X</button>
+        <button id="vk-del-right" class="vk-action-btn icon-btn" title="清空此格">X&gt;</button>
+        
         <button class="vk-btn num-btn">6</button>
         <button class="vk-btn num-btn">7</button>
         <button class="vk-btn num-btn">8</button>
         <button class="vk-btn num-btn">9</button>
         <button class="vk-btn num-btn">0</button>
-    </div>
-    <div class="vk-actions">
-        <button id="vk-del" class="vk-action-btn">⌫</button>
-        <button id="vk-tab" class="vk-action-btn">TAB</button>
+        <button id="vk-tab" class="vk-action-btn" style="font-size: 18px;">tab</button>
+        <button id="vk-clear" class="vk-action-btn" style="font-size: 16px;">清空</button>
     </div>
 </div>
 
@@ -570,21 +551,18 @@
 
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
-    const virtualKeyboard = document.getElementById('virtual-keyboard');
     
     continuousModeCheckbox.addEventListener('change', function() {
         if (this.checked) {
             modeToggleLabel.classList.add('active');
-            virtualKeyboard.classList.add('show'); // 顯示虛擬鍵盤
-            showToast('已開啟連續模式與虛擬鍵盤。', 4000);
+            showToast('已開啟連續模式，點擊欄位直接輸入。', 4000);
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
                 el.setAttribute('inputmode', 'none'); 
                 el.setAttribute('readonly', 'true'); 
             });
         } else {
             modeToggleLabel.classList.remove('active');
-            virtualKeyboard.classList.remove('show'); // 隱藏虛擬鍵盤
-            showToast('已關閉點讀模式。');
+            showToast('已關閉連續模式。');
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
                 el.removeAttribute('inputmode');
                 el.removeAttribute('readonly'); 
@@ -606,7 +584,8 @@
         });
     });
 
-    document.getElementById('vk-del').addEventListener('click', (e) => {
+    // <X (倒退刪除一個數字)
+    document.getElementById('vk-del-left').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
         let currentVal = currentFocusedInput.value;
@@ -614,6 +593,23 @@
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
+    // X> (清空整格)
+    document.getElementById('vk-del-right').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!currentFocusedInput) return;
+        currentFocusedInput.value = "";
+        currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    
+    // 清空 (清空整格)
+    document.getElementById('vk-clear').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!currentFocusedInput) return;
+        currentFocusedInput.value = "";
+        currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    // tab 鍵 (自動跳下一格並置中畫面)
     document.getElementById('vk-tab').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;

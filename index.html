@@ -2,7 +2,6 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 修改此處：強制允許使用者在手機上雙指縮放 (user-scalable=yes, maximum-scale=5.0) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>111年地方公職人員選舉 - 投開票所報告表</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -184,7 +183,7 @@
         
         .virtual-keyboard {
             position: fixed;
-            bottom: 25px;
+            bottom: 35px; /* 稍微調高，避免被手機底部導航列遮擋 */
             left: 50%;
             transform: translateX(-50%);
             background-color: #7dd3fc; /* 淺藍底色 */
@@ -193,7 +192,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             display: flex;
             gap: 8px;
-            z-index: 900;
+            z-index: 9999; /* 確保絕對在最上層 */
             opacity: 0;
             pointer-events: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -252,7 +251,6 @@
             transform: translateY(3px);
             box-shadow: 0 0 0 #a16207;
         }
-
     </style>
 </head>
 <body>
@@ -565,7 +563,7 @@
 
         input.addEventListener('focus', function(e) {
             if (document.getElementById('continuous-mode').checked) {
-                e.target.blur(); 
+                e.target.blur(); // 強制失焦，避免手機虛擬鍵盤彈出
             }
         });
     });
@@ -602,7 +600,6 @@
                 return;
             }
             let currentVal = currentFocusedInput.value;
-            // 若為0則清除重新輸入，避免出現 05 的狀況
             if (currentVal === "0") currentVal = ""; 
             currentFocusedInput.value = currentVal + e.target.textContent;
             currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -684,13 +681,11 @@
         recognition.onresult = function(event) {
             const rawTranscript = event.results[0][0].transcript;
             
-            // 只要沒有點擊格子鎖定區域，一律擋下並提示
             if (!currentFocusedInput) {
                 showToast(`❌ 請先點擊一個欄位以鎖定區域！`);
                 return;
             }
 
-            // 1. 判斷目前所在的「區域」
             let section = "";
             if (currentFocusedInput.classList.contains('mayor-input')) section = 'mayor';
             else if (currentFocusedInput.classList.contains('councilor-input')) section = 'councilor';
@@ -700,17 +695,14 @@
 
             if (!section) return;
 
-            // 2. 尋找語句中是否包含「號碼」或「名字」
             let candIndex = -1;
             let matchType = ""; 
             
-            // 嘗試配對號碼 (例如: 1號, 一號)
             let candMatch = rawTranscript.match(/(?:第)?(\d+|[一二三四五六七八九十]+)\s*(號|号)/);
             if (candMatch) {
                 candIndex = parseInt(extractNumberFromText(candMatch[1])) - 1; 
                 matchType = "號碼";
             } else {
-                // 嘗試模糊配對名字 (限定在目前區域內，並補齊18位議員名單)
                 const candidates = {
                     'mayor': ['張家豪', '王文娟', '鄭匡宇', '黃聖峰', '童文薰', '蔣萬安', '蘇煥智', '黃珊珊', '施奉先', '唐新民', '謝立康', '陳時中'],
                     'councilor': ['劉耀仁', '郭智亭', '鍾小平', '吳沛憶', '徐立信', '吳志剛', '曾琳詒', '吳怡萱', '邵維倫', '李有宜', '張榮法', '應曉薇', '李菁琪', '王麒傑', '陳樹霖', '郭昭巖', '洪婉臻', '呂增塔'],
@@ -733,20 +725,18 @@
                 }
             }
 
-            // 3. 擷取票數 (避開號碼的數字)
             let transcriptForVotes = rawTranscript;
             if (matchType === "號碼" && candMatch) {
                 transcriptForVotes = rawTranscript.replace(candMatch[0], ''); 
             }
             let votes = extractNumberFromText(transcriptForVotes);
-            if (votes === null) votes = extractNumberFromText(rawTranscript); // 備用方案
+            if (votes === null) votes = extractNumberFromText(rawTranscript);
 
             if (votes === null) {
                 showToast(`❌ 沒聽到數字: "${rawTranscript}"`);
                 return;
             }
 
-            // 4. 執行填寫邏輯 (核心區塊移出 if 外，確保任何模式皆可運作)
             const sectionInputs = Array.from(document.querySelectorAll(`.${section}-cand`));
             let targetInput = null;
             
@@ -762,11 +752,9 @@
                 showToast(`✅ 已填入: ${votes} 票`);
             }
 
-            // 5. 處理連續模式下的自動跳格 (改用統一的跳格與捲動函數)
             if (continuousModeCheckbox.checked) {
                 autoTabToNextCell(targetInput);
             } else {
-                // 非連續模式：將紅框焦點移至剛剛被填入數字的格子
                 currentFocusedInput.classList.remove('focused-cell');
                 targetInput.click();
             }

@@ -72,7 +72,9 @@
             word-break: break-all;
         }
         
-        input[type="number"] {
+        input[type="number"], 
+        input[type="text"][inputmode="numeric"],
+        input[type="text"][inputmode="none"] {
             width: 100%;
             height: 100%;
             min-height: 36px;
@@ -87,7 +89,9 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-        input[type="number"]:focus, input.focused-cell {
+        input[type="number"]:focus, input.focused-cell,
+        input[type="text"][inputmode="numeric"]:focus,
+        input[type="text"][inputmode="none"]:focus {
             outline: none;
             border: 3px solid #ef4444 !important; 
             background-color: #fef2f2 !important;
@@ -468,7 +472,7 @@
             <button class="vk-btn num-btn">4</button>
             <button class="vk-btn num-btn">5</button>
             <button id="vk-del-left" class="vk-action-btn icon-btn wide-btn" title="倒退刪除">&lt;X</button>
-            <button id="vk-del-right" class="vk-action-btn icon-btn wide-btn" title="清空此格">X&gt;</button>
+            <button id="vk-del-right" class="vk-action-btn icon-btn wide-btn" title="向右刪除">X&gt;</button>
         </div>
         <div class="vk-row">
             <button class="vk-btn num-btn">6</button>
@@ -581,9 +585,19 @@
 
         if (nextInput) {
             currentInput.classList.remove('focused-cell');
-            nextInput.click(); 
-            // 神奇魔法：讓螢幕自動平滑捲動，把目標格子置於畫面正中央
-            nextInput.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            
+            // 【防止自動放大的黑魔法】
+            if (document.getElementById('continuous-mode').checked) {
+                // 在連續模式下，我們「不觸發」原生的 .click()，只加 CSS 讓格子變紅
+                // 這樣就能騙過手機瀏覽器，絕對不會觸發強制 Zoom-In
+                nextInput.classList.add('focused-cell');
+                currentFocusedInput = nextInput;
+            } else {
+                nextInput.click(); 
+            }
+
+            // 平滑滾動：改用 inline: 'nearest'。只有在格子超出畫面時，才會輕輕平移拉回來，不會大動作置中
+            nextInput.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         }
     }
 
@@ -618,8 +632,16 @@
         }
     }
 
-    const allInputs = document.querySelectorAll('input[type="number"]');
+    const allInputs = document.querySelectorAll('input[type="number"], input[type="text"][inputmode="numeric"]');
     let currentFocusedInput = null;
+
+    // 將所有數字輸入框底層轉為 text 格式，以完美支援鍵盤「刪除游標旁單一字元」的功能
+    allInputs.forEach(input => {
+        if (input.type === 'number' && !input.readOnly) {
+            input.type = 'text';
+            input.setAttribute('inputmode', 'numeric');
+        }
+    });
 
     allInputs.forEach(input => {
         input.addEventListener('input', function() {
@@ -661,7 +683,7 @@
             modeToggleLabel.classList.remove('active');
             showToast('已關閉連續模式。');
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
-                el.removeAttribute('inputmode');
+                el.setAttribute('inputmode', 'numeric'); // 修復：恢復成數字模式，而不是徹底刪除屬性
                 el.removeAttribute('readonly'); 
             });
         }
@@ -675,26 +697,52 @@
                 return;
             }
             let currentVal = currentFocusedInput.value;
+            let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
+            
             if (currentVal === "0") currentVal = ""; 
-            currentFocusedInput.value = currentVal + e.target.textContent;
+            
+            // 插入數字到游標位置
+            const newVal = currentVal.slice(0, start) + e.target.textContent + currentVal.slice(start);
+            currentFocusedInput.value = newVal;
+            try { currentFocusedInput.setSelectionRange(start + 1, start + 1); } catch(err) {}
+            
             currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
         });
     });
 
-    // <X (倒退刪除一個數字)
+    // <X (倒退刪除一個數字 Backspace)
     document.getElementById('vk-del-left').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
         let currentVal = currentFocusedInput.value;
-        currentFocusedInput.value = currentVal.slice(0, -1);
+        let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
+        let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
+        
+        if (start === end && start > 0) {
+            currentFocusedInput.value = currentVal.slice(0, start - 1) + currentVal.slice(start);
+            try { currentFocusedInput.setSelectionRange(start - 1, start - 1); } catch(err) {}
+        } else if (start !== end) {
+            currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
+            try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
+        }
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    // X> (清空整格)
+    // X> (向右刪除 Delete)
     document.getElementById('vk-del-right').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
-        currentFocusedInput.value = "";
+        let currentVal = currentFocusedInput.value;
+        let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
+        let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
+        
+        if (start === end && start < currentVal.length) {
+            currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(start + 1);
+            try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
+        } else if (start !== end) {
+            currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
+            try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
+        }
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
     

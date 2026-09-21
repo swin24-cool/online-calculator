@@ -72,7 +72,6 @@
             word-break: break-all;
         }
         
-        input[type="number"], 
         input[type="text"][inputmode="numeric"],
         input[type="text"][inputmode="none"] {
             width: 100%;
@@ -89,18 +88,12 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-        input[type="number"]:focus, input.focused-cell,
-        input[type="text"][inputmode="numeric"]:focus,
+        input[type="text"][inputmode="numeric"]:focus, input.focused-cell,
         input[type="text"][inputmode="none"]:focus {
             outline: none;
             border: 3px solid #ef4444 !important; 
             background-color: #fef2f2 !important;
             border-radius: 4px;
-        }
-        input[type="number"]::-webkit-inner-spin-button, 
-        input[type="number"]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
         }
         .stats-input {
             color: #1e3a8a;
@@ -315,30 +308,31 @@
                     <td class="candidate-cell"><div class="cand-number">11</div><div class="cand-name">謝立康</div></td>
                     <td class="candidate-cell"><div class="cand-number">12</div><div class="cand-name">陳時中</div></td>
                     
-                    <td rowspan="2"><input type="number" id="mayor_valid" class="stats-input" readonly value="794"></td>
-                    <td rowspan="2"><input type="number" id="mayor_invalid" class="mayor-input editable-stat" value="3"></td>
-                    <td rowspan="2"><input type="number" id="mayor_total" class="stats-input" readonly value="797"></td>
-                    <td rowspan="2"><input type="number" id="mayor_issued_not_voted" class="mayor-input editable-stat" value="0"></td>
-                    <td rowspan="2"><input type="number" id="mayor_issued" class="stats-input" readonly value="797"></td>
-                    <td rowspan="2"><input type="number" id="mayor_remaining" class="mayor-input editable-stat" value="573"></td>
-                    <td rowspan="2"><input type="number" id="mayor_electors" class="stats-input" readonly value="1370"></td>
-                    <td rowspan="2"><input type="number" id="mayor_check" class="stats-input font-bold" readonly value="1370" style="background-color: #dcfce7; color: #166534;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_valid" class="stats-input" readonly value="794"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_invalid" class="mayor-input editable-stat" value="3"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_total" class="stats-input" readonly value="797"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_issued_not_voted" class="mayor-input editable-stat" value="0"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_issued" class="stats-input" readonly value="797"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_remaining" class="mayor-input editable-stat" value="573"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_electors" class="stats-input" readonly value="1370"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_check" class="stats-input font-bold" readonly value="1370" style="background-color: #dcfce7; color: #166534;"></td>
                 </tr>
                 <tr>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="54"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="99"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="93"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="63"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="70"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="55"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="55"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="56"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="112"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="25"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="75"></td>
-                    <td><input type="number" class="mayor-input mayor-cand data-cell" value="37"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="54"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="99"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="93"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="63"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="70"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="55"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="55"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="56"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="112"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="25"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="75"></td>
+                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell" value="37"></td>
                 </tr>
 
+                <!-- 區域議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">區域議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">劉耀仁</div></td>
@@ -354,30 +348,31 @@
                     <td class="candidate-cell"><div class="cand-number">11</div><div class="cand-name">張榮法</div></td>
                     <td class="candidate-cell"><div class="cand-number">12</div><div class="cand-name">應曉薇</div></td>
                     
-                    <td rowspan="2"><input type="number" id="councilor_valid" class="stats-input" readonly value="687"></td>
-                    <td rowspan="2"><input type="number" id="councilor_invalid" class="councilor-input editable-stat" value="25"></td>
-                    <td rowspan="2"><input type="number" id="councilor_total" class="stats-input" readonly value="712"></td>
-                    <td rowspan="2"><input type="number" id="councilor_issued_not_voted" class="councilor-input editable-stat" value="1"></td>
-                    <td rowspan="2"><input type="number" id="councilor_issued" class="stats-input" readonly value="713"></td>
-                    <td rowspan="2"><input type="number" id="councilor_remaining" class="councilor-input editable-stat" value="314"></td>
-                    <td rowspan="2"><input type="number" id="councilor_electors" class="stats-input" readonly value="1027"></td>
-                    <td rowspan="2"><input type="number" id="councilor_check" class="stats-input font-bold" readonly value="1027" style="background-color: #dcfce7; color: #166534;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_valid" class="stats-input" readonly value="687"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_invalid" class="councilor-input editable-stat" value="25"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_total" class="stats-input" readonly value="712"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_issued_not_voted" class="councilor-input editable-stat" value="1"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_issued" class="stats-input" readonly value="713"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_remaining" class="councilor-input editable-stat" value="314"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_electors" class="stats-input" readonly value="1027"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="councilor_check" class="stats-input font-bold" readonly value="1027" style="background-color: #dcfce7; color: #166534;"></td>
                 </tr>
                 <tr>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="56"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="28"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="31"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="32"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="11"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="25"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="51"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="32"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="35"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="30"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="31"></td>
-                    <td><input type="number" class="councilor-input councilor-cand data-cell" value="60"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="56"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="28"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="31"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="32"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="11"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="25"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="51"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="32"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="35"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="30"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="31"></td>
+                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell" value="60"></td>
                 </tr>
 
+                <!-- 平地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">平地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">倪零一</div></td>
@@ -385,22 +380,23 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     
-                    <td rowspan="2"><input type="number" id="flatland_valid" class="stats-input" readonly value="1"></td>
-                    <td rowspan="2"><input type="number" id="flatland_invalid" class="flatland-input editable-stat" value="0"></td>
-                    <td rowspan="2"><input type="number" id="flatland_total" class="stats-input" readonly value="1"></td>
-                    <td rowspan="2"><input type="number" id="flatland_issued_not_voted" class="flatland-input editable-stat" value="0"></td>
-                    <td rowspan="2"><input type="number" id="flatland_issued" class="stats-input" readonly value="1"></td>
-                    <td rowspan="2"><input type="number" id="flatland_remaining" class="flatland-input editable-stat" value="1"></td>
-                    <td rowspan="2"><input type="number" id="flatland_electors" class="stats-input" readonly value="2"></td>
-                    <td rowspan="2"><input type="number" id="flatland_check" class="stats-input font-bold" readonly value="2" style="background-color: #dcfce7; color: #166534;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_valid" class="stats-input" readonly value="1"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_invalid" class="flatland-input editable-stat" value="0"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_total" class="stats-input" readonly value="1"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_issued_not_voted" class="flatland-input editable-stat" value="0"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_issued" class="stats-input" readonly value="1"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_remaining" class="flatland-input editable-stat" value="1"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_electors" class="stats-input" readonly value="2"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_check" class="stats-input font-bold" readonly value="2" style="background-color: #dcfce7; color: #166534;"></td>
                 </tr>
                 <tr>
-                    <td><input type="number" class="flatland-input flatland-cand data-cell" value="0"></td>
-                    <td><input type="number" class="flatland-input flatland-cand data-cell" value="1"></td>
+                    <td><input type="text" inputmode="numeric" class="flatland-input flatland-cand data-cell" value="0"></td>
+                    <td><input type="text" inputmode="numeric" class="flatland-input flatland-cand data-cell" value="1"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 山地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">山地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">秋零零</div></td>
@@ -409,23 +405,24 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     
-                    <td rowspan="2"><input type="number" id="mountain_valid" class="stats-input" readonly value="2"></td>
-                    <td rowspan="2"><input type="number" id="mountain_invalid" class="mountain-input editable-stat" value="0"></td>
-                    <td rowspan="2"><input type="number" id="mountain_total" class="stats-input" readonly value="2"></td>
-                    <td rowspan="2"><input type="number" id="mountain_issued_not_voted" class="mountain-input editable-stat" value="0"></td>
-                    <td rowspan="2"><input type="number" id="mountain_issued" class="stats-input" readonly value="2"></td>
-                    <td rowspan="2"><input type="number" id="mountain_remaining" class="mountain-input editable-stat" value="1"></td>
-                    <td rowspan="2"><input type="number" id="mountain_electors" class="stats-input" readonly value="3"></td>
-                    <td rowspan="2"><input type="number" id="mountain_check" class="stats-input font-bold" readonly value="3" style="background-color: #dcfce7; color: #166534;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_valid" class="stats-input" readonly value="2"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_invalid" class="mountain-input editable-stat" value="0"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_total" class="stats-input" readonly value="2"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_issued_not_voted" class="mountain-input editable-stat" value="0"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_issued" class="stats-input" readonly value="2"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_remaining" class="mountain-input editable-stat" value="1"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_electors" class="stats-input" readonly value="3"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_check" class="stats-input font-bold" readonly value="3" style="background-color: #dcfce7; color: #166534;"></td>
                 </tr>
                 <tr>
-                    <td><input type="number" class="mountain-input mountain-cand data-cell" value="0"></td>
-                    <td><input type="number" class="mountain-input mountain-cand data-cell" value="1"></td>
-                    <td><input type="number" class="mountain-input mountain-cand data-cell" value="1"></td>
+                    <td><input type="text" inputmode="numeric" class="mountain-input mountain-cand data-cell" value="0"></td>
+                    <td><input type="text" inputmode="numeric" class="mountain-input mountain-cand data-cell" value="1"></td>
+                    <td><input type="text" inputmode="numeric" class="mountain-input mountain-cand data-cell" value="1"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 里長 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">里長</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">吳淑芬</div></td>
@@ -433,18 +430,42 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     
-                    <td rowspan="2"><input type="number" id="village_valid" class="stats-input" readonly value="702"></td>
-                    <td rowspan="2"><input type="number" id="village_invalid" class="village-input editable-stat" value="23"></td>
-                    <td rowspan="2"><input type="number" id="village_total" class="stats-input" readonly value="725"></td>
-                    <td rowspan="2"><input type="number" id="village_issued_not_voted" class="village-input editable-stat" value="3"></td>
-                    <td rowspan="2"><input type="number" id="village_issued" class="stats-input" readonly value="728"></td>
-                    <td rowspan="2"><input type="number" id="village_remaining" class="village-input editable-stat" value="196"></td>
-                    <td rowspan="2"><input type="number" id="village_electors" class="stats-input" readonly value="924"></td>
-                    <td rowspan="2"><input type="number" id="village_check" class="stats-input font-bold" readonly value="924" style="background-color: #dcfce7; color: #166534;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_valid" class="stats-input" readonly value="702"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_invalid" class="village-input editable-stat" value="23"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_total" class="stats-input" readonly value="725"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_issued_not_voted" class="village-input editable-stat" value="3"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_issued" class="stats-input" readonly value="728"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_remaining" class="village-input editable-stat" value="196"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_electors" class="stats-input" readonly value="924"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_check" class="stats-input font-bold" readonly value="924" style="background-color: #dcfce7; color: #166534;"></td>
                 </tr>
                 <tr>
-                    <td><input type="number" class="village-input village-cand data-cell" value="515"></td>
-                    <td><input type="number" class="village-input village-cand data-cell" value="187"></td>
+                    <td><input type="text" inputmode="numeric" class="village-input village-cand data-cell" value="515"></td>
+                    <td><input type="text" inputmode="numeric" class="village-input village-cand data-cell" value="187"></td>
+                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
+                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
+                </tr>
+
+                <!-- 公投 (新增區塊) -->
+                <tr>
+                    <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px;">公投</td>
+                    <td class="candidate-cell"><div class="cand-name mt-3 text-lg">同意</div></td>
+                    <td class="candidate-cell"><div class="cand-name mt-3 text-lg">不同意</div></td>
+                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
+                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
+                    
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_valid" class="stats-input" readonly></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_invalid" class="referendum-input editable-stat"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_total" class="stats-input" readonly></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_issued_not_voted" class="referendum-input editable-stat"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_issued" class="stats-input" readonly></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_remaining" class="referendum-input editable-stat"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_electors" class="stats-input" readonly></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_check" class="stats-input font-bold" readonly value="1000" style="background-color: #fee2e2; color: #991b1b;"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" inputmode="numeric" class="referendum-input referendum-cand data-cell"></td>
+                    <td><input type="text" inputmode="numeric" class="referendum-input referendum-cand data-cell"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
@@ -498,16 +519,14 @@
     let initialX, initialY;
 
     function startDrag(e) {
-        // 如果點到的是按鈕或勾選框，不要觸發拖曳
         if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input' || e.target.closest('label')) return;
         
-        // 將原本置中的 CSS 轉換為絕對座標，防止拖曳時瞬間瞬移
         if (!draggablePanel.style.top) {
             const rect = draggablePanel.getBoundingClientRect();
             draggablePanel.style.left = rect.left + 'px';
             draggablePanel.style.top = rect.top + 'px';
-            draggablePanel.style.bottom = 'auto'; // 解除底部鎖定
-            draggablePanel.style.transform = 'none'; // 解除水平置中偏移
+            draggablePanel.style.bottom = 'auto'; 
+            draggablePanel.style.transform = 'none'; 
         }
 
         initialX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -517,7 +536,7 @@
 
     function drag(e) {
         if (!isDragging) return;
-        e.preventDefault(); // 防止手機畫面跟著滾動
+        e.preventDefault(); 
         
         const currentX = e.clientX || (e.touches && e.touches[0].clientX);
         const currentY = e.clientY || (e.touches && e.touches[0].clientY);
@@ -539,7 +558,6 @@
         isDragging = false;
     }
 
-    // 將滑鼠與觸控事件綁定到拖曳熱區 (橫條與頂部藍色區域)
     [panelHeader, dragIndicator].forEach(el => {
         el.addEventListener('mousedown', startDrag);
         el.addEventListener('touchstart', startDrag, { passive: false });
@@ -559,6 +577,7 @@
         else if (currentInput.classList.contains('flatland-input')) section = 'flatland';
         else if (currentInput.classList.contains('mountain-input')) section = 'mountain';
         else if (currentInput.classList.contains('village-input')) section = 'village';
+        else if (currentInput.classList.contains('referendum-input')) section = 'referendum'; // 公投加入跳格排隊
 
         if (!section) return;
 
@@ -574,8 +593,8 @@
         if (currentIndex >= 0 && currentIndex < orderedInputs.length - 1) {
             nextInput = orderedInputs[currentIndex + 1];
         } else {
-            // 自動跨區：跳到下一個選舉種類的第 1 位候選人
-            const sections = ['mayor', 'councilor', 'flatland', 'mountain', 'village'];
+            // 自動跨區跳格包含公投
+            const sections = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
             let sectionIndex = sections.indexOf(section);
             if (sectionIndex >= 0 && sectionIndex < sections.length - 1) {
                 let nextSection = sections[sectionIndex + 1];
@@ -586,17 +605,13 @@
         if (nextInput) {
             currentInput.classList.remove('focused-cell');
             
-            // 【防止自動放大的黑魔法】
             if (document.getElementById('continuous-mode').checked) {
-                // 在連續模式下，我們「不觸發」原生的 .click()，只加 CSS 讓格子變紅
-                // 這樣就能騙過手機瀏覽器，絕對不會觸發強制 Zoom-In
                 nextInput.classList.add('focused-cell');
                 currentFocusedInput = nextInput;
             } else {
                 nextInput.click(); 
             }
 
-            // 平滑滾動：改用 inline: 'nearest'。只有在格子超出畫面時，才會輕輕平移拉回來，不會大動作置中
             nextInput.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         }
     }
@@ -632,16 +647,8 @@
         }
     }
 
-    const allInputs = document.querySelectorAll('input[type="number"], input[type="text"][inputmode="numeric"]');
+    const allInputs = document.querySelectorAll('input[type="text"]');
     let currentFocusedInput = null;
-
-    // 將所有數字輸入框底層轉為 text 格式，以完美支援鍵盤「刪除游標旁單一字元」的功能
-    allInputs.forEach(input => {
-        if (input.type === 'number' && !input.readOnly) {
-            input.type = 'text';
-            input.setAttribute('inputmode', 'numeric');
-        }
-    });
 
     allInputs.forEach(input => {
         input.addEventListener('input', function() {
@@ -651,6 +658,8 @@
             else if (this.classList.contains('flatland-input')) prefix = 'flatland';
             else if (this.classList.contains('mountain-input')) prefix = 'mountain';
             else if (this.classList.contains('village-input')) prefix = 'village';
+            else if (this.classList.contains('referendum-input')) prefix = 'referendum'; // 公投加入公式連動
+            
             if (prefix) calculateTotals(prefix);
         });
 
@@ -663,7 +672,7 @@
 
         input.addEventListener('focus', function(e) {
             if (document.getElementById('continuous-mode').checked) {
-                e.target.blur(); // 強制失焦，避免手機虛擬鍵盤彈出
+                e.target.blur(); 
             }
         });
     });
@@ -674,7 +683,7 @@
     continuousModeCheckbox.addEventListener('change', function() {
         if (this.checked) {
             modeToggleLabel.classList.add('active');
-            showToast('已開啟連續模式，點擊欄位直接輸入。', 4000);
+            showToast('已開啟連續模式，點擊欄位直接語音或按鍵輸入。', 4000);
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
                 el.setAttribute('inputmode', 'none'); 
                 el.setAttribute('readonly', 'true'); 
@@ -683,7 +692,7 @@
             modeToggleLabel.classList.remove('active');
             showToast('已關閉連續模式。');
             document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
-                el.setAttribute('inputmode', 'numeric'); // 修復：恢復成數字模式，而不是徹底刪除屬性
+                el.setAttribute('inputmode', 'numeric');
                 el.removeAttribute('readonly'); 
             });
         }
@@ -701,7 +710,6 @@
             
             if (currentVal === "0") currentVal = ""; 
             
-            // 插入數字到游標位置
             const newVal = currentVal.slice(0, start) + e.target.textContent + currentVal.slice(start);
             currentFocusedInput.value = newVal;
             try { currentFocusedInput.setSelectionRange(start + 1, start + 1); } catch(err) {}
@@ -710,7 +718,6 @@
         });
     });
 
-    // <X (倒退刪除一個數字 Backspace)
     document.getElementById('vk-del-left').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
@@ -728,7 +735,6 @@
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    // X> (向右刪除 Delete)
     document.getElementById('vk-del-right').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
@@ -746,7 +752,6 @@
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
     
-    // 清空 (清空整格)
     document.getElementById('vk-clear').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
@@ -754,7 +759,6 @@
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    // tab 鍵 (自動跳下一格並置中畫面)
     document.getElementById('vk-tab').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
@@ -792,7 +796,7 @@
         recognition.onstart = function() {
             isRecording = true;
             voiceBtn.classList.add('recording');
-            showToast('⚡ 點擊欄位鎖定區域，可說「姓名 票數」、「號碼 票數」或直接唸「票數」自動跳格');
+            showToast('⚡ 錄音中...請直接唸出「票數」');
         };
 
         recognition.onend = function() {
@@ -807,6 +811,19 @@
         function extractNumberFromText(text) {
             let t = text.replace(/\s+/g, ''); 
             t = t.replace(/零|洞|空|沒有/g, '0');
+            
+            // 強化百位數與千位數辨識，解決被轉成國字或漏聽的問題
+            t = t.replace(/一百|1百/g, '100')
+                 .replace(/二百|兩百|2百/g, '200')
+                 .replace(/三百|3百/g, '300')
+                 .replace(/四百|4百/g, '400')
+                 .replace(/五百|5百/g, '500')
+                 .replace(/六百|6百/g, '600')
+                 .replace(/七百|7百/g, '700')
+                 .replace(/八百|8百/g, '800')
+                 .replace(/九百|9百/g, '900')
+                 .replace(/一千|1千/g, '1000');
+
             const map2 = { '十一': '11', '十二': '12', '十三': '13', '十四': '14', '十五': '15', '十六': '16', '十七': '17', '十八': '18', '十九': '19', '二十': '20' };
             for (let k in map2) { t = t.replace(new RegExp(k, 'g'), map2[k]); }
             const map1 = { '一': '1', '二': '2', '兩': '2', '三': '3', '四': '4', '五': '5', '六': '6', '七': '7', '八': '8', '九': '9', '十': '10' };
@@ -823,81 +840,26 @@
             const rawTranscript = event.results[0][0].transcript;
             
             if (!currentFocusedInput) {
-                showToast(`❌ 請先點擊一個欄位以鎖定區域！`);
+                showToast(`❌ 請先點擊一個欄位！`);
                 return;
             }
 
-            let section = "";
-            if (currentFocusedInput.classList.contains('mayor-input')) section = 'mayor';
-            else if (currentFocusedInput.classList.contains('councilor-input')) section = 'councilor';
-            else if (currentFocusedInput.classList.contains('flatland-input')) section = 'flatland';
-            else if (currentFocusedInput.classList.contains('mountain-input')) section = 'mountain';
-            else if (currentFocusedInput.classList.contains('village-input')) section = 'village';
-
-            if (!section) return;
-
-            let candIndex = -1;
-            let matchType = ""; 
-            
-            let candMatch = rawTranscript.match(/(?:第)?(\d+|[一二三四五六七八九十]+)\s*(號|号)/);
-            if (candMatch) {
-                candIndex = parseInt(extractNumberFromText(candMatch[1])) - 1; 
-                matchType = "號碼";
-            } else {
-                const candidates = {
-                    'mayor': ['張家豪', '王文娟', '鄭匡宇', '黃聖峰', '童文薰', '蔣萬安', '蘇煥智', '黃珊珊', '施奉先', '唐新民', '謝立康', '陳時中'],
-                    'councilor': ['劉耀仁', '郭智亭', '鍾小平', '吳沛憶', '徐立信', '吳志剛', '曾琳詒', '吳怡萱', '邵維倫', '李有宜', '張榮法', '應曉薇', '李菁琪', '王麒傑', '陳樹霖', '郭昭巖', '洪婉臻', '呂增塔'],
-                    'flatland': ['倪零一', '吳零二'],
-                    'mountain': ['秋零零', '梁零二', '韋零三'],
-                    'village': ['吳淑芬', '張政保']
-                };
-                let sectionCands = candidates[section] || [];
-                for (let i = 0; i < sectionCands.length; i++) {
-                    let name = sectionCands[i];
-                    let matchCount = 0;
-                    for (let char of name) {
-                        if (rawTranscript.includes(char)) matchCount++;
-                    }
-                    if (matchCount >= 2) {
-                        candIndex = i;
-                        matchType = "名字";
-                        break;
-                    }
-                }
-            }
-
-            let transcriptForVotes = rawTranscript;
-            if (matchType === "號碼" && candMatch) {
-                transcriptForVotes = rawTranscript.replace(candMatch[0], ''); 
-            }
-            let votes = extractNumberFromText(transcriptForVotes);
-            if (votes === null) votes = extractNumberFromText(rawTranscript);
+            // 【極簡大腦】捨棄所有複雜比對，只專心抓數字！
+            let votes = extractNumberFromText(rawTranscript);
 
             if (votes === null) {
                 showToast(`❌ 沒聽到數字: "${rawTranscript}"`);
                 return;
             }
 
-            const sectionInputs = Array.from(document.querySelectorAll(`.${section}-cand`));
-            let targetInput = null;
-            
-            if (candIndex >= 0 && candIndex < sectionInputs.length) {
-                targetInput = sectionInputs[candIndex];
-                targetInput.value = votes;
-                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                showToast(`🎯 配對成功: 獲得 ${votes} 票`);
-            } else {
-                targetInput = currentFocusedInput;
-                targetInput.value = votes;
-                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                showToast(`✅ 已填入: ${votes} 票`);
-            }
+            // 直接將抓到的數字填入目前發光的格子中
+            currentFocusedInput.value = votes;
+            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+            showToast(`✅ 已填入: ${votes} 票`);
 
+            // 如果是在連續模式，填完自動跳下一格
             if (continuousModeCheckbox.checked) {
-                autoTabToNextCell(targetInput);
-            } else {
-                currentFocusedInput.classList.remove('focused-cell');
-                targetInput.click();
+                autoTabToNextCell(currentFocusedInput);
             }
         };
 

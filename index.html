@@ -950,6 +950,24 @@
         }
     });
 
+    // 新增：攔截 PC 實體鍵盤的 Tab 鍵，強制套用自訂的跳格順序
+    tableWrapper.addEventListener('keydown', function(e) {
+        // 判斷是否按下 Tab 鍵 (且沒有按著 Shift 鍵)
+        if (e.key === 'Tab' && !e.shiftKey) {
+            if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
+                e.preventDefault(); // 阻止瀏覽器原生的 DOM 跳格行為
+                
+                // 呼叫我們寫好的智慧跳格邏輯 (會正確跳向 無效票 -> 已領未投 ...)
+                autoTabToNextCell(e.target);
+                
+                // 確保實體鍵盤操作時，網頁游標 (Blinking cursor) 有正確跟著移動過去
+                if (currentFocusedInput && !document.getElementById('continuous-mode').checked) {
+                    currentFocusedInput.focus();
+                }
+            }
+        }
+    });
+
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
     

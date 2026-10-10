@@ -10,20 +10,52 @@
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
             background-color: #f3f4f6;
             padding: 10px;
+            padding-bottom: 120px;
         }
         .report-container {
             background-color: white;
-            padding: 10px; /* 縮小 Padding 爭取空間 */
+            padding: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             max-width: 1800px;
             margin: 0 auto;
             overflow-x: auto;
         }
+        
+        .station-input-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .station-input {
+            border: 2px solid #94a3b8;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 16px;
+            width: 100px;
+        }
+        .warning-text {
+            background-color: #fef08a;
+            color: #dc2626;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
         .table-wrapper {
             min-width: 1400px; 
-            max-height: 75vh; 
+            max-height: 70vh; 
             overflow: auto; 
         }
+        
+        /* 新增：鎖定狀態的視覺效果 */
+        .table-wrapper.locked input {
+            pointer-events: none;
+            background-color: #e5e7eb;
+        }
+
         thead th {
             position: sticky; 
             top: 0;
@@ -72,8 +104,6 @@
             word-break: break-all;
         }
         
-        /* 確保 numeric 和 none 模式下，格子大小都維持撐滿 */
-        input[type="number"], 
         input[type="text"][inputmode="numeric"],
         input[type="text"][inputmode="none"] {
             width: 100%;
@@ -90,21 +120,15 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-        /* 取消焦點時的紅色邊框，改用 class 控制以防止手機自動放大 */
-        input:focus {
-            outline: none;
-        }
-        input.focused-cell {
+        input[type="text"][inputmode="numeric"]:focus, 
+        input.focused-cell,
+        input[type="text"][inputmode="none"]:focus {
             outline: none;
             border: 3px solid #ef4444 !important; 
             background-color: #fef2f2 !important;
             border-radius: 4px;
         }
-        input::-webkit-inner-spin-button, 
-        input::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
+        
         .stats-input {
             color: #1e3a8a;
             font-size: 20px;
@@ -117,16 +141,37 @@
             background-color: #fdfdfd;
         }
 
-        body {
-            padding-bottom: 120px; 
+        .system-locked input {
+            pointer-events: none;
+            background-color: #f1f5f9;
         }
         
+        .action-buttons-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ccc;
+        }
+        .action-btn {
+            padding: 8px 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #333;
+            transition: transform 0.1s;
+        }
+        .action-btn:active { transform: scale(0.95); }
+        .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
+        .btn-green { background-color: #bbf7d0; color: #166534; }
+
         .control-panel {
             position: fixed;
             bottom: 15px; 
             left: 50%;
             transform: translateX(-50%); 
-            width: clamp(320px, 33vw, 450px); /* 1/3 寬度的懸浮小鍵盤 */
+            width: clamp(320px, 33vw, 450px); 
             background-color: #7dd3fc; 
             padding: 10px;
             border-radius: 12px; 
@@ -142,13 +187,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 40px; /* 增加上方按鈕距離 */
+            gap: 40px; 
             width: 100%;
             cursor: grab;
         }
-        .cp-header:active {
-            cursor: grabbing;
-        }
+        .cp-header:active { cursor: grabbing; }
         
         .drag-indicator {
             width: 40px;
@@ -191,26 +234,24 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        .wide-btn {
-            flex: 1.4; /* 讓特定功能鍵變寬 */
-        }
+        .wide-btn { flex: 1.4; }
         
         .vk-action-btn {
             font-size: 16px;
             padding: 0 4px;
         }
+        .vk-action-btn.icon-btn { font-size: 14px; letter-spacing: -1px; }
         .vk-btn:active, .vk-action-btn:active {
             transform: translateY(3px);
             box-shadow: 0 0 0 #a16207;
         }
 
-        /* 連續模式按鈕樣式 */
         .mode-toggle {
             display: flex;
             align-items: center;
             gap: 8px;
-            background-color: white; /* 預設白底 */
-            border: 2px solid black; /* 黑色實線邊框 */
+            background-color: white; 
+            border: 2px solid black; 
             padding: 4px 12px;
             border-radius: 8px;
             cursor: pointer;
@@ -219,29 +260,24 @@
             transition: background-color 0.2s;
             user-select: none;
         }
-        .mode-toggle.active {
-            background-color: #bbf7d0; /* 開啟時淺綠色 */
-        }
+        .mode-toggle.active { background-color: #bbf7d0; }
 
-        /* 麥克風按鈕樣式 */
         .voice-btn-small {
             display: flex;
             align-items: center;
             justify-content: center;
             width: 44px;
             height: 44px;
-            background-color: #ef4444; /* 預設紅底 */
-            border: 2px solid black;   /* 黑色實線邊框 */
-            border-radius: 50%;        /* 圓形 */
+            background-color: #ef4444; 
+            border: 2px solid black;   
+            border-radius: 50%;        
             font-size: 20px;
             cursor: pointer;
             transition: background-color 0.2s, transform 0.1s;
         }
-        .voice-btn-small:active {
-            transform: translateY(2px);
-        }
+        .voice-btn-small:active { transform: translateY(2px); }
         .voice-btn-small.recording {
-            background-color: #22c55e; /* 錄音中亮綠色 */
+            background-color: #22c55e; 
             animation: pulse 1.5s infinite; 
         }
 
@@ -266,28 +302,47 @@
             pointer-events: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .toast-msg.show {
-            opacity: 1;
+        .toast-msg.show { opacity: 1; }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3a8a;
+            display: none;
         }
     </style>
 </head>
 <body>
 
-<div class="report-container">
-    <!-- 縮小標題列，精簡為一行 -->
+<div class="loading-overlay" id="loading-overlay">處理中，請稍候...</div>
+
+<div class="report-container" id="main-container">
+    <div class="station-input-area">
+        <label class="font-bold">投開票所編號:</label>
+        <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
+        <button id="btn-load-station" class="action-btn btn-blue">載入資料</button>
+        <span class="warning-text">請先填寫票所編號後(1282-1419)，才可進行試算！</span>
+    </div>
+
     <div class="flex flex-wrap justify-between items-center px-4 py-1 bg-white font-bold text-[15px] border-b border-gray-300">
         <h1 class="tracking-widest mr-4">115年地方公職暨公投選舉</h1>
         <div>臺北市萬華區</div>
-        <div>第 1329 投開票所</div>
-        <div>115年11月28日</div>
+        <div id="display-date">115年11月28日</div>
     </div>
 
-    <div class="table-wrapper">
+    <!-- 新增：預設加上 locked 類別 -->
+    <div class="table-wrapper locked" id="table-wrapper">
         <table>
             <thead>
                 <tr>
                     <th colspan="2" class="w-16">開票結果<br>選舉種類</th>
-                    <!-- 改為 10 欄位 -->
                     <th colspan="10">各 候 選 人 得 票 數</th>
                     <th class="w-28 text-blue-800">有效票數</th>
                     <th class="w-28">無效票數</th>
@@ -300,7 +355,7 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- ================= 直轄市長 (6人 + 4空格 = 10格) ================= -->
+                <!-- 直轄市長 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">直轄市長</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">蔣萬安</div></td>
@@ -318,7 +373,7 @@
                     <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_issued" class="stats-input" readonly></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_remaining" class="mayor-input editable-stat"></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_check" class="stats-input font-bold" readonly value="1000" style="background-color: #fee2e2; color: #991b1b;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_check" class="stats-input font-bold check-val" readonly value=""></td>
                 </tr>
                 <tr>
                     <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell"></td>
@@ -330,11 +385,9 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- ================= 區域議員 (14人 -> 拆成 10格 + 4格) ================= -->
+                <!-- 區域議員 -->
                 <tr>
-                    <!-- 跨 4 列 (因為有兩層候選人) -->
                     <td colspan="2" rowspan="4" class="row-header">區域議員</td>
-                    <!-- 第一層候選人 1~10 號 -->
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">吳志剛</div></td>
                     <td class="candidate-cell"><div class="cand-number">2</div><div class="cand-name">鍾小平</div></td>
                     <td class="candidate-cell"><div class="cand-number">3</div><div class="cand-name">張延廷</div></td>
@@ -346,7 +399,6 @@
                     <td class="candidate-cell"><div class="cand-number">9</div><div class="cand-name">吳怡萱</div></td>
                     <td class="candidate-cell"><div class="cand-number">10</div><div class="cand-name">王振庭</div></td>
                     
-                    <!-- 統計欄位也跨 4 列 -->
                     <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_valid" class="stats-input" readonly></td>
                     <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_invalid" class="councilor-input editable-stat"></td>
                     <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_total" class="stats-input" readonly></td>
@@ -354,10 +406,9 @@
                     <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_issued" class="stats-input" readonly></td>
                     <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_remaining" class="councilor-input editable-stat"></td>
                     <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_electors" class="stats-input" readonly></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_check" class="stats-input font-bold" readonly value="1000" style="background-color: #fee2e2; color: #991b1b;"></td>
+                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_check" class="stats-input font-bold check-val" readonly value=""></td>
                 </tr>
                 <tr>
-                    <!-- 第一層輸入框 1~10 號 -->
                     <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
                     <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
                     <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
@@ -370,7 +421,6 @@
                     <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
                 </tr>
                 <tr>
-                    <!-- 第二層候選人 11~14 號 (4人 + 6空格 = 10格) -->
                     <td class="candidate-cell"><div class="cand-number">11</div><div class="cand-name">陳力新</div></td>
                     <td class="candidate-cell"><div class="cand-number">12</div><div class="cand-name">應佳妤</div></td>
                     <td class="candidate-cell"><div class="cand-number">13</div><div class="cand-name">徐立信</div></td>
@@ -378,7 +428,6 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
                 <tr>
-                    <!-- 第二層輸入框 11~14 號 (4人 + 6空格 = 10格) -->
                     <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
                     <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
                     <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
@@ -386,7 +435,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- ================= 平地原住民議員 (2人 + 8空格 = 10格) ================= -->
+                <!-- 平地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">平地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">李芳儒</div></td>
@@ -400,7 +449,7 @@
                     <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_issued" class="stats-input" readonly></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_remaining" class="flatland-input editable-stat"></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_check" class="stats-input font-bold" readonly value="1000" style="background-color: #fee2e2; color: #991b1b;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_check" class="stats-input font-bold check-val" readonly value=""></td>
                 </tr>
                 <tr>
                     <td><input type="text" inputmode="numeric" class="flatland-input flatland-cand data-cell"></td>
@@ -408,7 +457,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- ================= 山地原住民議員 (3人 + 7空格 = 10格) ================= -->
+                <!-- 山地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">山地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">孔垂崢</div></td>
@@ -423,7 +472,7 @@
                     <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_issued" class="stats-input" readonly></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_remaining" class="mountain-input editable-stat"></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_check" class="stats-input font-bold" readonly value="1000" style="background-color: #fee2e2; color: #991b1b;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_check" class="stats-input font-bold check-val" readonly value=""></td>
                 </tr>
                 <tr>
                     <td><input type="text" inputmode="numeric" class="mountain-input mountain-cand data-cell"></td>
@@ -432,12 +481,14 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- ================= 里長 (2人 + 8空格 = 10格) ================= -->
-                <tr>
+                <!-- 里長 -->
+                <tr id="village-row-header">
                     <td colspan="2" rowspan="2" class="row-header">里長</td>
-                    <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">吳淑芬</div></td>
-                    <td class="candidate-cell"><div class="cand-number">2</div><div class="cand-name">張政保</div></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
+                    <!-- 預設顯示三個空位，會根據 GAS 載入動態生成 -->
+                    <td class="candidate-cell village-name-cell"><div class="cand-number">1</div><div class="cand-name">AAA</div></td>
+                    <td class="candidate-cell village-name-cell"><div class="cand-number">2</div><div class="cand-name">BBB</div></td>
+                    <td class="candidate-cell village-name-cell"><div class="cand-number">3</div><div class="cand-name">CCC</div></td>
+                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_valid" class="stats-input" readonly></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_invalid" class="village-input editable-stat"></td>
@@ -446,15 +497,16 @@
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_issued" class="stats-input" readonly></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_remaining" class="village-input editable-stat"></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_check" class="stats-input font-bold" readonly value="1000" style="background-color: #fee2e2; color: #991b1b;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_check" class="stats-input font-bold check-val" readonly value=""></td>
                 </tr>
-                <tr>
-                    <td><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
+                <tr id="village-row-inputs">
+                    <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
+                    <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
+                    <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
+                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- ================= 公投 (2人 + 8空格 = 10格) ================= -->
+                <!-- 公投 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px;">公投</td>
                     <td class="candidate-cell"><div class="cand-name mt-3 text-lg">同意</div></td>
@@ -468,7 +520,7 @@
                     <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_issued" class="stats-input" readonly></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_remaining" class="referendum-input editable-stat"></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_check" class="stats-input font-bold" readonly value="1000" style="background-color: #fee2e2; color: #991b1b;"></td>
+                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_check" class="stats-input font-bold check-val" readonly value=""></td>
                 </tr>
                 <tr>
                     <td><input type="text" inputmode="numeric" class="referendum-input referendum-cand data-cell"></td>
@@ -477,6 +529,13 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <div class="action-buttons-container">
+        <a href="https://news.google.com" target="_blank" class="action-btn" style="background-color: #e5e7eb;">亂數練習</a>
+        <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
+        <button id="btn-lock" class="action-btn btn-green">鎖住 / 解鎖</button>
+        <button id="btn-submit" class="action-btn btn-blue">傳送資料(提供分析用)</button>
     </div>
 </div>
 
@@ -516,17 +575,234 @@
 <div class="toast-msg" id="toast"></div>
 
 <script>
-    // === 虛擬鍵盤自由拖曳功能 ===
+    // === 配置區域 ===
+    // 部署 GAS 專案後，請將網址替換成您的 Web App 網址
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwO6yHnB2f1H8sU2O1aO7u0O6yHnB2f1H8sU2O1a/exec'; 
+    
+    let isSystemLocked = false;
+    let currentStationId = '';
+    let currentFocusedInput = null;
+
+    // === UI Helper ===
+    const toast = document.getElementById('toast');
+    function showToast(msg, duration = 3000) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+    
+    function toggleLoading(show) {
+        document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+    }
+
+    // === 資料載入邏輯 (連接 GAS) ===
+    document.getElementById('btn-load-station').addEventListener('click', () => {
+        const inputId = document.getElementById('station-id-input').value;
+        if (!inputId || inputId < 1282 || inputId > 1419) {
+            alert('請輸入有效的票所編號 (1282-1419)');
+            return;
+        }
+
+        toggleLoading(true);
+        fetch(`${GAS_API_URL}?station=${inputId}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    currentStationId = inputId;
+                    applyStationData(data.data);
+                    // 解除鎖定狀態，不再使用模糊效果
+                    document.getElementById('table-wrapper').classList.remove('locked');
+                    showToast(`已成功載入第 ${inputId} 票所資料`);
+                } else {
+                    alert(`載入失敗: ${data.message}`);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('連線失敗。如果您尚未設定 GAS 網址，將使用本地測試資料。');
+                currentStationId = inputId;
+                applyStationData({
+                    checkValues: { mayor: 1000, councilor: 1000, flatland: 10, mountain: 50, village: 1000, referendum: 1000 },
+                    villageCandidates: ['王大明', '李小華']
+                });
+                // 解除鎖定狀態
+                document.getElementById('table-wrapper').classList.remove('locked');
+            })
+            .finally(() => {
+                toggleLoading(false);
+            });
+    });
+
+    function applyStationData(data) {
+        const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
+        types.forEach(type => {
+            const el = document.getElementById(`${type}_check`);
+            if (el) {
+                const val = data.checkValues[type];
+                el.value = val;
+                const rowInputs = document.querySelectorAll(`.${type}-input`);
+                if (!val || val == 0) {
+                    rowInputs.forEach(input => {
+                        input.readOnly = true;
+                        input.style.backgroundColor = '#e5e7eb';
+                        input.value = '';
+                    });
+                    el.value = '';
+                } else {
+                    rowInputs.forEach(input => {
+                        if (!input.classList.contains('stats-input')) {
+                            input.readOnly = false;
+                            input.style.backgroundColor = 'transparent';
+                        }
+                });
+            }
+        });
+
+        // 動態生成里長欄位 (完美修復跑版問題)
+        const headerTr = document.getElementById('village-row-header');
+        const inputsTr = document.getElementById('village-row-inputs');
+        const statsStartTd = document.getElementById('village_valid').parentNode;
+        
+        // 1. 徹底清除標題與統計區塊之間的「所有」舊格子
+        let currentHeaderTd = headerTr.children[1];
+        while (currentHeaderTd && currentHeaderTd !== statsStartTd) {
+            let next = currentHeaderTd.nextElementSibling;
+            headerTr.removeChild(currentHeaderTd);
+            currentHeaderTd = next;
+        }
+        
+        while (inputsTr.children.length > 0) {
+            inputsTr.removeChild(inputsTr.children[0]);
+        }
+        
+        // 2. 重新精準建立 10 個欄位 (候選人 + 空格)，確保與上方表格完美對齊
+        const cands = data.villageCandidates || [];
+        for(let i = 0; i < 10; i++) {
+            const hTd = document.createElement('td');
+            const iTd = document.createElement('td');
+            
+            if (i < cands.length) {
+                hTd.className = 'candidate-cell village-name-cell';
+                hTd.innerHTML = `<div class="cand-number">${i+1}</div><div class="cand-name">${cands[i]}</div>`;
+                
+                iTd.className = 'village-input-td';
+                iTd.innerHTML = `<input type="text" inputmode="numeric" class="village-input village-cand data-cell">`;
+            } else {
+                hTd.className = 'empty-cell';
+                iTd.className = 'empty-cell';
+            }
+            
+            headerTr.insertBefore(hTd, statsStartTd);
+            inputsTr.appendChild(iTd);
+        }
+        
+        clearAllData();
+    }
+
+    // === 按鈕功能邏輯 ===
+    document.getElementById('btn-clear-all').addEventListener('click', () => {
+        if(confirm('確定要清除所有已輸入的資料，回到初始狀態嗎？')) {
+            clearAllData();
+            document.getElementById('station-id-input').value = '';
+            // 清除時重新將表格上鎖
+            document.getElementById('table-wrapper').classList.add('locked');
+            currentStationId = '';
+            showToast('已回到初始狀態');
+        }
+    });
+
+    function clearAllData() {
+        document.querySelectorAll('input.data-cell, input.editable-stat, input.stats-input').forEach(input => {
+            if(!input.classList.contains('check-val')) {
+                input.value = '';
+            }
+        });
+        const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
+        types.forEach(type => {
+            document.getElementById(`${type}_check`).style.backgroundColor = '#fee2e2';
+        });
+    }
+
+    document.getElementById('btn-lock').addEventListener('click', function() {
+        isSystemLocked = !isSystemLocked;
+        const container = document.getElementById('main-container');
+        if(isSystemLocked) {
+            container.classList.add('system-locked');
+            this.textContent = '解鎖 (已鎖定)';
+            this.style.backgroundColor = '#fca5a5';
+            this.style.color = '#7f1d1d';
+            showToast('系統已鎖定，防止誤觸');
+        } else {
+            container.classList.remove('system-locked');
+            this.textContent = '鎖住 / 解鎖';
+            this.style.backgroundColor = '#bbf7d0';
+            this.style.color = '#166534';
+            showToast('系統已解鎖');
+        }
+    });
+
+    document.getElementById('btn-submit').addEventListener('click', () => {
+        if(!currentStationId) {
+            alert('請先輸入並載入票所編號！');
+            return;
+        }
+        if(confirm('即將傳送資料至資料庫，請確認數字是否正確？')) {
+            toggleLoading(true);
+            
+            const payload = {
+                stationId: currentStationId,
+                txId: `${currentStationId}-${Date.now().toString().slice(-4)}`,
+                timestamp: new Date().toLocaleString('zh-TW'),
+                data: {}
+            };
+
+            const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
+            types.forEach(type => {
+                const cands = Array.from(document.querySelectorAll(`.${type}-cand`)).map(el => el.value);
+                if (cands.some(v => v !== '') || document.getElementById(`${type}_total`).value !== '') {
+                    payload.data[type] = {
+                        candidates: ['dummy'].concat(cands), 
+                        valid: document.getElementById(`${type}_valid`).value,
+                        invalid: document.getElementById(`${type}_invalid`).value,
+                        total: document.getElementById(`${type}_total`).value,
+                        issuedNotVoted: document.getElementById(`${type}_issued_not_voted`).value,
+                        issued: document.getElementById(`${type}_issued`).value,
+                        remaining: document.getElementById(`${type}_remaining`).value,
+                        electors: document.getElementById(`${type}_electors`).value,
+                        check: document.getElementById(`${type}_check`).value
+                    };
+                }
+            });
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert('資料傳送成功！\n交易序號: ' + payload.txId);
+                } else {
+                    alert('傳送失敗: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('連線失敗，請檢查網路或 GAS 網址設定。');
+            })
+            .finally(() => toggleLoading(false));
+        }
+    });
+
+    // === 虛擬鍵盤與輸入邏輯 ===
     const draggablePanel = document.getElementById('draggable-panel');
     const panelHeader = document.getElementById('panel-header');
     const dragIndicator = document.querySelector('.drag-indicator');
-    
     let isDragging = false;
     let initialX, initialY;
 
     function startDrag(e) {
         if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input' || e.target.closest('label')) return;
-        
         if (!draggablePanel.style.top) {
             const rect = draggablePanel.getBoundingClientRect();
             draggablePanel.style.left = rect.left + 'px';
@@ -534,7 +810,6 @@
             draggablePanel.style.bottom = 'auto'; 
             draggablePanel.style.transform = 'none'; 
         }
-
         initialX = e.clientX || (e.touches && e.touches[0].clientX);
         initialY = e.clientY || (e.touches && e.touches[0].clientY);
         isDragging = true;
@@ -543,38 +818,29 @@
     function drag(e) {
         if (!isDragging) return;
         e.preventDefault(); 
-        
         const currentX = e.clientX || (e.touches && e.touches[0].clientX);
         const currentY = e.clientY || (e.touches && e.touches[0].clientY);
-        
         const dx = currentX - initialX;
         const dy = currentY - initialY;
-        
         initialX = currentX;
         initialY = currentY;
-        
         const currentLeft = parseFloat(draggablePanel.style.left) || 0;
         const currentTop = parseFloat(draggablePanel.style.top) || 0;
-        
         draggablePanel.style.left = (currentLeft + dx) + 'px';
         draggablePanel.style.top = (currentTop + dy) + 'px';
     }
 
-    function endDrag() {
-        isDragging = false;
-    }
+    function endDrag() { isDragging = false; }
 
     [panelHeader, dragIndicator].forEach(el => {
         el.addEventListener('mousedown', startDrag);
         el.addEventListener('touchstart', startDrag, { passive: false });
     });
-
     document.addEventListener('mousemove', drag);
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('mouseup', endDrag);
     document.addEventListener('touchend', endDrag);
 
-    // === 自動跳格邏輯 (包含公投與跨列表格支援) ===
     function autoTabToNextCell(currentInput) {
         if (!currentInput) return;
         let section = "";
@@ -588,7 +854,7 @@
         if (!section) return;
 
         let orderedInputs = [];
-        orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand`)));
+        orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand:not([readonly])`)));
         orderedInputs.push(document.getElementById(`${section}_invalid`));
         orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
         orderedInputs.push(document.getElementById(`${section}_remaining`));
@@ -603,27 +869,22 @@
             let sectionIndex = sections.indexOf(section);
             if (sectionIndex >= 0 && sectionIndex < sections.length - 1) {
                 let nextSection = sections[sectionIndex + 1];
-                nextInput = document.querySelector(`.${nextSection}-cand`);
+                nextInput = document.querySelector(`.${nextSection}-cand:not([readonly])`);
             }
         }
 
         if (nextInput) {
             currentInput.classList.remove('focused-cell');
-            
-            // 黑魔法：如果是在連續模式下，不要觸發 click (避免原生的 focus 放縮)，只上紅框
             if (document.getElementById('continuous-mode').checked) {
                 nextInput.classList.add('focused-cell');
                 currentFocusedInput = nextInput;
             } else {
                 nextInput.click(); 
             }
-
-            // 平滑捲動 (改用 nearest 防止強制推移導致的版面彈跳放大)
             nextInput.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
         }
     }
 
-    // === 計算公式 ===
     function calculateTotals(prefix) {
         let validVotes = 0;
         const candInputs = document.querySelectorAll(`.${prefix}-cand`);
@@ -643,7 +904,7 @@
         document.getElementById(`${prefix}_electors`).value = electors;
 
         const checkInput = document.getElementById(`${prefix}_check`);
-        if (checkInput) {
+        if (checkInput && checkInput.value) {
             const checkValue = Number(checkInput.value);
             if (electors === checkValue) {
                 checkInput.style.backgroundColor = '#dcfce7'; 
@@ -655,59 +916,58 @@
         }
     }
 
-    const allInputs = document.querySelectorAll('input[type="text"]');
-    let currentFocusedInput = null;
-
-    allInputs.forEach(input => {
-        input.addEventListener('input', function() {
+    // 使用事件代理 (Event Delegation) 統一處理表格內的 input 與 click 事件
+    const tableWrapper = document.getElementById('table-wrapper');
+    
+    tableWrapper.addEventListener('input', function(e) {
+        if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
             let prefix = '';
-            if (this.classList.contains('mayor-input')) prefix = 'mayor';
-            else if (this.classList.contains('councilor-input')) prefix = 'councilor';
-            else if (this.classList.contains('flatland-input')) prefix = 'flatland';
-            else if (this.classList.contains('mountain-input')) prefix = 'mountain';
-            else if (this.classList.contains('village-input')) prefix = 'village';
-            else if (this.classList.contains('referendum-input')) prefix = 'referendum';
-            
+            if (e.target.classList.contains('mayor-input')) prefix = 'mayor';
+            else if (e.target.classList.contains('councilor-input')) prefix = 'councilor';
+            else if (e.target.classList.contains('flatland-input')) prefix = 'flatland';
+            else if (e.target.classList.contains('mountain-input')) prefix = 'mountain';
+            else if (e.target.classList.contains('village-input')) prefix = 'village';
+            else if (e.target.classList.contains('referendum-input')) prefix = 'referendum';
             if (prefix) calculateTotals(prefix);
-        });
+        }
+    });
 
-        input.addEventListener('click', function() {
-            if (this.classList.contains('stats-input')) return; 
-            allInputs.forEach(el => el.classList.remove('focused-cell'));
-            this.classList.add('focused-cell');
-            currentFocusedInput = this;
-        });
+    tableWrapper.addEventListener('click', function(e) {
+        if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
+            if (e.target.classList.contains('stats-input') || e.target.readOnly) return;
+            document.querySelectorAll('input[type="text"]').forEach(el => el.classList.remove('focused-cell'));
+            e.target.classList.add('focused-cell');
+            currentFocusedInput = e.target;
+        }
+    });
 
-        input.addEventListener('focus', function(e) {
+    tableWrapper.addEventListener('focusin', function(e) {
+        if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
             if (document.getElementById('continuous-mode').checked) {
                 e.target.blur(); 
             }
-        });
+        }
     });
 
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
     
-    // === 連續模式開關 ===
     continuousModeCheckbox.addEventListener('change', function() {
         if (this.checked) {
             modeToggleLabel.classList.add('active');
-            showToast('已開啟連續模式，點擊欄位直接語音或按鍵輸入。', 4000);
-            document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
+            showToast('已開啟連續模式，點擊欄位直接輸入。', 4000);
+            document.querySelectorAll('input.data-cell:not([readonly]), input.editable-stat:not([readonly])').forEach(el => {
                 el.setAttribute('inputmode', 'none'); 
-                el.setAttribute('readonly', 'true'); 
             });
         } else {
             modeToggleLabel.classList.remove('active');
             showToast('已關閉連續模式。');
-            document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
-                el.setAttribute('inputmode', 'numeric'); // 恢復數字鍵盤喚醒能力
-                el.removeAttribute('readonly'); 
+            document.querySelectorAll('input.data-cell:not([readonly]), input.editable-stat:not([readonly])').forEach(el => {
+                el.setAttribute('inputmode', 'numeric');
             });
         }
     });
 
-    // === 虛擬鍵盤按鍵邏輯 (支援安插與精準刪除) ===
     document.querySelectorAll('.num-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -728,7 +988,6 @@
         });
     });
 
-    // <X (向左倒退刪除)
     document.getElementById('vk-del-left').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
@@ -746,7 +1005,6 @@
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    // X> (向右 Delete 刪除)
     document.getElementById('vk-del-right').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
@@ -764,7 +1022,6 @@
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
     
-    // 清空 (清空整格)
     document.getElementById('vk-clear').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
@@ -772,21 +1029,13 @@
         currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
 
-    // tab 鍵 (自動跳下一格)
     document.getElementById('vk-tab').addEventListener('click', (e) => {
         e.preventDefault();
         if (!currentFocusedInput) return;
         autoTabToNextCell(currentFocusedInput);
     });
 
-    const toast = document.getElementById('toast');
-    function showToast(msg, duration = 3000) {
-        toast.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), duration);
-    }
-
-    // === AI 語音大腦 (極簡化純數字版) ===
+    // === 語音辨識 ===
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -811,7 +1060,7 @@
         recognition.onstart = function() {
             isRecording = true;
             voiceBtn.classList.add('recording');
-            showToast('⚡ 錄音中...請直接唸出「票數」');
+            showToast('⚡ 錄音中...請直接唸出「數字」自動跳格');
         };
 
         recognition.onend = function() {
@@ -825,16 +1074,12 @@
 
         function extractNumberFromText(text) {
             let t = text.replace(/\s+/g, ''); 
+            t = t.replace(/零|洞|空|沒有|林|靈|凌|玲/g, '0');
+            t = t.replace(/無|吳|舞|武|午|吾|喔/g, '5');
+            t = t.replace(/去|其|奇|氣|妻|期|欺|漆|齊|起|泣|契/g, '7');
+            t = t.replace(/吧|把|爸|發|拔|叭|巴|罷|趴/g, '8');
+            t = t.replace(/是|事|石|時|使|實|市|室|勢|食|遲|池|詞/g, '10');
             
-            // === 終極同音字強化過濾器 ===
-            // 將常見的誤聽字先轉換為「標準中文數字」，確保後續組合(如:時期->十七->17)能正確運算
-            t = t.replace(/洞|空|沒有|林|靈|凌|玲|您|寧|凝|鈴|贏/g, '0');
-            t = t.replace(/無|吳|舞|武|午|吾|喔/g, '五');
-            t = t.replace(/去|其|奇|氣|妻|期|欺|漆|齊|起|泣|契/g, '七');
-            t = t.replace(/吧|把|爸|發|拔|叭|巴|罷|趴/g, '八');
-            t = t.replace(/是|事|石|時|使|實|市|室|勢|食|遲|池|詞/g, '十');
-            
-            // 強化百位數與千位數辨識
             t = t.replace(/一百|1百/g, '100')
                  .replace(/二百|兩百|2百/g, '200')
                  .replace(/三百|3百/g, '300')
@@ -848,8 +1093,7 @@
 
             const map2 = { '十一': '11', '十二': '12', '十三': '13', '十四': '14', '十五': '15', '十六': '16', '十七': '17', '十八': '18', '十九': '19', '二十': '20' };
             for (let k in map2) { t = t.replace(new RegExp(k, 'g'), map2[k]); }
-            
-            const map1 = { '一': '1', '二': '2', '兩': '2', '三': '3', '四': '4', '五': '5', '六': '6', '七': '7', '八': '8', '九': '9', '十': '10', '零': '0' };
+            const map1 = { '一': '1', '二': '2', '兩': '2', '三': '3', '四': '4', '五': '5', '六': '6', '七': '7', '八': '8', '九': '9', '十': '10' };
             for (let k in map1) { t = t.replace(new RegExp(k, 'g'), map1[k]); }
             
             let matches = t.match(/\d+/g);
@@ -874,12 +1118,10 @@
                 return;
             }
 
-            // 直接將數字填入目前發光的格子
             currentFocusedInput.value = votes;
             currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
             showToast(`✅ 已填入: ${votes} 票`);
 
-            // 如果是在連續模式，自動跳下一格
             if (continuousModeCheckbox.checked) {
                 autoTabToNextCell(currentFocusedInput);
             }
@@ -893,8 +1135,6 @@
                 forceStop = true;
             }
         };
-    } else {
-        alert('您的瀏覽器不支援語音辨識功能，請使用 Chrome、Edge 或 Safari。');
     }
 </script>
 </body>

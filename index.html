@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>115年地方公職暨公投選舉 - 投開票所報告表</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
@@ -50,6 +51,7 @@
             overflow: auto; 
         }
         
+        /* 唯讀鎖定模式設計 */
         .table-wrapper.locked input {
             pointer-events: none;
             background-color: #f3f4f6;
@@ -289,39 +291,60 @@
             backdrop-filter: blur(5px);
         }
         .practice-room {
-            width: 90vw; height: 90vh; max-width: 1200px;
+            width: 95vw; height: 95vh; max-width: 1400px;
             background-color: #f1f5f9; border-radius: 12px;
             padding: 20px; position: relative;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             display: flex; flex-direction: column;
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 20px 20px;
         }
         .pr-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dashed #94a3b8;
+            margin-bottom: 10px; padding-bottom: 10px; border-bottom: 2px dashed #94a3b8;
+            flex-shrink: 0;
         }
+        
+        /* 這是場景底圖區，請在下方的 url() 換成您的圖片網址 */
+        .pr-scene {
+            flex-grow: 1;
+            position: relative;
+            background-color: #e2e8f0; /* 預設底色 */
+            /* 💡 請將 url('這裡') 替換為您的圖一網址或檔案名稱，例如 url('image_a98a39.png') */
+            background-image: url(''); 
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
         .draggable-item {
-            width: 80px; height: 80px; background-color: #fef08a;
+            width: 85px; height: 90px; background-color: #fef08a;
             border: 2px solid #ca8a04; border-radius: 8px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             font-weight: bold; cursor: grab; position: absolute;
             box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
             touch-action: none; user-select: none; z-index: 10;
         }
+        .draggable-item .label { font-size: 14px; color: #854d0e; }
+        .draggable-item .val { font-size: 26px; color: #000; font-weight: 900; }
         .draggable-item:active { cursor: grabbing; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); transform: scale(1.05); }
         .draggable-item.dropped { position: static; box-shadow: none; transform: none; width: 100%; height: 100%; border: none; background-color: transparent; }
         
-        .pr-table-container { margin-top: auto; background: white; border-radius: 8px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .pr-table-container { 
+            flex-shrink: 0;
+            background: white; border-radius: 8px; padding: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
         .pr-table { width: 100%; border-collapse: collapse; text-align: center; }
         .pr-table th, .pr-table td { border: 2px solid #333; padding: 8px; font-size: 18px; }
-        .pr-table th { background-color: #e2e8f0; }
+        .pr-table th { background-color: #f1f5f9; }
         .drop-zone {
             min-height: 60px; background-color: #f8fafc;
-            border: 2px dashed #cbd5e1; transition: all 0.2s;
+            border: 3px dashed #cbd5e1; transition: all 0.2s;
             display: flex; justify-content: center; align-items: center;
         }
-        .drop-zone.filled { border: 2px solid #22c55e; background-color: #dcfce7; }
+        .drop-zone.filled { border: 3px solid #22c55e; background-color: #dcfce7; }
         
         .error-shake { animation: shake 0.4s; border-color: #ef4444 !important; background-color: #fee2e2 !important; }
         @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
@@ -350,7 +373,6 @@
         <div id="display-date">115年11月28日</div>
     </div>
 
-    <!-- 預設 locked，等待載入後解鎖。移除blur濾鏡，只套用鎖定唯讀 -->
     <div class="table-wrapper locked" id="table-wrapper">
         <table>
             <thead>
@@ -398,6 +420,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 區域議員 (14人分兩列 10 + 4) -->
                 <tr>
                     <td colspan="2" rowspan="4" class="row-header">區域議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">吳志剛</div></td>
@@ -447,7 +470,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- 平地原住民議員 (2人+8空格=10格) -->
+                <!-- 平地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">平地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">李芳儒</div></td>
@@ -469,7 +492,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- 山地原住民議員 (3人+7空格=10格) -->
+                <!-- 山地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">山地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">孔垂崢</div></td>
@@ -493,9 +516,9 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 里長 (動態生成，預設防塌陷結構) -->
                 <tr id="village-row-header">
                     <td colspan="2" rowspan="2" class="row-header">里長</td>
-                    <!-- 預設2個候選人，8個空格，防止無資料時破版 -->
                     <td class="candidate-cell village-name-cell"><div class="cand-number">1</div><div class="cand-name text-gray-400">AAA</div></td>
                     <td class="candidate-cell village-name-cell"><div class="cand-number">2</div><div class="cand-name text-gray-400">BBB</div></td>
                     <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
@@ -515,7 +538,7 @@
                      <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
                 </tr>
 
-                <!-- 公投 (2個選項+8個空格=10格) -->
+                <!-- 公投 (10格) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px;">公投</td>
                     <td class="candidate-cell"><div class="cand-name mt-3 text-lg">同意</div></td>
@@ -541,7 +564,7 @@
     </div>
 
     <div class="action-buttons-container">
-        <button id="btn-practice" class="action-btn btn-yellow">亂數練習 (拖曳模擬)</button>
+        <button id="btn-practice" class="action-btn btn-yellow">亂數練習 (公投模擬)</button>
         <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
         <button id="btn-lock" class="action-btn btn-green">鎖住 / 解鎖</button>
         <button id="btn-submit" class="action-btn btn-blue">傳送資料(提供分析用)</button>
@@ -581,17 +604,20 @@
     </div>
 </div>
 
-<!-- 公投亂數模擬拖曳房間 -->
 <div class="practice-modal" id="practice-modal">
     <div class="practice-room" id="practice-room">
         <div class="pr-header">
             <h2 class="text-2xl font-bold text-blue-900">🗳️ 公投結算模擬 (目標檢查值：<span id="p-check"></span>)</h2>
             <button id="btn-close-practice" class="text-gray-500 hover:text-red-500 font-bold text-xl px-4 py-2 bg-gray-200 rounded-lg">關閉</button>
         </div>
-        <div class="text-gray-600 mb-4">請將畫面上方的「黃色選票便條紙」拖曳到下方對應的格子中，完成結算。</div>
         
-        <!-- 動態生成的便條紙會放在這裡 -->
+        <!-- 場景區 (Scene) -->
+        <div class="pr-scene" id="pr-scene">
+            <div class="absolute top-2 left-4 bg-white px-3 py-1 rounded shadow text-sm font-bold text-gray-500 opacity-80 pointer-events-none">請將產生的黃色便條紙拖曳至下方表格對應格子中</div>
+            <!-- 動態生成的便條紙會放在這裡，座標基於此場景定位 -->
+        </div>
 
+        <!-- 核對表格區 -->
         <div class="pr-table-container">
             <table class="pr-table">
                 <tr>
@@ -605,22 +631,22 @@
                     <th>選舉人數</th>
                 </tr>
                 <tr>
-                    <td>同意<br><div class="drop-zone" data-accept="agree"></div></td>
-                    <td>不同意<br><div class="drop-zone" data-accept="disagree"></div></td>
+                    <td class="w-24">同意<br><div class="drop-zone" data-accept="agree"></div></td>
+                    <td class="w-24">不同意<br><div class="drop-zone" data-accept="disagree"></div></td>
                     <td class="text-blue-700 font-bold text-2xl calc-cell" id="p-valid"></td>
-                    <td><div class="drop-zone" data-accept="invalid"></div></td>
+                    <td class="w-24"><div class="drop-zone" data-accept="invalid"></div></td>
                     <td class="text-blue-700 font-bold text-2xl calc-cell" id="p-total"></td>
-                    <td><div class="drop-zone" data-accept="not_voted"></div></td>
+                    <td class="w-24"><div class="drop-zone" data-accept="not_voted"></div></td>
                     <td class="text-blue-700 font-bold text-2xl calc-cell" id="p-issued"></td>
-                    <td><div class="drop-zone" data-accept="remaining"></div></td>
-                    <td class="font-bold text-2xl calc-cell" id="p-electors"></td>
+                    <td class="w-24"><div class="drop-zone" data-accept="remaining"></div></td>
+                    <td class="font-bold text-3xl calc-cell text-red-700 bg-red-50" id="p-electors"></td>
                 </tr>
             </table>
         </div>
 
         <div class="win-overlay" id="win-overlay">
             <div class="text-6xl mb-4">🎉</div>
-            <h2 class="text-4xl font-bold text-green-600 mb-2">試算完全正確！</h2>
+            <h2 class="text-4xl font-bold text-green-600 mb-2">恭喜，試算完全正確！</h2>
             <p class="text-gray-600 text-lg">您已掌握報表填寫邏輯</p>
             <button class="mt-6 px-6 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600" onclick="document.getElementById('practice-modal').style.display='none'">回主畫面</button>
         </div>
@@ -735,8 +761,9 @@
         }
     }
 
-    // 攔截實體 Tab 鍵，強制套用 autoTabToNextCell
-    document.getElementById('table-wrapper').addEventListener('keydown', function(e) {
+    // 攔截實體 Tab 鍵，強制套用 autoTabToNextCell (修正 PC 端跳格問題)
+    const tableWrapper = document.getElementById('table-wrapper');
+    tableWrapper.addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             e.preventDefault(); 
             if (currentFocusedInput) {
@@ -777,7 +804,7 @@
     }
 
     // 事件代理：統一處理輸入與點擊
-    document.getElementById('table-wrapper').addEventListener('input', function(e) {
+    tableWrapper.addEventListener('input', function(e) {
         if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
             let prefix = '';
             if (e.target.classList.contains('mayor-input')) prefix = 'mayor';
@@ -790,7 +817,7 @@
         }
     });
 
-    document.getElementById('table-wrapper').addEventListener('click', function(e) {
+    tableWrapper.addEventListener('click', function(e) {
         if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
             if (e.target.classList.contains('stats-input')) return; 
             document.querySelectorAll('input[type="text"]').forEach(el => el.classList.remove('focused-cell'));
@@ -799,7 +826,7 @@
         }
     });
 
-    document.getElementById('table-wrapper').addEventListener('focusin', function(e) {
+    tableWrapper.addEventListener('focusin', function(e) {
         if (e.target.tagName.toLowerCase() === 'input' && document.getElementById('continuous-mode').checked) {
             e.target.blur(); 
         }
@@ -924,7 +951,7 @@
         function extractNumberFromText(text) {
             let t = text.replace(/\s+/g, ''); 
             
-            // 修正「零、無、七、十」的同音字誤判
+            // 強制同音字轉正體
             t = t.replace(/去|其|氣|期/g, '七');
             t = t.replace(/無|吳/g, '五');
             t = t.replace(/吧|發/g, '八');
@@ -989,7 +1016,7 @@
     // 預設備用快取 (防止連線失敗時無法操作)
     const fallbackMockData = {
         "1282": { checkValues: { mayor: 1000, councilor: 1000, flatland: 0, mountain: 0, village: 100, referendum: 1000 }, villageCandidates: ["李珮忻", "徐庭崇"] },
-        "1285": { checkValues: { mayor: 1000, councilor: 1000, flatland: 10, mountain: 20, village: 100, referendum: 1000 }, villageCandidates: ["吳美玫"] }
+        "1285": { checkValues: { mayor: 1200, councilor: 1200, flatland: 10, mountain: 20, village: 100, referendum: 1200 }, villageCandidates: ["吳美玫"] }
     };
 
     document.getElementById('btn-load-station').addEventListener('click', async () => {
@@ -1005,11 +1032,11 @@
 
         try {
             if (!globalStationCache) {
-                showToast("初次載入，正在嘗試將雲端資料庫快取至本地端...", 4000);
+                showToast("初次載入，正在將雲端資料庫快取至本地端...", 4000);
                 
-                // 【終極CORS解法】完全不放任何 Headers，發出最純粹的簡單請求，避免觸發 OPTIONS 預檢！
-                const response = await fetch(`${GAS_API_URL}?action=getAll`);
-                let text = await response.text();
+                // 破解 CORS 阻擋：使用簡單的 GET 請求，移除 headers
+                const response = await fetch(`${GAS_API_URL}?action=getAll`, { mode: 'cors' });
+                let text = await response.text(); 
                 
                 try {
                     const json = JSON.parse(text);
@@ -1046,14 +1073,14 @@
     });
 
     function applyStationData(data) {
-        // 寫入檢查值
+        // 寫入檢查值，這個步驟確保了公投欄位有最新動態數字
         const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
         types.forEach(type => {
             const checkEl = document.getElementById(`${type}_check`);
             if (checkEl) checkEl.value = data.checkValues[type] || 0;
         });
 
-        // 動態生成里長欄位 (嚴格限制 10 格總數，防止塌陷跑版)
+        // 動態生成里長欄位 (嚴格補齊 10 格總數，防止塌陷跑版)
         const villageHeaderRow = document.getElementById('village-row-header');
         const villageInputsRow = document.getElementById('village-row-inputs');
         
@@ -1127,19 +1154,18 @@
         submitBtn.textContent = "傳送中...";
         submitBtn.disabled = true;
 
-        // 【CORS 解法】傳送 text/plain 避免預檢阻擋，並直接攔截結果
         fetch(GAS_API_URL, {
             method: 'POST',
+            mode: 'cors',
             body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // 再次確保傳送純文字避開預檢
         })
         .then(response => response.text())
         .then(text => {
             alert(`✅ 傳送要求已成功送出！\n(交易序號: ${txId})`);
         })
         .catch(error => {
-            // 因 Google 可能會強制 Redirect 導致 Fetch 本身拋出 TypeError
-            // 但實際資料已寫入成功，所以在此大方給予成功提示
+            // 因 Google 可能會強制 Redirect 導致 Fetch 報錯，但資料通常已成功
             alert(`✅ 傳送要求已送出！(已繞過跨域檢查)\n(交易序號: ${txId})`);
         })
         .finally(() => {
@@ -1169,7 +1195,7 @@
     });
 
     const practiceModal = document.getElementById('practice-modal');
-    const practiceRoom = document.getElementById('practice-room');
+    const prScene = document.getElementById('pr-scene');
     
     document.getElementById('btn-close-practice').addEventListener('click', () => {
         practiceModal.style.display = 'none';
@@ -1181,26 +1207,27 @@
             return;
         }
         
-        // 1. 取得目標檢查值並顯示
+        // 1. 動態取得目標檢查值並顯示 (完美呼應需求一)
         const checkVal = parseInt(document.getElementById('referendum_check').value) || 1000;
         document.getElementById('p-check').textContent = checkVal;
         
-        // 2. 演算法產生亂數 (依照您指定的完美比例)
+        // 2. 演算法產生亂數
         const agree = Math.floor(checkVal * (0.35 + Math.random() * 0.05));
         const disagree = Math.floor(checkVal * (0.35 + Math.random() * 0.05));
         const invalid = Math.floor(checkVal * (0.08 + Math.random() * 0.02));
         const issuedNotVoted = Math.floor(Math.random() * 3); // 0~2
         const remaining = checkVal - (agree + disagree + invalid + issuedNotVoted);
 
+        // 3. 根據需求二重新定義生成座標，使其符合圖一底圖的分佈
         const itemsData = [
-            { type: 'agree', label: '同意票', val: agree, top: '20%', left: '10%' },
-            { type: 'disagree', label: '不同意票', val: disagree, top: '40%', left: '10%' },
-            { type: 'invalid', label: '無效票', val: invalid, top: '60%', left: '10%' },
-            { type: 'not_voted', label: '已領未投', val: issuedNotVoted, top: '20%', left: '75%' },
-            { type: 'remaining', label: '用餘票數', val: remaining, top: '40%', left: '75%' }
+            { type: 'agree', label: '同意票', val: agree, top: '5%', left: '25%' },
+            { type: 'disagree', label: '不同意票', val: disagree, top: '22%', left: '25%' },
+            { type: 'invalid', label: '無效票', val: invalid, top: '39%', left: '25%' },
+            { type: 'not_voted', label: '已領未投', val: issuedNotVoted, top: '25%', left: '75%' },
+            { type: 'remaining', label: '用餘票數', val: remaining, top: '45%', left: '75%' }
         ];
 
-        // 3. 清空房間與表格
+        // 清空房間與表格
         document.querySelectorAll('.drop-zone').forEach(z => {
             z.innerHTML = ''; z.classList.remove('filled');
             z.removeAttribute('data-val');
@@ -1208,14 +1235,17 @@
         document.querySelectorAll('.calc-cell').forEach(c => {
             if(c.id !== 'p-check') c.textContent = '';
         });
+        // 直接將選舉人數填入表格最右方
+        document.getElementById('p-electors').textContent = checkVal;
+
         document.getElementById('win-overlay').style.display = 'none';
         document.querySelectorAll('.draggable-item').forEach(el => el.remove());
 
-        // 4. 生成新的便條紙，並使用 Pointer Events 完美支援手機觸控與滑鼠
+        // 生成新的便條紙，並附加到場景區
         itemsData.forEach(data => {
             const el = document.createElement('div');
             el.className = 'draggable-item';
-            el.innerHTML = `<span class="text-sm">${data.label}</span><span class="text-2xl">${data.val}</span>`;
+            el.innerHTML = `<span class="label">${data.label}</span><span class="val">${data.val}</span>`;
             el.style.top = data.top;
             el.style.left = data.left;
             el.dataset.type = data.type;
@@ -1234,9 +1264,12 @@
             
             el.addEventListener('pointermove', (e) => {
                 if(!isDraggingItem) return;
-                const roomRect = practiceRoom.getBoundingClientRect();
+                // 座標計算改為基於 modal 視窗，避免場景偏移問題
+                const roomRect = practiceModal.getBoundingClientRect();
                 let newX = e.clientX - roomRect.left - offsetX;
                 let newY = e.clientY - roomRect.top - offsetY;
+                // 為了拖曳過程順暢，改為 fixed 定位
+                el.style.position = 'fixed';
                 el.style.left = newX + 'px';
                 el.style.top = newY + 'px';
             });
@@ -1257,6 +1290,7 @@
                 if (dropZone) {
                     if (dropZone.dataset.accept === el.dataset.type) {
                         el.classList.add('dropped');
+                        el.style.position = 'static'; // 歸位
                         dropZone.innerHTML = '';
                         dropZone.appendChild(el);
                         dropZone.classList.add('filled');
@@ -1265,12 +1299,19 @@
                     } else {
                         dropZone.classList.add('error-shake');
                         setTimeout(() => dropZone.classList.remove('error-shake'), 400);
+                        // 放錯則彈回原位
+                        el.style.position = 'absolute';
                         el.style.top = data.top;
                         el.style.left = data.left;
                     }
+                } else {
+                    // 放空地也彈回原位
+                    el.style.position = 'absolute';
+                    el.style.top = data.top;
+                    el.style.left = data.left;
                 }
             });
-            practiceRoom.appendChild(el);
+            prScene.appendChild(el);
         });
 
         practiceModal.style.display = 'flex';
@@ -1305,12 +1346,14 @@
         }
         if(issued !== null && rem !== null) {
             electors = issued + rem;
-            document.getElementById('p-electors').textContent = electors;
+            // 這裡不再改寫選舉人數欄位，因為它已經預設填寫好目標值，
+            // 我們只在背景計算，用來驗證是否過關
         }
 
-        // 判斷是否過關
-        if (electors === targetCheck) {
-            document.getElementById('p-electors').classList.add('text-green-600');
+        // 判斷是否過關 (所有格子都有填入且加總正確)
+        if (electors === targetCheck && a !== null && d !== null && inv !== null && notV !== null && rem !== null) {
+            document.getElementById('p-electors').classList.replace('text-red-700', 'text-green-700');
+            document.getElementById('p-electors').classList.replace('bg-red-50', 'bg-green-50');
             setTimeout(() => {
                 document.getElementById('win-overlay').style.display = 'flex';
             }, 500);

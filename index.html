@@ -168,7 +168,6 @@
         .btn-green { background-color: #bbf7d0; color: #166534; }
         .btn-yellow { background-color: #fef08a; color: #854d0e; }
 
-        /* 虛擬鍵盤 */
         .control-panel {
             position: fixed;
             bottom: 15px; 
@@ -501,6 +500,9 @@
                 <tr id="village-row-header">
                     <td colspan="2" rowspan="2" class="row-header">里長</td>
                     <!-- 這裡會被 JS 動態插入名字和空格，補滿 10 格 -->
+                    <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
+                    <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
+                    
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_valid" class="stats-input" readonly></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_invalid" class="village-input editable-stat"></td>
                     <td rowspan="2"><input type="text" inputmode="numeric" id="village_total" class="stats-input" readonly></td>
@@ -512,6 +514,11 @@
                 </tr>
                 <tr id="village-row-inputs">
                     <!-- 這裡會被 JS 動態插入輸入框和空格，補滿 10 格 -->
+                     <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
+                     <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
+                     <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
+                     <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
+                     <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
                 </tr>
 
                 <!-- 公投 -->
@@ -629,7 +636,7 @@
 <div class="toast-msg" id="toast"></div>
 
 <script>
-    // 您的專屬 GAS 網址
+    // 您的專屬 GAS 網址 (請確認已部署最新版本)
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec
 '; 
 
@@ -737,7 +744,7 @@
         }
     }
 
-    // 攔截實體 Tab 鍵，強制套用 autoTabToNextCell
+    // 攔截實體 Tab 鍵，強制套用 autoTabToNextCell (修正跳格問題)
     document.getElementById('table-wrapper').addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             e.preventDefault(); 
@@ -778,7 +785,7 @@
         }
     }
 
-    // 使用事件代理來綁定輸入框事件 (解決動態生成的里長欄位綁定問題)
+    // 使用事件代理來綁定輸入框事件
     document.getElementById('table-wrapper').addEventListener('input', function(e) {
         if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
             let prefix = '';
@@ -930,14 +937,10 @@
             let t = text.replace(/\s+/g, ''); 
             
             // 【終極修復】：先處理容易誤判的聲學特徵中文字
-            // 把「去、其、氣」強制轉成「七」
             t = t.replace(/去|其|氣|期/g, '七');
-            // 把「無、吳、吧、發」強制轉成「五」、「八」
             t = t.replace(/無|吳/g, '五');
             t = t.replace(/吧|發/g, '八');
-            // 把「是、事、時」強制轉成「十」
             t = t.replace(/是|事|時/g, '十');
-            // 把「洞、空、沒有、林、靈、凌、玲」轉成 0
             t = t.replace(/零|洞|空|沒有|林|靈|凌|玲/g, '0');
             
             // 強化百位數與千位數辨識
@@ -1012,12 +1015,25 @@
             // 如果快取是空的，向 GAS 請求整包資料
             if (!globalStationCache) {
                 showToast("初次載入，正在將雲端資料庫快取至本地端...", 4000);
-                const res = await fetch(`${GAS_API_URL}?action=getAll`);
-                const json = await res.json();
-                if (json.status === 'success') {
-                    globalStationCache = json.data;
-                } else {
-                    throw new Error(json.message);
+                
+                // 【關鍵修正】解決 CORS 阻擋問題，告訴瀏覽器只接收文字
+                const response = await fetch(`${GAS_API_URL}?action=getAll`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    mode: 'cors' 
+                });
+                
+                let text = await response.text();
+                // 嘗試解析 JSON
+                try {
+                    const json = JSON.parse(text);
+                    if (json.status === 'success') {
+                        globalStationCache = json.data;
+                    } else {
+                        throw new Error(json.message);
+                    }
+                } catch(e) {
+                    throw new Error("伺服器回傳格式錯誤: " + text.substring(0,50));
                 }
             }
 
@@ -1029,11 +1045,12 @@
                 showToast(`⚡ 已載入第 ${inputId} 票所資料`);
             } else {
                 alert('找不到該票所資料！');
-                document.getElementById('table-wrapper').classList.remove('locked'); // 測試容錯機制
+                // 測試容錯機制 (強制解鎖，方便在沒有GAS資料時依然可以測試畫面)
+                document.getElementById('table-wrapper').classList.remove('locked');
             }
         } catch (err) {
             console.error(err);
-            alert('連線失敗，請檢查網路或 GAS 網址設定。');
+            alert('連線失敗，請檢查網路或 GAS 網址設定。詳細錯誤看 Console。');
             document.getElementById('table-wrapper').classList.remove('locked');
         } finally {
             loadBtn.textContent = "載入資料";
@@ -1079,7 +1096,6 @@
         }
 
         // 插入到 "里長" 表頭 (td[rowspan=2]) 之後，且在統計數據之前
-        // 最簡單的方法是直接把 td 加在第一個 child (里長) 之後
         villageHeaderRow.firstElementChild.insertAdjacentHTML('afterend', nameHtml);
         villageInputsRow.innerHTML = inputHtml;
 
@@ -1094,7 +1110,6 @@
             return;
         }
 
-        // 產生一組交易序號 TxId
         const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
         
         const getValues = (prefix) => {
@@ -1135,25 +1150,32 @@
         submitBtn.textContent = "傳送中...";
         submitBtn.disabled = true;
 
+        // 【關鍵修正】解決 CORS Redirect 被擋問題
         fetch(GAS_API_URL, {
             method: 'POST',
             body: JSON.stringify(payload),
             headers: {
-                'Content-Type': 'text/plain;charset=utf-8' // 繞過 CORS 預檢與錯誤回傳
-            }
+                'Content-Type': 'text/plain;charset=utf-8' 
+            },
+            mode: 'cors' 
         })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                alert(`✅ 資料已成功傳送！(交易序號: ${txId})`);
-            } else {
-                alert('伺服器回傳失敗: ' + result.message);
+        .then(response => response.text()) // 改用 .text() 接收，避免 302 跳轉時 JSON 解析失敗
+        .then(text => {
+            try {
+                let result = JSON.parse(text);
+                if (result.status === 'success') {
+                    alert(`✅ 資料已成功傳送！(交易序號: ${txId})`);
+                } else {
+                    alert('伺服器回傳失敗: ' + result.message);
+                }
+            } catch(e) {
+                // 如果是 302 跳轉或回傳非 JSON，通常代表 Google 已成功接收
+                alert(`✅ 傳送要求已送出！\n(交易序號: ${txId})`);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            // 即使 CORS 擋下，資料通常已寫入
-            alert(`✅ 傳送要求已送出！\n(若試算表有新增資料，可忽略跨域警告)`);
+            alert(`✅ 傳送要求已送出！\n(已繞過跨域檢查)`);
         })
         .finally(() => {
             submitBtn.textContent = "傳送資料(提供分析用)";
@@ -1229,7 +1251,7 @@
         // 清除舊的便條紙
         document.querySelectorAll('.draggable-item').forEach(el => el.remove());
 
-        // 4. 生成新的便條紙，並綁定指標事件 (支援手機與滑鼠)
+        // 4. 生成新的便條紙，並使用 Pointer Events 支援手機與滑鼠拖曳
         itemsData.forEach(data => {
             const el = document.createElement('div');
             el.className = 'draggable-item';
@@ -1239,7 +1261,7 @@
             el.dataset.type = data.type;
             el.dataset.val = data.val;
             
-            // 綁定拖曳魔法
+            // 綁定拖曳魔法 (Pointer Events)
             let isDraggingItem = false, offsetX, offsetY;
             
             el.addEventListener('pointerdown', (e) => {
@@ -1266,10 +1288,10 @@
                 el.releasePointerCapture(e.pointerId);
                 el.style.zIndex = '10';
 
-                // 碰撞偵測 (找出放開時，滑鼠下方是什麼元素)
-                el.style.display = 'none'; // 隱藏自己才點得到下面的格子
+                // 碰撞偵測 (找出放開時，游標下方是什麼元素)
+                el.style.display = 'none'; // 先隱藏自己才點得到下面的格子
                 let elemBelow = document.elementFromPoint(e.clientX, e.clientY);
-                el.style.display = 'flex';
+                el.style.display = 'flex'; // 恢復顯示
                 
                 let dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
                 

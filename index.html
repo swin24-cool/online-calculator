@@ -577,7 +577,7 @@
 <script>
     // === 配置區域 ===
     // 部署 GAS 專案後，請將網址替換成您的 Web App 網址
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwO6yHnB2f1H8sU2O1aO7u0O6yHnB2f1H8sU2O1a/exec'; 
     
     let isSystemLocked = false;
     let currentStationId = '';
@@ -775,8 +775,12 @@
                 }
             });
 
+            // 【關鍵修正】加上 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             fetch(GAS_API_URL, {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
                 body: JSON.stringify(payload)
             })
             .then(res => res.json())

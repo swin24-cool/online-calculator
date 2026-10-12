@@ -271,18 +271,30 @@
             position: fixed;
             bottom: 120px;
             right: 30px;
-            background-color: rgba(30, 41, 59, 0.9);
+            background-color: rgba(30, 41, 59, 0.95);
             color: white;
             padding: 12px 20px;
             border-radius: 8px;
             font-size: 16px;
             opacity: 0;
             transition: opacity 0.3s;
-            z-index: 1000;
+            z-index: 10002;
             pointer-events: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .toast-msg.show { opacity: 1; }
+
+        .custom-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 10001;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(2px);
+        }
+        .custom-modal-box {
+            background: white; padding: 25px; border-radius: 12px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            min-width: 300px;
+        }
 
         .practice-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -303,13 +315,12 @@
             flex-shrink: 0;
         }
         
-        /* 這是場景底圖區，請在下方的 url() 換成您的圖片網址 */
         .pr-scene {
             flex-grow: 1;
             position: relative;
-            background-color: #e2e8f0; /* 預設底色 */
-            /* 💡 請將 url('這裡') 替換為您的圖一網址或檔案名稱，例如 url('image_a98a39.png') */
-            background-image: url('https://drive.google.com/file/d/1AaRYcm4ypLx54WUZcYuzL7zbsj45TsjA/view?usp=sharing'); 
+            background-color: #e2e8f0;
+            /* 💡 已經為您轉換 Google Drive 網址格式 */
+            background-image: url('https://drive.google.com/uc?export=view&id=1AaRYcm4ypLx54WUZcYuzL7zbsj45TsjA'); 
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -390,7 +401,6 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- 直轄市長 (10格) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">直轄市長</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">蔣萬安</div></td>
@@ -420,7 +430,6 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- 區域議員 (14人分兩列 10 + 4) -->
                 <tr>
                     <td colspan="2" rowspan="4" class="row-header">區域議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">吳志剛</div></td>
@@ -470,7 +479,6 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- 平地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">平地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">李芳儒</div></td>
@@ -492,7 +500,6 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- 山地原住民議員 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">山地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">孔垂崢</div></td>
@@ -516,9 +523,9 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
-                <!-- 里長 (動態生成，預設防塌陷結構) -->
                 <tr id="village-row-header">
                     <td colspan="2" rowspan="2" class="row-header">里長</td>
+                    <!-- 預設防塌陷格子 -->
                     <td class="candidate-cell village-name-cell"><div class="cand-number">1</div><div class="cand-name text-gray-400">AAA</div></td>
                     <td class="candidate-cell village-name-cell"><div class="cand-number">2</div><div class="cand-name text-gray-400">BBB</div></td>
                     <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
@@ -538,7 +545,6 @@
                      <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
                 </tr>
 
-                <!-- 公投 (10格) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px;">公投</td>
                     <td class="candidate-cell"><div class="cand-name mt-3 text-lg">同意</div></td>
@@ -611,13 +617,10 @@
             <button id="btn-close-practice" class="text-gray-500 hover:text-red-500 font-bold text-xl px-4 py-2 bg-gray-200 rounded-lg">關閉</button>
         </div>
         
-        <!-- 場景區 (Scene) -->
         <div class="pr-scene" id="pr-scene">
             <div class="absolute top-2 left-4 bg-white px-3 py-1 rounded shadow text-sm font-bold text-gray-500 opacity-80 pointer-events-none">請將產生的黃色便條紙拖曳至下方表格對應格子中</div>
-            <!-- 動態生成的便條紙會放在這裡，座標基於此場景定位 -->
         </div>
 
-        <!-- 核對表格區 -->
         <div class="pr-table-container">
             <table class="pr-table">
                 <tr>
@@ -655,12 +658,23 @@
 
 <div class="toast-msg" id="toast"></div>
 
+<div id="custom-confirm-modal" class="custom-modal-overlay">
+    <div class="custom-modal-box">
+        <h3 class="text-xl font-bold mb-4 text-red-600">⚠️ 警告</h3>
+        <p class="text-gray-700 mb-6 text-lg">確定要清除畫面上所有資料並回到鎖定狀態嗎？</p>
+        <div class="flex justify-center gap-4">
+            <button id="btn-confirm-yes" class="px-6 py-2 bg-red-500 text-white font-bold rounded hover:bg-red-600">確定清除</button>
+            <button id="btn-confirm-no" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded hover:bg-gray-300">取消</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // ⚠️ 記得替換為您專屬的 GAS 網址！
+    // 💡 已為您更新為最新的 GAS URL
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
 
-    let globalStationCache = null; // Bulk Caching 記憶體
-    let currentStationId = null;   // 目前載入的票所
+    let globalStationCache = null; 
+    let currentStationId = null;   
 
     const draggablePanel = document.getElementById('draggable-panel');
     const panelHeader = document.getElementById('panel-header');
@@ -761,7 +775,6 @@
         }
     }
 
-    // 攔截實體 Tab 鍵，強制套用 autoTabToNextCell (修正 PC 端跳格問題)
     const tableWrapper = document.getElementById('table-wrapper');
     tableWrapper.addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
@@ -797,13 +810,12 @@
                 checkInput.style.backgroundColor = '#dcfce7'; 
                 checkInput.style.color = '#166534';
             } else {
-                checkInput.style.backgroundColor = '#f3f4f6'; // 恢復預設灰
+                checkInput.style.backgroundColor = '#f3f4f6'; 
                 checkInput.style.color = '#9ca3af';
             }
         }
     }
 
-    // 事件代理：統一處理輸入與點擊
     tableWrapper.addEventListener('input', function(e) {
         if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
             let prefix = '';
@@ -951,7 +963,7 @@
         function extractNumberFromText(text) {
             let t = text.replace(/\s+/g, ''); 
             
-            // 強制同音字轉正體
+            // 語音修正字典 (處理 0, 5, 7, 10 等常見錯誤)
             t = t.replace(/去|其|氣|期/g, '七');
             t = t.replace(/無|吳/g, '五');
             t = t.replace(/吧|發/g, '八');
@@ -1013,7 +1025,6 @@
         console.warn('瀏覽器不支援語音辨識功能');
     }
 
-    // 預設備用快取 (防止連線失敗時無法操作)
     const fallbackMockData = {
         "1282": { checkValues: { mayor: 1000, councilor: 1000, flatland: 0, mountain: 0, village: 100, referendum: 1000 }, villageCandidates: ["李珮忻", "徐庭崇"] },
         "1285": { checkValues: { mayor: 1200, councilor: 1200, flatland: 10, mountain: 20, village: 100, referendum: 1200 }, villageCandidates: ["吳美玫"] }
@@ -1022,7 +1033,7 @@
     document.getElementById('btn-load-station').addEventListener('click', async () => {
         const inputId = document.getElementById('station-id-input').value;
         if (!inputId || inputId < 1282 || inputId > 1419) {
-            alert('請輸入有效的票所編號 (1282-1419)');
+            showToast('⚠️ 請輸入有效的票所編號 (1282-1419)');
             return;
         }
 
@@ -1033,8 +1044,6 @@
         try {
             if (!globalStationCache) {
                 showToast("初次載入，正在將雲端資料庫快取至本地端...", 4000);
-                
-                // 破解 CORS 阻擋：使用簡單的 GET 請求，移除 headers
                 const response = await fetch(`${GAS_API_URL}?action=getAll`, { mode: 'cors' });
                 let text = await response.text(); 
                 
@@ -1056,11 +1065,10 @@
                 document.getElementById('table-wrapper').classList.remove('locked');
                 showToast(`⚡ 已載入第 ${inputId} 票所資料`);
             } else {
-                alert('雲端資料庫中找不到該票所資料！');
+                showToast('❌ 雲端資料庫中找不到該票所資料！');
             }
         } catch (err) {
             console.error(err);
-            // 【強大容錯】就算連不上 GAS，依然載入本機備用資料讓使用者測試
             showToast('⚠️ 連線 GAS 失敗，已自動載入本機備用測試資料 (1282)', 5000);
             currentStationId = "1282";
             document.getElementById('station-id-input').value = "1282";
@@ -1073,14 +1081,12 @@
     });
 
     function applyStationData(data) {
-        // 寫入檢查值，這個步驟確保了公投欄位有最新動態數字
         const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
         types.forEach(type => {
             const checkEl = document.getElementById(`${type}_check`);
             if (checkEl) checkEl.value = data.checkValues[type] || 0;
         });
 
-        // 動態生成里長欄位 (嚴格補齊 10 格總數，防止塌陷跑版)
         const villageHeaderRow = document.getElementById('village-row-header');
         const villageInputsRow = document.getElementById('village-row-inputs');
         
@@ -1111,7 +1117,7 @@
 
     document.getElementById('btn-submit').addEventListener('click', () => {
         if (!currentStationId) {
-            alert('請先載入票所資料！');
+            showToast('⚠️ 請先載入票所資料！');
             return;
         }
 
@@ -1158,15 +1164,14 @@
             method: 'POST',
             mode: 'cors',
             body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // 再次確保傳送純文字避開預檢
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         })
         .then(response => response.text())
         .then(text => {
-            alert(`✅ 傳送要求已成功送出！\n(交易序號: ${txId})`);
+            showToast(`✅ 傳送要求已成功送出！(序號: ${txId})`, 4000);
         })
         .catch(error => {
-            // 因 Google 可能會強制 Redirect 導致 Fetch 報錯，但資料通常已成功
-            alert(`✅ 傳送要求已送出！(已繞過跨域檢查)\n(交易序號: ${txId})`);
+            showToast(`✅ 傳送已送出！(繞過跨域檢查)(序號: ${txId})`, 4000);
         })
         .finally(() => {
             submitBtn.textContent = "傳送資料(提供分析用)";
@@ -1184,14 +1189,21 @@
         }
     });
 
+    // Custom Confirm Modal Logic (Replacing window.confirm)
+    const customConfirmModal = document.getElementById('custom-confirm-modal');
     document.getElementById('btn-clear-all').addEventListener('click', () => {
-        if(confirm('確定要清除畫面上所有資料並回到鎖定狀態嗎？')) {
-            document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
-            document.getElementById('station-id-input').value = '';
-            currentStationId = null;
-            document.getElementById('table-wrapper').classList.add('locked');
-            showToast('🗑️ 資料已全數清除。');
-        }
+        customConfirmModal.style.display = 'flex';
+    });
+    document.getElementById('btn-confirm-no').addEventListener('click', () => {
+        customConfirmModal.style.display = 'none';
+    });
+    document.getElementById('btn-confirm-yes').addEventListener('click', () => {
+        document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+        document.getElementById('station-id-input').value = '';
+        currentStationId = null;
+        document.getElementById('table-wrapper').classList.add('locked');
+        customConfirmModal.style.display = 'none';
+        showToast('🗑️ 資料已全數清除。');
     });
 
     const practiceModal = document.getElementById('practice-modal');
@@ -1203,22 +1215,19 @@
 
     document.getElementById('btn-practice').addEventListener('click', () => {
         if(!currentStationId) {
-            alert('請先輸入並載入票所編號，系統才能依據該票所的「公投檢查值」產生亂數考題！');
+            showToast('⚠️ 請先輸入並載入票所編號，才能產生對應亂數考題！', 4000);
             return;
         }
         
-        // 1. 動態取得目標檢查值並顯示 (完美呼應需求一)
         const checkVal = parseInt(document.getElementById('referendum_check').value) || 1000;
         document.getElementById('p-check').textContent = checkVal;
         
-        // 2. 演算法產生亂數
         const agree = Math.floor(checkVal * (0.35 + Math.random() * 0.05));
         const disagree = Math.floor(checkVal * (0.35 + Math.random() * 0.05));
         const invalid = Math.floor(checkVal * (0.08 + Math.random() * 0.02));
-        const issuedNotVoted = Math.floor(Math.random() * 3); // 0~2
+        const issuedNotVoted = Math.floor(Math.random() * 3); 
         const remaining = checkVal - (agree + disagree + invalid + issuedNotVoted);
 
-        // 3. 根據需求二重新定義生成座標，使其符合圖一底圖的分佈
         const itemsData = [
             { type: 'agree', label: '同意票', val: agree, top: '5%', left: '25%' },
             { type: 'disagree', label: '不同意票', val: disagree, top: '22%', left: '25%' },
@@ -1227,7 +1236,6 @@
             { type: 'remaining', label: '用餘票數', val: remaining, top: '45%', left: '75%' }
         ];
 
-        // 清空房間與表格
         document.querySelectorAll('.drop-zone').forEach(z => {
             z.innerHTML = ''; z.classList.remove('filled');
             z.removeAttribute('data-val');
@@ -1235,13 +1243,11 @@
         document.querySelectorAll('.calc-cell').forEach(c => {
             if(c.id !== 'p-check') c.textContent = '';
         });
-        // 直接將選舉人數填入表格最右方
         document.getElementById('p-electors').textContent = checkVal;
 
         document.getElementById('win-overlay').style.display = 'none';
         document.querySelectorAll('.draggable-item').forEach(el => el.remove());
 
-        // 生成新的便條紙，並附加到場景區
         itemsData.forEach(data => {
             const el = document.createElement('div');
             el.className = 'draggable-item';
@@ -1264,11 +1270,9 @@
             
             el.addEventListener('pointermove', (e) => {
                 if(!isDraggingItem) return;
-                // 座標計算改為基於 modal 視窗，避免場景偏移問題
                 const roomRect = practiceModal.getBoundingClientRect();
                 let newX = e.clientX - roomRect.left - offsetX;
                 let newY = e.clientY - roomRect.top - offsetY;
-                // 為了拖曳過程順暢，改為 fixed 定位
                 el.style.position = 'fixed';
                 el.style.left = newX + 'px';
                 el.style.top = newY + 'px';
@@ -1280,7 +1284,6 @@
                 el.releasePointerCapture(e.pointerId);
                 el.style.zIndex = '10';
 
-                // 碰撞偵測魔法 (隱藏自己找尋下方的 drop-zone)
                 el.style.display = 'none'; 
                 let elemBelow = document.elementFromPoint(e.clientX, e.clientY);
                 el.style.display = 'flex'; 
@@ -1290,7 +1293,7 @@
                 if (dropZone) {
                     if (dropZone.dataset.accept === el.dataset.type) {
                         el.classList.add('dropped');
-                        el.style.position = 'static'; // 歸位
+                        el.style.position = 'static'; 
                         dropZone.innerHTML = '';
                         dropZone.appendChild(el);
                         dropZone.classList.add('filled');
@@ -1299,13 +1302,11 @@
                     } else {
                         dropZone.classList.add('error-shake');
                         setTimeout(() => dropZone.classList.remove('error-shake'), 400);
-                        // 放錯則彈回原位
                         el.style.position = 'absolute';
                         el.style.top = data.top;
                         el.style.left = data.left;
                     }
                 } else {
-                    // 放空地也彈回原位
                     el.style.position = 'absolute';
                     el.style.top = data.top;
                     el.style.left = data.left;
@@ -1346,11 +1347,8 @@
         }
         if(issued !== null && rem !== null) {
             electors = issued + rem;
-            // 這裡不再改寫選舉人數欄位，因為它已經預設填寫好目標值，
-            // 我們只在背景計算，用來驗證是否過關
         }
 
-        // 判斷是否過關 (所有格子都有填入且加總正確)
         if (electors === targetCheck && a !== null && d !== null && inv !== null && notV !== null && rem !== null) {
             document.getElementById('p-electors').classList.replace('text-red-700', 'text-green-700');
             document.getElementById('p-electors').classList.replace('bg-red-50', 'bg-green-50');

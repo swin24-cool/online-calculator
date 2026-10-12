@@ -296,6 +296,7 @@
             min-width: 300px;
         }
 
+        /* 遊戲區塊 CSS */
         .practice-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.85); z-index: 10000;
@@ -319,8 +320,8 @@
             flex-grow: 1;
             position: relative;
             background-color: #e2e8f0;
-            /* 💡 已經為您轉換 Google Drive 網址格式 */
-            background-image: url('bg.png'); 
+            /* 💡 將背景圖片指向同一個 GitHub 資料夾內的 bg.png */
+            background-image: url('./bg.png'); 
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -371,6 +372,7 @@
 <body>
 
 <div class="report-container" id="main-container">
+    <!-- 票所輸入區 -->
     <div class="station-input-area">
         <label class="font-bold">投開票所編號:</label>
         <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
@@ -384,6 +386,7 @@
         <div id="display-date">115年11月28日</div>
     </div>
 
+    <!-- 表格區塊 -->
     <div class="table-wrapper locked" id="table-wrapper">
         <table>
             <thead>
@@ -401,6 +404,7 @@
                 </tr>
             </thead>
             <tbody>
+                <!-- 直轄市長 (10欄) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">直轄市長</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">蔣萬安</div></td>
@@ -430,6 +434,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 區域議員 (2列，14人) -->
                 <tr>
                     <td colspan="2" rowspan="4" class="row-header">區域議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">吳志剛</div></td>
@@ -479,6 +484,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 平地原住民議員 (2人) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">平地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">李芳儒</div></td>
@@ -500,6 +506,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 山地原住民議員 (3人) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header">山地原住民議員</td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">孔垂崢</div></td>
@@ -523,6 +530,7 @@
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                 </tr>
 
+                <!-- 里長 (動態寫入，預設防塌陷結構) -->
                 <tr id="village-row-header">
                     <td colspan="2" rowspan="2" class="row-header">里長</td>
                     <!-- 預設防塌陷格子 -->
@@ -545,6 +553,7 @@
                      <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
                 </tr>
 
+                <!-- 公投 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px;">公投</td>
                     <td class="candidate-cell"><div class="cand-name mt-3 text-lg">同意</div></td>
@@ -569,6 +578,7 @@
         </table>
     </div>
 
+    <!-- 按鈕區 -->
     <div class="action-buttons-container">
         <button id="btn-practice" class="action-btn btn-yellow">亂數練習 (公投模擬)</button>
         <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
@@ -577,6 +587,7 @@
     </div>
 </div>
 
+<!-- 懸浮控制鍵盤 -->
 <div class="control-panel" id="draggable-panel">
     <div class="drag-indicator"></div>
     <div class="cp-header" id="panel-header">
@@ -610,6 +621,7 @@
     </div>
 </div>
 
+<!-- 模擬遊戲區 -->
 <div class="practice-modal" id="practice-modal">
     <div class="practice-room" id="practice-room">
         <div class="pr-header">
@@ -658,6 +670,7 @@
 
 <div class="toast-msg" id="toast"></div>
 
+<!-- 自訂清除確認對話框 -->
 <div id="custom-confirm-modal" class="custom-modal-overlay">
     <div class="custom-modal-box">
         <h3 class="text-xl font-bold mb-4 text-red-600">⚠️ 警告</h3>
@@ -670,12 +683,13 @@
 </div>
 
 <script>
-    // 💡 已為您更新為最新的 GAS URL
+    // 💡 替換為您的實際 Google Apps Script Web App URL
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
 
     let globalStationCache = null; 
     let currentStationId = null;   
 
+    // === 虛擬鍵盤拖曳邏輯 ===
     const draggablePanel = document.getElementById('draggable-panel');
     const panelHeader = document.getElementById('panel-header');
     const dragIndicator = document.querySelector('.drag-indicator');
@@ -722,6 +736,7 @@
     document.addEventListener('mouseup', endDrag);
     document.addEventListener('touchend', endDrag);
 
+    // === Toast 訊息 ===
     const toast = document.getElementById('toast');
     function showToast(msg, duration = 3000) {
         toast.textContent = msg;
@@ -729,6 +744,7 @@
         setTimeout(() => toast.classList.remove('show'), duration);
     }
 
+    // === 表格跳格與加總邏輯 ===
     let currentFocusedInput = null;
 
     function autoTabToNextCell(currentInput) {
@@ -776,6 +792,8 @@
     }
 
     const tableWrapper = document.getElementById('table-wrapper');
+    
+    // 解決 PC 端 Tab 鍵跳格錯誤問題
     tableWrapper.addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             e.preventDefault(); 
@@ -844,6 +862,7 @@
         }
     });
 
+    // === 虛擬鍵盤按鈕事件 ===
     document.querySelectorAll('.num-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -903,6 +922,7 @@
         autoTabToNextCell(currentFocusedInput);
     });
 
+    // === 連續模式切換 ===
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
     
@@ -924,6 +944,7 @@
         }
     });
 
+    // === 語音辨識 ===
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -963,7 +984,7 @@
         function extractNumberFromText(text) {
             let t = text.replace(/\s+/g, ''); 
             
-            // 語音修正字典 (處理 0, 5, 7, 10 等常見錯誤)
+            // 語音強化：同音字與常見錯誤糾正
             t = t.replace(/去|其|氣|期/g, '七');
             t = t.replace(/無|吳/g, '五');
             t = t.replace(/吧|發/g, '八');
@@ -1025,11 +1046,13 @@
         console.warn('瀏覽器不支援語音辨識功能');
     }
 
+    // === 備用假資料 (防呆機制) ===
     const fallbackMockData = {
         "1282": { checkValues: { mayor: 1000, councilor: 1000, flatland: 0, mountain: 0, village: 100, referendum: 1000 }, villageCandidates: ["李珮忻", "徐庭崇"] },
         "1285": { checkValues: { mayor: 1200, councilor: 1200, flatland: 10, mountain: 20, village: 100, referendum: 1200 }, villageCandidates: ["吳美玫"] }
     };
 
+    // === 載入資料 (Bulk Caching 實作) ===
     document.getElementById('btn-load-station').addEventListener('click', async () => {
         const inputId = document.getElementById('station-id-input').value;
         if (!inputId || inputId < 1282 || inputId > 1419) {
@@ -1115,6 +1138,7 @@
         types.forEach(type => calculateTotals(type));
     }
 
+    // === 傳送資料 ===
     document.getElementById('btn-submit').addEventListener('click', () => {
         if (!currentStationId) {
             showToast('⚠️ 請先載入票所資料！');
@@ -1179,6 +1203,7 @@
         });
     });
 
+    // === 其他按鈕功能 ===
     document.getElementById('btn-lock').addEventListener('click', () => {
         const tableWrapper = document.getElementById('table-wrapper');
         tableWrapper.classList.toggle('locked');
@@ -1189,7 +1214,6 @@
         }
     });
 
-    // Custom Confirm Modal Logic (Replacing window.confirm)
     const customConfirmModal = document.getElementById('custom-confirm-modal');
     document.getElementById('btn-clear-all').addEventListener('click', () => {
         customConfirmModal.style.display = 'flex';
@@ -1206,6 +1230,7 @@
         showToast('🗑️ 資料已全數清除。');
     });
 
+    // === 公投模擬小遊戲 (加入自由拖曳機制) ===
     const practiceModal = document.getElementById('practice-modal');
     const prScene = document.getElementById('pr-scene');
     
@@ -1270,10 +1295,11 @@
             
             el.addEventListener('pointermove', (e) => {
                 if(!isDraggingItem) return;
-                const roomRect = practiceModal.getBoundingClientRect();
-                let newX = e.clientX - roomRect.left - offsetX;
-                let newY = e.clientY - roomRect.top - offsetY;
-                el.style.position = 'fixed';
+                // 改為相對於 prScene 計算絕對坐標，確保自由拖曳順暢
+                const sceneRect = prScene.getBoundingClientRect();
+                let newX = e.clientX - sceneRect.left - offsetX;
+                let newY = e.clientY - sceneRect.top - offsetY;
+                el.style.position = 'absolute';
                 el.style.left = newX + 'px';
                 el.style.top = newY + 'px';
             });
@@ -1292,6 +1318,7 @@
                 
                 if (dropZone) {
                     if (dropZone.dataset.accept === el.dataset.type) {
+                        // 拖曳成功，完美吸附
                         el.classList.add('dropped');
                         el.style.position = 'static'; 
                         dropZone.innerHTML = '';
@@ -1300,17 +1327,12 @@
                         dropZone.dataset.val = el.dataset.val;
                         calcPracticeTable();
                     } else {
+                        // 放錯格子：格子抖動警告，但便條紙停留在原地不強制彈回
                         dropZone.classList.add('error-shake');
                         setTimeout(() => dropZone.classList.remove('error-shake'), 400);
-                        el.style.position = 'absolute';
-                        el.style.top = data.top;
-                        el.style.left = data.left;
                     }
-                } else {
-                    el.style.position = 'absolute';
-                    el.style.top = data.top;
-                    el.style.left = data.left;
-                }
+                } 
+                // 若沒有丟在格子上，就讓它自然停在原地，不做任何動作 (Free Roaming)
             });
             prScene.appendChild(el);
         });

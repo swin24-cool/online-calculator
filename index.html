@@ -62,6 +62,14 @@
             color: #9ca3af !important;
         }
 
+        /* 原住民無選票時的徹底鎖定設計 */
+        .locked-empty {
+            background-color: #e2e8f0 !important;
+            pointer-events: none !important;
+            color: transparent !important;
+            border-color: #cbd5e1 !important;
+        }
+
         thead th {
             position: sticky; 
             top: 0;
@@ -296,13 +304,36 @@
             min-width: 300px;
         }
 
-        /* 遊戲區塊 CSS */
+        /* --- 另開視窗練習模式專用 CSS --- */
+        body.practice-mode {
+            background-color: #f1f5f9;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        body.practice-mode .report-container, 
+        body.practice-mode .control-panel,
+        body.practice-mode #custom-confirm-modal {
+            display: none !important;
+        }
+        
         .practice-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.85); z-index: 10000;
             display: none; justify-content: center; align-items: center;
             backdrop-filter: blur(5px);
         }
+        body.practice-mode .practice-modal {
+            position: static;
+            background: none;
+            backdrop-filter: none;
+            width: 100%;
+            height: 100%;
+        }
+
         .practice-room {
             width: 95vw; height: 95vh; max-width: 1400px;
             background-color: #f1f5f9; border-radius: 12px;
@@ -320,7 +351,6 @@
             flex-grow: 1;
             position: relative;
             background-color: #e2e8f0;
-            /* 💡 將背景圖片指向同一個 GitHub 資料夾內的 bg.png */
             background-image: url('./bg.png'); 
             background-size: contain;
             background-repeat: no-repeat;
@@ -580,10 +610,10 @@
 
     <!-- 按鈕區 -->
     <div class="action-buttons-container">
-        <button id="btn-practice" class="action-btn btn-yellow">亂數練習 (公投模擬)</button>
+        <button id="btn-practice" class="action-btn btn-yellow">亂數練習(填寫報表)</button>
         <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
         <button id="btn-lock" class="action-btn btn-green">鎖住 / 解鎖</button>
-        <button id="btn-submit" class="action-btn btn-blue">傳送資料(提供分析用)</button>
+        <button id="btn-submit" class="action-btn btn-blue">傳送資料(含A3報表圖)</button>
     </div>
 </div>
 
@@ -621,12 +651,12 @@
     </div>
 </div>
 
-<!-- 模擬遊戲區 -->
+<!-- 模擬遊戲區 (獨立視窗模式使用) -->
 <div class="practice-modal" id="practice-modal">
     <div class="practice-room" id="practice-room">
         <div class="pr-header">
             <h2 class="text-2xl font-bold text-blue-900">🗳️ 公投結算模擬 (目標檢查值：<span id="p-check"></span>)</h2>
-            <button id="btn-close-practice" class="text-gray-500 hover:text-red-500 font-bold text-xl px-4 py-2 bg-gray-200 rounded-lg">關閉</button>
+            <button id="btn-close-practice" class="text-gray-500 hover:text-red-500 font-bold text-xl px-4 py-2 bg-gray-200 rounded-lg">關閉視窗</button>
         </div>
         
         <div class="pr-scene" id="pr-scene">
@@ -663,7 +693,7 @@
             <div class="text-6xl mb-4">🎉</div>
             <h2 class="text-4xl font-bold text-green-600 mb-2">恭喜，試算完全正確！</h2>
             <p class="text-gray-600 text-lg">您已掌握報表填寫邏輯</p>
-            <button class="mt-6 px-6 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600" onclick="document.getElementById('practice-modal').style.display='none'">回主畫面</button>
+            <button class="mt-6 px-6 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600" onclick="window.close()">關閉視窗</button>
         </div>
     </div>
 </div>
@@ -688,6 +718,22 @@
 
     let globalStationCache = null; 
     let currentStationId = null;   
+
+    // === URL 路由解析：判斷是否為另開視窗的練習模式 ===
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'practice') {
+            document.body.classList.add('practice-mode');
+            const targetCheck = parseInt(urlParams.get('check')) || 1000;
+            document.getElementById('practice-modal').style.display = 'flex';
+            
+            // 綁定關閉按鈕為關閉分頁
+            document.getElementById('btn-close-practice').onclick = () => window.close();
+            
+            // 初始化遊戲
+            initPracticeGame(targetCheck);
+        }
+    });
 
     // === 虛擬鍵盤拖曳邏輯 ===
     const draggablePanel = document.getElementById('draggable-panel');
@@ -849,7 +895,7 @@
 
     tableWrapper.addEventListener('click', function(e) {
         if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'text') {
-            if (e.target.classList.contains('stats-input')) return; 
+            if (e.target.classList.contains('stats-input') || e.target.classList.contains('locked-empty')) return; 
             document.querySelectorAll('input[type="text"]').forEach(el => el.classList.remove('focused-cell'));
             e.target.classList.add('focused-cell');
             currentFocusedInput = e.target;
@@ -926,23 +972,25 @@
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
     
-    continuousModeCheckbox.addEventListener('change', function() {
-        if (this.checked) {
-            modeToggleLabel.classList.add('active');
-            showToast('已開啟連續模式，點擊欄位直接語音或按鍵輸入。', 4000);
-            document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
-                el.setAttribute('inputmode', 'none'); 
-                el.setAttribute('readonly', 'true'); 
-            });
-        } else {
-            modeToggleLabel.classList.remove('active');
-            showToast('已關閉連續模式。');
-            document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => {
-                el.setAttribute('inputmode', 'numeric');
-                el.removeAttribute('readonly'); 
-            });
-        }
-    });
+    if(continuousModeCheckbox) {
+        continuousModeCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                modeToggleLabel.classList.add('active');
+                showToast('已開啟連續模式，點擊欄位直接語音或按鍵輸入。', 4000);
+                document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(el => {
+                    el.setAttribute('inputmode', 'none'); 
+                    el.setAttribute('readonly', 'true'); 
+                });
+            } else {
+                modeToggleLabel.classList.remove('active');
+                showToast('已關閉連續模式。');
+                document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(el => {
+                    el.setAttribute('inputmode', 'numeric');
+                    el.removeAttribute('readonly'); 
+                });
+            }
+        });
+    }
 
     // === 語音辨識 ===
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -956,35 +1004,36 @@
         let isRecording = false;
         let forceStop = false; 
 
-        voiceBtn.addEventListener('click', () => {
-            if (isRecording) {
-                forceStop = true;
-                recognition.stop();
-            } else {
-                forceStop = false;
-                try { recognition.start(); } catch(e) {}
-            }
-        });
+        if(voiceBtn) {
+            voiceBtn.addEventListener('click', () => {
+                if (isRecording) {
+                    forceStop = true;
+                    recognition.stop();
+                } else {
+                    forceStop = false;
+                    try { recognition.start(); } catch(e) {}
+                }
+            });
+        }
 
         recognition.onstart = function() {
             isRecording = true;
-            voiceBtn.classList.add('recording');
+            if(voiceBtn) voiceBtn.classList.add('recording');
             showToast('⚡ 錄音中...請直接唸出「票數」');
         };
 
         recognition.onend = function() {
-            if (continuousModeCheckbox.checked && !forceStop) {
+            if (continuousModeCheckbox && continuousModeCheckbox.checked && !forceStop) {
                 try { recognition.start(); } catch(e) {}
             } else {
                 isRecording = false;
-                voiceBtn.classList.remove('recording');
+                if(voiceBtn) voiceBtn.classList.remove('recording');
             }
         };
 
         function extractNumberFromText(text) {
             let t = text.replace(/\s+/g, ''); 
             
-            // 語音強化：同音字與常見錯誤糾正
             t = t.replace(/去|其|氣|期/g, '七');
             t = t.replace(/無|吳/g, '五');
             t = t.replace(/吧|發/g, '八');
@@ -1029,7 +1078,7 @@
             currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
             showToast(`✅ 已填入: ${votes} 票`);
 
-            if (continuousModeCheckbox.checked) {
+            if (continuousModeCheckbox && continuousModeCheckbox.checked) {
                 autoTabToNextCell(currentFocusedInput);
             }
         };
@@ -1038,7 +1087,7 @@
             if (event.error !== 'no-speech') {
                 showToast('麥克風發生錯誤: ' + event.error);
                 isRecording = false;
-                voiceBtn.classList.remove('recording');
+                if(voiceBtn) voiceBtn.classList.remove('recording');
                 forceStop = true;
             }
         };
@@ -1053,63 +1102,97 @@
     };
 
     // === 載入資料 (Bulk Caching 實作) ===
-    document.getElementById('btn-load-station').addEventListener('click', async () => {
-        const inputId = document.getElementById('station-id-input').value;
-        if (!inputId || inputId < 1282 || inputId > 1419) {
-            showToast('⚠️ 請輸入有效的票所編號 (1282-1419)');
-            return;
-        }
+    if(document.getElementById('btn-load-station')) {
+        document.getElementById('btn-load-station').addEventListener('click', async () => {
+            const inputId = document.getElementById('station-id-input').value;
+            if (!inputId || inputId < 1282 || inputId > 1419) {
+                showToast('⚠️ 請輸入有效的票所編號 (1282-1419)');
+                return;
+            }
 
-        const loadBtn = document.getElementById('btn-load-station');
-        loadBtn.textContent = "載入中...";
-        loadBtn.disabled = true;
+            const loadBtn = document.getElementById('btn-load-station');
+            loadBtn.textContent = "載入中...";
+            loadBtn.disabled = true;
 
-        try {
-            if (!globalStationCache) {
-                showToast("初次載入，正在將雲端資料庫快取至本地端...", 4000);
-                const response = await fetch(`${GAS_API_URL}?action=getAll`, { mode: 'cors' });
-                let text = await response.text(); 
-                
-                try {
-                    const json = JSON.parse(text);
-                    if (json.status === 'success') {
-                        globalStationCache = json.data;
-                    } else {
-                        throw new Error(json.message);
+            try {
+                if (!globalStationCache) {
+                    showToast("初次載入，正在將雲端資料庫快取至本地端...", 4000);
+                    const response = await fetch(`${GAS_API_URL}?action=getAll`, { mode: 'cors' });
+                    let text = await response.text(); 
+                    
+                    try {
+                        const json = JSON.parse(text);
+                        if (json.status === 'success') {
+                            globalStationCache = json.data;
+                        } else {
+                            throw new Error(json.message);
+                        }
+                    } catch(e) {
+                        throw new Error("伺服器回應格式錯誤");
                     }
-                } catch(e) {
-                    throw new Error("伺服器回應格式錯誤");
                 }
-            }
 
-            if (globalStationCache && globalStationCache[inputId]) {
-                currentStationId = inputId;
-                applyStationData(globalStationCache[inputId]);
+                if (globalStationCache && globalStationCache[inputId]) {
+                    currentStationId = inputId;
+                    applyStationData(globalStationCache[inputId]);
+                    document.getElementById('table-wrapper').classList.remove('locked');
+                    showToast(`⚡ 已載入第 ${inputId} 票所資料`);
+                } else {
+                    showToast('❌ 雲端資料庫中找不到該票所資料！');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('⚠️ 連線 GAS 失敗，已自動載入本機備用測試資料 (1282)', 5000);
+                currentStationId = "1282";
+                document.getElementById('station-id-input').value = "1282";
+                applyStationData(fallbackMockData["1282"]);
                 document.getElementById('table-wrapper').classList.remove('locked');
-                showToast(`⚡ 已載入第 ${inputId} 票所資料`);
-            } else {
-                showToast('❌ 雲端資料庫中找不到該票所資料！');
+            } finally {
+                loadBtn.textContent = "載入資料";
+                loadBtn.disabled = false;
             }
-        } catch (err) {
-            console.error(err);
-            showToast('⚠️ 連線 GAS 失敗，已自動載入本機備用測試資料 (1282)', 5000);
-            currentStationId = "1282";
-            document.getElementById('station-id-input').value = "1282";
-            applyStationData(fallbackMockData["1282"]);
-            document.getElementById('table-wrapper').classList.remove('locked');
-        } finally {
-            loadBtn.textContent = "載入資料";
-            loadBtn.disabled = false;
-        }
-    });
+        });
+    }
 
     function applyStationData(data) {
         const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
+        
         types.forEach(type => {
             const checkEl = document.getElementById(`${type}_check`);
-            if (checkEl) checkEl.value = data.checkValues[type] || 0;
+            const val = data.checkValues[type];
+            
+            // 💡 根據 DB 的檢查值，徹底鎖死原住民欄位
+            if (type === 'flatland' || type === 'mountain') {
+                if (!val || Number(val) === 0) {
+                    if (checkEl) {
+                        checkEl.value = "";
+                        checkEl.classList.add('locked-empty');
+                    }
+                    document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
+                        if (el.tagName === 'INPUT') {
+                            el.value = "";
+                            el.classList.add('locked-empty');
+                            el.setAttribute('tabindex', '-1');
+                        }
+                    });
+                } else {
+                    if (checkEl) {
+                        checkEl.value = val;
+                        checkEl.classList.remove('locked-empty');
+                    }
+                    document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
+                        if (el.tagName === 'INPUT') {
+                            el.classList.remove('locked-empty');
+                            el.removeAttribute('tabindex');
+                        }
+                    });
+                }
+            } else {
+                if (checkEl) checkEl.value = val || 0;
+            }
         });
 
+        // 處理里長動態列
         const villageHeaderRow = document.getElementById('village-row-header');
         const villageInputsRow = document.getElementById('village-row-inputs');
         
@@ -1139,112 +1222,124 @@
     }
 
     // === 傳送資料 ===
-    document.getElementById('btn-submit').addEventListener('click', () => {
-        if (!currentStationId) {
-            showToast('⚠️ 請先載入票所資料！');
-            return;
-        }
-
-        const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
-        
-        const getValues = (prefix) => {
-            const data = {
-                candidates: {},
-                valid: document.getElementById(`${prefix}_valid`)?.value || "",
-                invalid: document.getElementById(`${prefix}_invalid`)?.value || "",
-                total: document.getElementById(`${prefix}_total`)?.value || "",
-                issuedNotVoted: document.getElementById(`${prefix}_issued_not_voted`)?.value || "",
-                issued: document.getElementById(`${prefix}_issued`)?.value || "",
-                remaining: document.getElementById(`${prefix}_remaining`)?.value || "",
-                electors: document.getElementById(`${prefix}_electors`)?.value || "",
-                check: document.getElementById(`${prefix}_check`)?.value || ""
-            };
-            const inputs = document.querySelectorAll(`.${prefix}-cand`);
-            inputs.forEach((input, index) => {
-                data.candidates[index + 1] = input.value;
-            });
-            return data;
-        };
-
-        const payload = {
-            stationId: currentStationId,
-            txId: txId,
-            timestamp: new Date().toLocaleString('zh-TW'),
-            data: {
-                mayor: getValues('mayor'),
-                councilor: getValues('councilor'),
-                flatland: getValues('flatland'),
-                mountain: getValues('mountain'),
-                village: getValues('village'),
-                referendum: getValues('referendum')
+    if(document.getElementById('btn-submit')) {
+        document.getElementById('btn-submit').addEventListener('click', () => {
+            if (!currentStationId) {
+                showToast('⚠️ 請先載入票所資料！');
+                return;
             }
-        };
 
-        const submitBtn = document.getElementById('btn-submit');
-        submitBtn.textContent = "傳送中...";
-        submitBtn.disabled = true;
+            const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
+            
+            const getValues = (prefix) => {
+                const data = {
+                    candidates: {},
+                    valid: document.getElementById(`${prefix}_valid`)?.value || "",
+                    invalid: document.getElementById(`${prefix}_invalid`)?.value || "",
+                    total: document.getElementById(`${prefix}_total`)?.value || "",
+                    issuedNotVoted: document.getElementById(`${prefix}_issued_not_voted`)?.value || "",
+                    issued: document.getElementById(`${prefix}_issued`)?.value || "",
+                    remaining: document.getElementById(`${prefix}_remaining`)?.value || "",
+                    electors: document.getElementById(`${prefix}_electors`)?.value || "",
+                    check: document.getElementById(`${prefix}_check`)?.value || ""
+                };
+                const inputs = document.querySelectorAll(`.${prefix}-cand`);
+                inputs.forEach((input, index) => {
+                    data.candidates[index + 1] = input.value;
+                });
+                return data;
+            };
 
-        fetch(GAS_API_URL, {
-            method: 'POST',
-            mode: 'cors',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-        })
-        .then(response => response.text())
-        .then(text => {
-            showToast(`✅ 傳送要求已成功送出！(序號: ${txId})`, 4000);
-        })
-        .catch(error => {
-            showToast(`✅ 傳送已送出！(繞過跨域檢查)(序號: ${txId})`, 4000);
-        })
-        .finally(() => {
-            submitBtn.textContent = "傳送資料(提供分析用)";
-            submitBtn.disabled = false;
+            const payload = {
+                stationId: currentStationId,
+                txId: txId,
+                timestamp: new Date().toLocaleString('zh-TW'),
+                data: {
+                    mayor: getValues('mayor'),
+                    councilor: getValues('councilor'),
+                    flatland: getValues('flatland'),
+                    mountain: getValues('mountain'),
+                    village: getValues('village'),
+                    referendum: getValues('referendum')
+                }
+            };
+
+            const submitBtn = document.getElementById('btn-submit');
+            submitBtn.textContent = "傳送中...";
+            submitBtn.disabled = true;
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                mode: 'cors',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            })
+            .then(response => response.text())
+            .then(text => {
+                showToast(`✅ 傳送要求已成功送出！`, 4000);
+            })
+            .catch(error => {
+                showToast(`✅ 傳送已送出！(繞過跨域檢查)`, 4000);
+            })
+            .finally(() => {
+                submitBtn.textContent = "傳送資料(含A3報表圖)";
+                submitBtn.disabled = false;
+            });
         });
-    });
+    }
 
     // === 其他按鈕功能 ===
-    document.getElementById('btn-lock').addEventListener('click', () => {
-        const tableWrapper = document.getElementById('table-wrapper');
-        tableWrapper.classList.toggle('locked');
-        if (tableWrapper.classList.contains('locked')) {
-            showToast('🔒 報表已鎖定，避免誤觸修改。');
-        } else {
-            showToast('🔓 報表已解鎖，可以繼續輸入。');
-        }
-    });
+    if(document.getElementById('btn-lock')) {
+        document.getElementById('btn-lock').addEventListener('click', () => {
+            const tableWrapper = document.getElementById('table-wrapper');
+            tableWrapper.classList.toggle('locked');
+            if (tableWrapper.classList.contains('locked')) {
+                showToast('🔒 報表已鎖定，避免誤觸修改。');
+            } else {
+                showToast('🔓 報表已解鎖，可以繼續輸入。');
+            }
+        });
+    }
 
     const customConfirmModal = document.getElementById('custom-confirm-modal');
-    document.getElementById('btn-clear-all').addEventListener('click', () => {
-        customConfirmModal.style.display = 'flex';
-    });
-    document.getElementById('btn-confirm-no').addEventListener('click', () => {
-        customConfirmModal.style.display = 'none';
-    });
-    document.getElementById('btn-confirm-yes').addEventListener('click', () => {
-        document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
-        document.getElementById('station-id-input').value = '';
-        currentStationId = null;
-        document.getElementById('table-wrapper').classList.add('locked');
-        customConfirmModal.style.display = 'none';
-        showToast('🗑️ 資料已全數清除。');
-    });
+    if(document.getElementById('btn-clear-all')) {
+        document.getElementById('btn-clear-all').addEventListener('click', () => {
+            customConfirmModal.style.display = 'flex';
+        });
+        document.getElementById('btn-confirm-no').addEventListener('click', () => {
+            customConfirmModal.style.display = 'none';
+        });
+        document.getElementById('btn-confirm-yes').addEventListener('click', () => {
+            document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+            document.getElementById('station-id-input').value = '';
+            currentStationId = null;
+            document.getElementById('table-wrapper').classList.add('locked');
+            customConfirmModal.style.display = 'none';
+            showToast('🗑️ 資料已全數清除。');
+        });
+    }
 
-    // === 公投模擬小遊戲 (加入自由拖曳機制) ===
-    const practiceModal = document.getElementById('practice-modal');
-    const prScene = document.getElementById('pr-scene');
-    
-    document.getElementById('btn-close-practice').addEventListener('click', () => {
-        practiceModal.style.display = 'none';
-    });
+    // === 點擊按鈕：另開視窗進入練習模式 ===
+    if(document.getElementById('btn-practice')) {
+        document.getElementById('btn-practice').addEventListener('click', () => {
+            if(!currentStationId) {
+                showToast('⚠️ 請先輸入並載入票所編號，才能產生對應亂數考題！', 4000);
+                return;
+            }
+            
+            const checkVal = parseInt(document.getElementById('referendum_check').value) || 1000;
+            
+            // 取得目前的網址，加上參數後，開新分頁
+            const url = new URL(window.location.href);
+            url.searchParams.set('mode', 'practice');
+            url.searchParams.set('check', checkVal);
+            
+            window.open(url.href, '_blank');
+        });
+    }
 
-    document.getElementById('btn-practice').addEventListener('click', () => {
-        if(!currentStationId) {
-            showToast('⚠️ 請先輸入並載入票所編號，才能產生對應亂數考題！', 4000);
-            return;
-        }
-        
-        const checkVal = parseInt(document.getElementById('referendum_check').value) || 1000;
+    // === 實作遊戲引擎 ===
+    function initPracticeGame(checkVal) {
         document.getElementById('p-check').textContent = checkVal;
         
         const agree = Math.floor(checkVal * (0.35 + Math.random() * 0.05));
@@ -1253,6 +1348,7 @@
         const issuedNotVoted = Math.floor(Math.random() * 3); 
         const remaining = checkVal - (agree + disagree + invalid + issuedNotVoted);
 
+        // 初始化產生的物件與位置 (改良版坐標)
         const itemsData = [
             { type: 'agree', label: '同意票', val: agree, top: '5%', left: '25%' },
             { type: 'disagree', label: '不同意票', val: disagree, top: '22%', left: '25%' },
@@ -1272,6 +1368,8 @@
 
         document.getElementById('win-overlay').style.display = 'none';
         document.querySelectorAll('.draggable-item').forEach(el => el.remove());
+
+        const prScene = document.getElementById('pr-scene');
 
         itemsData.forEach(data => {
             const el = document.createElement('div');
@@ -1295,7 +1393,6 @@
             
             el.addEventListener('pointermove', (e) => {
                 if(!isDraggingItem) return;
-                // 改為相對於 prScene 計算絕對坐標，確保自由拖曳順暢
                 const sceneRect = prScene.getBoundingClientRect();
                 let newX = e.clientX - sceneRect.left - offsetX;
                 let newY = e.clientY - sceneRect.top - offsetY;
@@ -1318,7 +1415,6 @@
                 
                 if (dropZone) {
                     if (dropZone.dataset.accept === el.dataset.type) {
-                        // 拖曳成功，完美吸附
                         el.classList.add('dropped');
                         el.style.position = 'static'; 
                         dropZone.innerHTML = '';
@@ -1327,18 +1423,15 @@
                         dropZone.dataset.val = el.dataset.val;
                         calcPracticeTable();
                     } else {
-                        // 放錯格子：格子抖動警告，但便條紙停留在原地不強制彈回
                         dropZone.classList.add('error-shake');
                         setTimeout(() => dropZone.classList.remove('error-shake'), 400);
                     }
                 } 
-                // 若沒有丟在格子上，就讓它自然停在原地，不做任何動作 (Free Roaming)
+                // 放錯地方時，保留在原地，不再強制彈回
             });
             prScene.appendChild(el);
         });
-
-        practiceModal.style.display = 'flex';
-    });
+    }
 
     function calcPracticeTable() {
         const getV = (accept) => {

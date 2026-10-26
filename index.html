@@ -147,10 +147,18 @@
             color: #1e3a8a;
             font-size: 20px;
             cursor: not-allowed;
+            pointer-events: none !important; /* 防止自動運算欄位觸發點擊紅框 */
         }
         input:read-only.stats-input {
             background-color: #f8fafc;
+            border: 2px solid transparent !important;
         }
+        input:read-only.stats-input:focus {
+            outline: none !important;
+            border: 2px solid transparent !important;
+            background-color: #f8fafc !important;
+        }
+
         .empty-cell {
             background-color: #fdfdfd;
         }
@@ -660,7 +668,7 @@
         </div>
         
         <div class="pr-scene" id="pr-scene">
-            <div class="absolute top-2 left-4 bg-white px-3 py-1 rounded shadow text-sm font-bold text-gray-500 opacity-80 pointer-events-none">請將產生的黃色便條紙拖曳至下方表格對應格子中</div>
+            <div class="absolute top-2 left-4 bg-white px-3 py-1 rounded shadow text-sm font-bold text-gray-500 opacity-80 pointer-events-none">請將產生的黃色便條紙任意放置，並拖曳至下方表格對應格子中</div>
         </div>
 
         <div class="pr-table-container">
@@ -713,27 +721,103 @@
 </div>
 
 <script>
-    // 💡 替換為您的實際 Google Apps Script Web App URL
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
 
     let globalStationCache = null; 
     let currentStationId = null;   
 
-    // === URL 路由解析：判斷是否為另開視窗的練習模式 ===
-    window.addEventListener('DOMContentLoaded', () => {
+    // === 頁面載入時自動預先快取 (Bulk Caching on Page Load) ===
+    window.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('mode') === 'practice') {
             document.body.classList.add('practice-mode');
             const targetCheck = parseInt(urlParams.get('check')) || 1000;
             document.getElementById('practice-modal').style.display = 'flex';
-            
-            // 綁定關閉按鈕為關閉分頁
             document.getElementById('btn-close-practice').onclick = () => window.close();
-            
-            // 初始化遊戲
             initPracticeGame(targetCheck);
+            return;
+        }
+
+        // 頁面開啟立刻背景抓取 DB
+        try {
+            showToast("正在背景載入資料庫快取...", 2000);
+            const response = await fetch(`${GAS_API_URL}?action=getAll`, { mode: 'cors' });
+            let text = await response.text();
+            const json = JSON.parse(text);
+            if (json.status === 'success') {
+                globalStationCache = json.data;
+                showToast("⚡ 資料庫快取載入完成，可隨時輸入票所！", 3000);
+            }
+        } catch(err) {
+            console.warn("自動快取失敗，將於手動載入時重試或使用備用資料", err);
         }
     });
+
+    // === 輸入票所後自動判定與載入 ===
+    const stationIdInput = document.getElementById('station-id-input');
+    if(stationIdInput) {
+        stationIdInput.addEventListener('input', async function() {
+            const inputId = this.value.trim();
+            if (inputId.length >= 4) {
+                await loadStationById(inputId);
+            } else {
+                // 清空時重新鎖定
+                lockTableStructure();
+            }
+        });
+    }
+
+    const loadBtn = document.getElementById('btn-load-station');
+    if(loadBtn) {
+        loadBtn.addEventListener('click', async () => {
+            const inputId = stationIdInput.value.trim();
+            await loadStationById(inputId);
+        });
+    }
+
+    async function loadStationById(inputId) {
+        if (!inputId || inputId < 1282 || inputId > 1419) {
+            return;
+        }
+
+        try {
+            if (!globalStationCache) {
+                showToast("正在向雲端請求資料...", 2000);
+                const response = await fetch(`${GAS_API_URL}?action=getAll`, { mode: 'cors' });
+                let text = await response.text();
+                const json = JSON.parse(text);
+                if (json.status === 'success') {
+                    globalStationCache = json.data;
+                } else {
+                    throw new Error(json.message);
+                }
+            }
+
+            if (globalStationCache && globalStationCache[inputId]) {
+                currentStationId = inputId;
+                applyStationData(globalStationCache[inputId]);
+                document.getElementById('table-wrapper').classList.remove('locked');
+                showToast(`⚡ 已自動載入第 ${inputId} 票所資料`);
+            } else {
+                showToast('❌ 雲端資料庫中找不到該票所編號！');
+            }
+        } catch (err) {
+            console.error(err);
+            if (fallbackMockData[inputId]) {
+                currentStationId = inputId;
+                applyStationData(fallbackMockData[inputId]);
+                document.getElementById('table-wrapper').classList.remove('locked');
+                showToast(`⚠️ 已載入第 ${inputId} 所本機備用測試資料`);
+            } else {
+                showToast('⚠️ 找不到該票所資料且連線GAS失敗');
+            }
+        }
+    }
+
+    function lockTableStructure() {
+        currentStationId = null;
+        document.getElementById('table-wrapper').classList.add('locked');
+    }
 
     // === 虛擬鍵盤拖曳邏輯 ===
     const draggablePanel = document.getElementById('draggable-panel');
@@ -806,10 +890,16 @@
         if (!section) return;
 
         let orderedInputs = [];
-        orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand`)));
-        orderedInputs.push(document.getElementById(`${section}_invalid`));
-        orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
-        orderedInputs.push(document.getElementById(`${section}_remaining`));
+        orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand:not(.locked-empty)`)));
+        
+        let invalidInput = document.getElementById(`${section}_invalid`);
+        if (invalidInput && !invalidInput.classList.contains('locked-empty')) orderedInputs.push(invalidInput);
+        
+        let notVotedInput = document.getElementById(`${section}_issued_not_voted`);
+        if (notVotedInput && !notVotedInput.classList.contains('locked-empty')) orderedInputs.push(notVotedInput);
+        
+        let remainingInput = document.getElementById(`${section}_remaining`);
+        if (remainingInput && !remainingInput.classList.contains('locked-empty')) orderedInputs.push(remainingInput);
         
         let currentIndex = orderedInputs.indexOf(currentInput);
         let nextInput = null;
@@ -819,9 +909,13 @@
         } else {
             const sections = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
             let sectionIndex = sections.indexOf(section);
-            if (sectionIndex >= 0 && sectionIndex < sections.length - 1) {
-                let nextSection = sections[sectionIndex + 1];
-                nextInput = document.querySelector(`.${nextSection}-cand`);
+            for (let i = sectionIndex + 1; i < sections.length; i++) {
+                let nextSec = sections[i];
+                let firstCandidate = document.querySelector(`.${nextSec}-cand:not(.locked-empty)`);
+                if (firstCandidate) {
+                    nextInput = firstCandidate;
+                    break;
+                }
             }
         }
 
@@ -839,7 +933,6 @@
 
     const tableWrapper = document.getElementById('table-wrapper');
     
-    // 解決 PC 端 Tab 鍵跳格錯誤問題
     tableWrapper.addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             e.preventDefault(); 
@@ -868,7 +961,7 @@
         document.getElementById(`${prefix}_electors`).value = electors;
 
         const checkInput = document.getElementById(`${prefix}_check`);
-        if (checkInput) {
+        if (checkInput && !checkInput.classList.contains('locked-empty')) {
             const checkValue = Number(checkInput.value);
             if (electors === checkValue && electors > 0) {
                 checkInput.style.backgroundColor = '#dcfce7'; 
@@ -1095,64 +1188,10 @@
         console.warn('瀏覽器不支援語音辨識功能');
     }
 
-    // === 備用假資料 (防呆機制) ===
     const fallbackMockData = {
         "1282": { checkValues: { mayor: 1000, councilor: 1000, flatland: 0, mountain: 0, village: 100, referendum: 1000 }, villageCandidates: ["李珮忻", "徐庭崇"] },
         "1285": { checkValues: { mayor: 1200, councilor: 1200, flatland: 10, mountain: 20, village: 100, referendum: 1200 }, villageCandidates: ["吳美玫"] }
     };
-
-    // === 載入資料 (Bulk Caching 實作) ===
-    if(document.getElementById('btn-load-station')) {
-        document.getElementById('btn-load-station').addEventListener('click', async () => {
-            const inputId = document.getElementById('station-id-input').value;
-            if (!inputId || inputId < 1282 || inputId > 1419) {
-                showToast('⚠️ 請輸入有效的票所編號 (1282-1419)');
-                return;
-            }
-
-            const loadBtn = document.getElementById('btn-load-station');
-            loadBtn.textContent = "載入中...";
-            loadBtn.disabled = true;
-
-            try {
-                if (!globalStationCache) {
-                    showToast("初次載入，正在將雲端資料庫快取至本地端...", 4000);
-                    const response = await fetch(`${GAS_API_URL}?action=getAll`, { mode: 'cors' });
-                    let text = await response.text(); 
-                    
-                    try {
-                        const json = JSON.parse(text);
-                        if (json.status === 'success') {
-                            globalStationCache = json.data;
-                        } else {
-                            throw new Error(json.message);
-                        }
-                    } catch(e) {
-                        throw new Error("伺服器回應格式錯誤");
-                    }
-                }
-
-                if (globalStationCache && globalStationCache[inputId]) {
-                    currentStationId = inputId;
-                    applyStationData(globalStationCache[inputId]);
-                    document.getElementById('table-wrapper').classList.remove('locked');
-                    showToast(`⚡ 已載入第 ${inputId} 票所資料`);
-                } else {
-                    showToast('❌ 雲端資料庫中找不到該票所資料！');
-                }
-            } catch (err) {
-                console.error(err);
-                showToast('⚠️ 連線 GAS 失敗，已自動載入本機備用測試資料 (1282)', 5000);
-                currentStationId = "1282";
-                document.getElementById('station-id-input').value = "1282";
-                applyStationData(fallbackMockData["1282"]);
-                document.getElementById('table-wrapper').classList.remove('locked');
-            } finally {
-                loadBtn.textContent = "載入資料";
-                loadBtn.disabled = false;
-            }
-        });
-    }
 
     function applyStationData(data) {
         const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
@@ -1161,7 +1200,6 @@
             const checkEl = document.getElementById(`${type}_check`);
             const val = data.checkValues[type];
             
-            // 💡 根據 DB 的檢查值，徹底鎖死原住民欄位
             if (type === 'flatland' || type === 'mountain') {
                 if (!val || Number(val) === 0) {
                     if (checkEl) {
@@ -1192,7 +1230,6 @@
             }
         });
 
-        // 處理里長動態列
         const villageHeaderRow = document.getElementById('village-row-header');
         const villageInputsRow = document.getElementById('village-row-inputs');
         
@@ -1225,7 +1262,7 @@
     if(document.getElementById('btn-submit')) {
         document.getElementById('btn-submit').addEventListener('click', () => {
             if (!currentStationId) {
-                showToast('⚠️ 請先載入票所資料！');
+                showToast('⚠️ 請先輸入並載入票所編號！');
                 return;
             }
 
@@ -1319,26 +1356,16 @@
         });
     }
 
-    // === 點擊按鈕：另開視窗進入練習模式 ===
     if(document.getElementById('btn-practice')) {
         document.getElementById('btn-practice').addEventListener('click', () => {
-            if(!currentStationId) {
-                showToast('⚠️ 請先輸入並載入票所編號，才能產生對應亂數考題！', 4000);
-                return;
-            }
-            
             const checkVal = parseInt(document.getElementById('referendum_check').value) || 1000;
-            
-            // 取得目前的網址，加上參數後，開新分頁
             const url = new URL(window.location.href);
             url.searchParams.set('mode', 'practice');
             url.searchParams.set('check', checkVal);
-            
             window.open(url.href, '_blank');
         });
     }
 
-    // === 實作遊戲引擎 ===
     function initPracticeGame(checkVal) {
         document.getElementById('p-check').textContent = checkVal;
         
@@ -1348,13 +1375,12 @@
         const issuedNotVoted = Math.floor(Math.random() * 3); 
         const remaining = checkVal - (agree + disagree + invalid + issuedNotVoted);
 
-        // 初始化產生的物件與位置 (改良版坐標)
         const itemsData = [
-            { type: 'agree', label: '同意票', val: agree, top: '5%', left: '25%' },
-            { type: 'disagree', label: '不同意票', val: disagree, top: '22%', left: '25%' },
-            { type: 'invalid', label: '無效票', val: invalid, top: '39%', left: '25%' },
-            { type: 'not_voted', label: '已領未投', val: issuedNotVoted, top: '25%', left: '75%' },
-            { type: 'remaining', label: '用餘票數', val: remaining, top: '45%', left: '75%' }
+            { type: 'agree', label: '同意票', val: agree, top: '15%', left: '22%' },
+            { type: 'disagree', label: '不同意票', val: disagree, top: '25%', left: '22%' },
+            { type: 'invalid', label: '無效票', val: invalid, top: '35%', left: '22%' },
+            { type: 'not_voted', label: '已領未投', val: issuedNotVoted, top: '20%', left: '72%' },
+            { type: 'remaining', label: '用餘票數', val: remaining, top: '32%', left: '72%' }
         ];
 
         document.querySelectorAll('.drop-zone').forEach(z => {
@@ -1426,8 +1452,7 @@
                         dropZone.classList.add('error-shake');
                         setTimeout(() => dropZone.classList.remove('error-shake'), 400);
                     }
-                } 
-                // 放錯地方時，保留在原地，不再強制彈回
+                }
             });
             prScene.appendChild(el);
         });

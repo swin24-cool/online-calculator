@@ -114,7 +114,12 @@
 
         #practice-ui-header, #pr-scene { display: none; }
         body.practice-mode #practice-ui-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px dashed #94a3b8; padding-bottom: 10px; }
-        body.practice-mode #pr-scene { display: block; position: relative; height: 380px; background-color: #f8fafc; background-image: url('./bg.png'); background-size: contain; background-repeat: no-repeat; background-position: center; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); }
+        body.practice-mode #pr-scene { 
+            display: block; position: relative; height: 480px; 
+            background-color: #f8fafc; background-image: url('./bg.png'); 
+            background-size: 200% auto; background-repeat: no-repeat; background-position: top center; 
+            border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); overflow: hidden;
+        }
 
         .p-type-btn { padding: 6px 12px; font-size: 16px; font-weight: bold; border: 2px solid #333; border-radius: 6px; background: white; cursor: pointer; transition: all 0.2s; box-shadow: 2px 2px 0 #333; }
         .p-type-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #333; }
@@ -652,6 +657,8 @@
         applyStationData(globalStationCache[stId]);
         document.getElementById('table-wrapper').classList.remove('locked');
 
+        let candCounters = { mayor: 0, councilor: 0, flatland: 0, mountain: 0, village: 0, referendum: 0 };
+
         document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => {
             let typeMatch = input.className.match(/(mayor|councilor|flatland|mountain|village|referendum)-input/);
             if(typeMatch) {
@@ -664,7 +671,10 @@
                 if (input.id.includes('invalid')) dz.dataset.field = 'invalid';
                 else if (input.id.includes('not_voted')) dz.dataset.field = 'not_voted';
                 else if (input.id.includes('remaining')) dz.dataset.field = 'remaining';
-                else dz.dataset.field = 'cand'; 
+                else {
+                    dz.dataset.field = 'cand'; 
+                    dz.dataset.candIdx = candCounters[type]++;
+                }
 
                 input.parentNode.appendChild(dz);
             }
@@ -726,14 +736,14 @@
         candsVotes.forEach((votes, i) => {
             let nameDiv = candInputs[i].closest('td').querySelector('.cand-name');
             let name = nameDiv ? nameDiv.textContent : `候選人${i+1}`;
-            createDraggableNote(type, 'cand', name, votes, 'left', scene);
+            createDraggableNote(type, 'cand', name, votes, 'left', scene, i);
         });
         createDraggableNote(type, 'invalid', '無效票', invalid, 'right', scene);
         createDraggableNote(type, 'not_voted', '已領未投', issuedNotVoted, 'right', scene);
         createDraggableNote(type, 'remaining', '用餘票數', remaining, 'right', scene);
     }
 
-    function createDraggableNote(type, field, label, val, position, container) {
+    function createDraggableNote(type, field, label, val, position, container, candIdx = null) {
         const el = document.createElement('div');
         el.className = 'draggable-item';
         el.style.backgroundColor = getElectionColor(type);
@@ -744,6 +754,7 @@
         
         el.dataset.type = type;
         el.dataset.field = field;
+        if (candIdx !== null) el.dataset.candIdx = candIdx;
         el.dataset.val = val;
         el.innerHTML = `<span class="label">${label}</span><span class="val">${val}</span>`;
         
@@ -777,7 +788,10 @@
             
             let dropZone = elemBelow ? elemBelow.closest('.drop-zone.active-zone') : null;
             
-            if (dropZone && dropZone.dataset.field === el.dataset.field && !dropZone.classList.contains('filled')) {
+            let isFieldMatch = dropZone && (dropZone.dataset.field === el.dataset.field);
+            let isCandMatch = dropZone && (el.dataset.field !== 'cand' || dropZone.dataset.candIdx === el.dataset.candIdx);
+
+            if (dropZone && isFieldMatch && isCandMatch && !dropZone.classList.contains('filled')) {
                 // 修正 3：放對格子，完美吸附並上鎖融入！
                 el.style.position = 'static'; 
                 el.style.transform = 'none';
@@ -802,6 +816,7 @@
                 
                 checkWinCondition(el.dataset.type);
             } else if (dropZone) {
+                // 放錯格子時：發紅抖動，但停留在原地 (任意拖曳)
                 dropZone.classList.add('error-shake');
                 setTimeout(() => dropZone.classList.remove('error-shake'), 400);
             }

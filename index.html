@@ -1269,6 +1269,12 @@
             const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
             
             const getValues = (prefix) => {
+                const checkEl = document.getElementById(`${prefix}_check`);
+                // 檢查該選舉種類是否被鎖定(代表無此選票)，若是則回傳 null
+                if (checkEl && checkEl.classList.contains('locked-empty')) {
+                    return null;
+                }
+
                 const data = {
                     candidates: {},
                     valid: document.getElementById(`${prefix}_valid`)?.value || "",
@@ -1287,18 +1293,20 @@
                 return data;
             };
 
+            // 動態過濾，只打包有資料的選舉種類
+            const payloadData = {};
+            ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
+                const vals = getValues(type);
+                if (vals) {
+                    payloadData[type] = vals;
+                }
+            });
+
             const payload = {
                 stationId: currentStationId,
                 txId: txId,
                 timestamp: new Date().toLocaleString('zh-TW'),
-                data: {
-                    mayor: getValues('mayor'),
-                    councilor: getValues('councilor'),
-                    flatland: getValues('flatland'),
-                    mountain: getValues('mountain'),
-                    village: getValues('village'),
-                    referendum: getValues('referendum')
-                }
+                data: payloadData
             };
 
             const submitBtn = document.getElementById('btn-submit');

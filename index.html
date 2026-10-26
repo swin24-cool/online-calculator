@@ -736,6 +736,12 @@
         candsVotes.forEach((votes, i) => {
             let nameDiv = candInputs[i].closest('td').querySelector('.cand-name');
             let name = nameDiv ? nameDiv.textContent : `候選人${i+1}`;
+            
+            // 針對公投選項強制自訂名稱
+            if (type === 'referendum') {
+                name = (i === 0) ? '同意' : '不同意';
+            }
+            
             createDraggableNote(type, 'cand', name, votes, 'left', scene, i);
         });
         createDraggableNote(type, 'invalid', '無效票', invalid, 'right', scene);

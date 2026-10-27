@@ -943,6 +943,33 @@
         });
     }
 
+    // === 鎖住/解鎖 與 清除全部功能 ===
+    if(document.getElementById('btn-lock')) {
+        document.getElementById('btn-lock').addEventListener('click', () => {
+            const tableWrapper = document.getElementById('table-wrapper');
+            tableWrapper.classList.toggle('locked');
+            if (tableWrapper.classList.contains('locked')) {
+                showToast('🔒 表格已鎖定，避免誤觸修改。');
+            } else {
+                showToast('🔓 表格已解鎖，開放編輯。');
+            }
+        });
+    }
+
+    if(document.getElementById('btn-clear-all')) {
+        document.getElementById('btn-clear-all').addEventListener('click', () => {
+            // 清空所有未被鎖定（非空置）的輸入框
+            document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => {
+                input.value = "";
+            });
+            // 重新觸發所有選舉種類的加總（恢復清零狀態）
+            ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
+                calculateTotals(type);
+            });
+            showToast('🗑️ 已清除所有輸入資料。');
+        });
+    }
+
     // ==========================================
     // 獨立子系統：SPA 亂數拖曳遊戲模組
     // ==========================================

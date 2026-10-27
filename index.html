@@ -76,10 +76,11 @@
         .btn-green { background-color: #bbf7d0; color: #166534; }
         .btn-yellow { background-color: #fef08a; color: #854d0e; }
 
+        /* 虛擬鍵盤 */
         .control-panel {
             position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: clamp(320px, 33vw, 450px); 
             background-color: #7dd3fc; padding: 10px; border-radius: 12px; border: 2px solid #38bdf8; box-shadow: 0 8px 25px rgba(0,0,0,0.3); 
-            z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+            z-index: 9999; display: flex; flex-direction: column; gap: 10px; touch-action: none;
         }
         .cp-header { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; cursor: grab; }
         .cp-header:active { cursor: grabbing; }
@@ -115,7 +116,7 @@
         #practice-ui-header, #pr-scene { display: none; }
         body.practice-mode #practice-ui-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px dashed #94a3b8; padding-bottom: 10px; }
         body.practice-mode #pr-scene { 
-            display: block; position: relative; height: 480px; 
+            display: block; position: relative; height: 500px; 
             background-color: #f8fafc; background-image: url('./bg.png'); 
             background-size: contain; background-repeat: no-repeat; background-position: center; 
             border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); overflow: hidden;
@@ -142,7 +143,7 @@
             font-weight: bold; cursor: grab; position: absolute; box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
             touch-action: none; user-select: none; z-index: 50; transition: transform 0.1s;
         }
-        .draggable-item .label { font-size: 13px; color: #333; text-align: center; line-height: 1.1; margin-bottom: 2px; }
+        .draggable-item .label { font-size: 13px; color: #333; text-align: center; line-height: 1.1; margin-bottom: 2px; padding: 0 2px; }
         .draggable-item .val { font-size: 24px; color: #000; font-weight: 900; line-height: 1; }
         .draggable-item:active { cursor: grabbing; box-shadow: 5px 5px 15px rgba(0,0,0,0.4); transform: scale(1.1); z-index: 1000 !important; }
         
@@ -157,7 +158,8 @@
     <div class="station-input-area">
         <label class="font-bold">投開票所編號:</label>
         <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
-        <span class="warning-text">輸入票所編號號(1282-1419)，即可解鎖並進行試算！</span>
+        <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
+        <span class="warning-text">輸入票所編號號(1282-1419)，點擊輸入即可解鎖試算！</span>
     </div>
 
     <!-- 練習模式專屬頂部 UI -->
@@ -427,7 +429,6 @@
 <div class="toast-msg" id="toast"></div>
 
 <script>
-    // ⚠️ 已換成您專屬的 GAS 網址！
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
 
     let globalStationCache = null; 
@@ -445,7 +446,6 @@
 
         if (!urlParams.has('mode')) {
             showToast("初次載入，正在將雲端資料庫快取至本地端...", 2000);
-            // 修正 1：移除 mode: 'cors' 避免觸發預檢請求，直接發送標準 GET
             fetch(`${GAS_API_URL}?action=getAll`)
                 .then(res => res.json())
                 .then(json => {
@@ -458,8 +458,8 @@
                 })
                 .catch(err => {
                     console.error("快取失敗:", err);
-                    showToast("⚠️ 快取失敗，請確認 GAS 網址與發布設定。已載入備用資料。", 4000);
-                    globalStationCache = getFallbackData(); // 載入備用資料確保系統可運作
+                    showToast("⚠️ 快取失敗，已載入備用資料。", 4000);
+                    globalStationCache = getFallbackData();
                 });
         } else if (urlParams.get('mode') === 'practice') {
             const stId = urlParams.get('station');
@@ -471,21 +471,37 @@
         }
     });
 
-    // === 輸入票所事件 ===
+    // === 輸入票所事件 (改成點擊按鈕才觸發) ===
     const stationIdInput = document.getElementById('station-id-input');
-    if(stationIdInput) {
-        stationIdInput.addEventListener('input', function() {
-            const inputId = this.value.trim();
-            if (inputId.length >= 4) {
-                loadStationById(inputId);
-            } else {
-                lockTableStructure();
-            }
+    const btnLoadStation = document.getElementById('btn-load-station');
+
+    if(btnLoadStation && stationIdInput) {
+        // 按下輸入按鈕
+        btnLoadStation.addEventListener('click', () => {
+            triggerLoadStation();
+        });
+        
+        // 在輸入框按下 Enter 鍵也能觸發
+        stationIdInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') triggerLoadStation();
         });
     }
 
+    function triggerLoadStation() {
+        const inputId = stationIdInput.value.trim();
+        if (inputId.length >= 4) {
+            loadStationById(inputId);
+        } else {
+            showToast('⚠️ 請輸入完整的票所編號');
+            lockTableStructure();
+        }
+    }
+
     function loadStationById(inputId) {
-        if (!inputId || inputId < 1282 || inputId > 1419) return;
+        if (!inputId || inputId < 1282 || inputId > 1419) {
+            showToast('❌ 請輸入 1282 - 1419 之間的票所編號');
+            return;
+        }
         
         if (!globalStationCache) {
             showToast('資料庫尚未就緒，已載入備用測試資料');
@@ -496,7 +512,7 @@
             currentStationId = inputId;
             applyStationData(globalStationCache[inputId]);
             document.getElementById('table-wrapper').classList.remove('locked');
-            showToast(`⚡ 已自動載入第 ${inputId} 票所資料`);
+            showToast(`⚡ 已成功載入第 ${inputId} 票所資料`);
         } else {
             showToast('❌ 找不到該票所編號！');
             lockTableStructure();
@@ -603,6 +619,78 @@
         }
     });
 
+    // === 虛擬鍵盤拖曳修復 (Pointer Events) ===
+    let isDraggingPanel = false;
+    let pStartX, pStartY, initialLeft, initialTop;
+    const draggablePanel = document.getElementById('draggable-panel');
+    const dragHandles = [document.getElementById('panel-header'), document.querySelector('.drag-indicator')];
+
+    dragHandles.forEach(handle => {
+        if(!handle) return;
+        handle.addEventListener('pointerdown', (e) => {
+            if(e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input' || e.target.closest('label')) return;
+            
+            isDraggingPanel = true;
+            draggablePanel.setPointerCapture(e.pointerId);
+
+            // 第一次拖曳時，將置中的 css transform 解除，改用絕對座標
+            if (!draggablePanel.style.left || draggablePanel.style.left === '') {
+                const rect = draggablePanel.getBoundingClientRect();
+                draggablePanel.style.left = rect.left + 'px';
+                draggablePanel.style.top = rect.top + 'px';
+                draggablePanel.style.transform = 'none';
+                draggablePanel.style.bottom = 'auto';
+            }
+
+            pStartX = e.clientX;
+            pStartY = e.clientY;
+            initialLeft = parseFloat(draggablePanel.style.left);
+            initialTop = parseFloat(draggablePanel.style.top);
+            e.preventDefault();
+        });
+    });
+
+    draggablePanel.addEventListener('pointermove', (e) => {
+        if (!isDraggingPanel) return;
+        const dx = e.clientX - pStartX;
+        const dy = e.clientY - pStartY;
+        draggablePanel.style.left = (initialLeft + dx) + 'px';
+        draggablePanel.style.top = (initialTop + dy) + 'px';
+    });
+
+    draggablePanel.addEventListener('pointerup', (e) => {
+        if(isDraggingPanel) {
+            isDraggingPanel = false;
+            draggablePanel.releasePointerCapture(e.pointerId);
+        }
+    });
+
+    // 鍵盤輸入功能
+    document.querySelectorAll('.num-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!currentFocusedInput) {
+                showToast('請先點擊一個欄位');
+                return;
+            }
+            let currentVal = currentFocusedInput.value;
+            let start = (currentFocusedInput.selectionStart !== null) ? currentFocusedInput.selectionStart : currentVal.length;
+            if (currentVal === "0") currentVal = ""; 
+            const newVal = currentVal.slice(0, start) + e.target.textContent + currentVal.slice(start);
+            currentFocusedInput.value = newVal;
+            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    });
+    
+    document.getElementById('vk-clear').addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentFocusedInput) {
+            currentFocusedInput.value = "";
+            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+
     // === 按鈕功能 ===
     if(document.getElementById('btn-practice')) {
         document.getElementById('btn-practice').addEventListener('click', () => {
@@ -708,7 +796,6 @@
         
         document.getElementById('p-header-title').textContent = `🗳️ ${getElectionName(type)}結算模擬 (票所: ${stId} .. 檢查值: ${practiceTargetCheck})`;
 
-        // 修正 2：清空時，排除帶有 .check-val 的檢查值，避免按第二次時找不到檢查值！
         document.querySelectorAll('.stats-input:not(.check-val)').forEach(el => el.value = '');
         document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles:true})); });
         
@@ -737,14 +824,14 @@
             let nameDiv = candInputs[i].closest('td').querySelector('.cand-name');
             let name = nameDiv ? nameDiv.textContent : `候選人${i+1}`;
             
-            // 針對公投選項強制自訂名稱
             if (type === 'referendum') {
                 name = (i === 0) ? '同意' : '不同意';
             }
-            
             createDraggableNote(type, 'cand', name, votes, 'left', scene, i);
         });
-        createDraggableNote(type, 'invalid', '無效票', invalid, 'right', scene);
+        
+        // 將無效票的 position 改為 'left'，使其與候選人放置在同一側
+        createDraggableNote(type, 'invalid', '無效票', invalid, 'left', scene);
         createDraggableNote(type, 'not_voted', '已領未投', issuedNotVoted, 'right', scene);
         createDraggableNote(type, 'remaining', '用餘票數', remaining, 'right', scene);
     }
@@ -798,7 +885,6 @@
             let isCandMatch = dropZone && (el.dataset.field !== 'cand' || dropZone.dataset.candIdx === el.dataset.candIdx);
 
             if (dropZone && isFieldMatch && isCandMatch && !dropZone.classList.contains('filled')) {
-                // 修正 3：放對格子，完美吸附並上鎖融入！
                 el.style.position = 'static'; 
                 el.style.transform = 'none';
                 dropZone.innerHTML = '';
@@ -806,7 +892,6 @@
                 dropZone.classList.add('filled');
                 dropZone.style.backgroundColor = getElectionColor(el.dataset.type);
                 
-                // 讓方塊視覺融入格子，並徹底關閉拖曳功能
                 el.style.pointerEvents = 'none'; 
                 el.style.boxShadow = 'none';
                 el.style.border = 'none';
@@ -822,7 +907,6 @@
                 
                 checkWinCondition(el.dataset.type);
             } else if (dropZone) {
-                // 放錯格子時：發紅抖動，但停留在原地 (任意拖曳)
                 dropZone.classList.add('error-shake');
                 setTimeout(() => dropZone.classList.remove('error-shake'), 400);
             }
@@ -851,7 +935,6 @@
     const toast = document.getElementById('toast');
     function showToast(msg, duration = 3000) { toast.textContent = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), duration); }
     
-    // (保留虛擬鍵盤等其他功能)
 </script>
 </body>
 </html>

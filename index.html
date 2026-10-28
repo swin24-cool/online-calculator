@@ -37,11 +37,11 @@
         .table-wrapper { min-width: 1400px; max-height: 70vh; overflow: auto; }
         
         /* 唯讀鎖定模式設計 */
-        .table-wrapper.locked input { pointer-events: none; background-color: #f3f4f6; color: #9ca3af; }
+        .table-wrapper.locked input { pointer-events: none; background-color: #f3f4f6 !important; color: #9ca3af !important; border-color: #cbd5e1 !important; }
         .table-wrapper.locked .check-val { background-color: #f3f4f6 !important; color: #9ca3af !important; }
 
         /* 原住民無選票時的徹底鎖定設計 */
-        .locked-empty { background-color: #e2e8f0 !important; pointer-events: none !important; color: transparent !important; border-color: #cbd5e1 !important; }
+        .locked-empty { background-color: #e2e8f0 !important; pointer-events: none !important; color: transparent !important; border-color: transparent !important; }
 
         thead th { position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; text-align: center; }
@@ -53,19 +53,23 @@
         .cand-number { font-size: 12px; text-align: left; margin-bottom: 2px; color: #4b5563; }
         .cand-name { font-size: 15px; font-weight: 500; line-height: 1.2; word-break: break-all; }
         
+        /* ==== 填寫欄位視覺升級 ==== */
         input[type="text"][inputmode="numeric"], input[type="text"][inputmode="none"] {
             width: 100%; height: 100%; min-height: 36px; box-sizing: border-box; text-align: right;
-            border: 2px solid transparent; background-color: transparent; font-size: 18px; font-weight: bold;
+            border: 1px solid #94a3b8; /* 加入明顯邊框 */
+            background-color: #ffffff; /* 確保內部白底 */
+            border-radius: 6px;        /* 圓角設計 */
+            font-size: 18px; font-weight: bold;
             font-family: monospace; padding-right: 6px; transition: all 0.2s; cursor: pointer;
         }
         input[type="text"][inputmode="numeric"]:focus, input.focused-cell, input[type="text"][inputmode="none"]:focus {
-            outline: none; border: 3px solid #ef4444 !important; background-color: #fef2f2 !important; border-radius: 4px;
+            outline: none; border: 2px solid #ef4444 !important; background-color: #fef2f2 !important;
         }
         
-        /* 系統運算欄位防呆：點擊時穿透，不顯示紅框 */
+        /* 系統運算欄位防呆：點擊時穿透，不顯示紅框與圓角邊框 */
         .stats-input { color: #1e3a8a; font-size: 20px; cursor: not-allowed; pointer-events: none !important; }
-        input:read-only.stats-input { background-color: #f8fafc; border: 2px solid transparent !important; }
-        input:read-only.stats-input:focus { outline: none !important; border: 2px solid transparent !important; background-color: #f8fafc !important; }
+        input:read-only.stats-input { background-color: transparent !important; border: 1px solid transparent !important; }
+        input:read-only.stats-input:focus { outline: none !important; border: 1px solid transparent !important; background-color: transparent !important; }
 
         .empty-cell { background-color: #fdfdfd; }
         
@@ -74,7 +78,6 @@
         .action-btn:active { transform: scale(0.95); }
         .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
         .btn-green { background-color: #bbf7d0; color: #166534; }
-        .btn-yellow { background-color: #fef08a; color: #854d0e; }
 
         /* 虛擬鍵盤 */
         .control-panel {
@@ -102,53 +105,6 @@
 
         .toast-msg { position: fixed; bottom: 120px; right: 30px; background-color: rgba(30, 41, 59, 0.95); color: white; padding: 12px 20px; border-radius: 8px; font-size: 16px; opacity: 0; transition: opacity 0.3s; z-index: 10002; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast-msg.show { opacity: 1; }
-
-        /* ==========================================
-           亂數練習模式 (Practice Mode) 專用 CSS
-        ========================================== */
-        body.practice-mode { background-color: #e2e8f0; padding: 0; }
-        body.practice-mode .report-container { max-width: 98vw; margin-top: 10px; padding: 15px; }
-        
-        body.practice-mode .station-input-area, 
-        body.practice-mode .action-buttons-container, 
-        body.practice-mode #draggable-panel { display: none !important; }
-
-        #practice-ui-header, #pr-scene { display: none; }
-        body.practice-mode #practice-ui-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px dashed #94a3b8; padding-bottom: 10px; }
-        
-        body.practice-mode #pr-scene { 
-            display: block; position: relative; height: 500px; 
-            background-color: #f8fafc; background-image: url('./bg.png'); 
-            background-size: contain; background-repeat: no-repeat; background-position: center; 
-            border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); z-index: 100;
-        }
-
-        .p-type-btn { padding: 6px 12px; font-size: 16px; font-weight: bold; border: 2px solid #333; border-radius: 6px; background: white; cursor: pointer; transition: all 0.2s; box-shadow: 2px 2px 0 #333; }
-        .p-type-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #333; }
-        .p-type-btn.active { background: #3b82f6; color: white; border-color: #1e3a8a; }
-
-        body.practice-mode input.data-cell, 
-        body.practice-mode input.editable-stat { display: none !important; }
-        
-        .drop-zone { display: none; width: 100%; height: 100%; min-height: 40px; border: 2px dashed #cbd5e1; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; transition: all 0.2s; background: #f8fafc; }
-        body.practice-mode .drop-zone { display: flex; }
-        .drop-zone.active-zone { border: 2px dashed #3b82f6; background-color: #eff6ff; }
-        .drop-zone.filled { border: 2px solid #16a34a; }
-        
-        .error-shake { animation: shake 0.4s; border-color: #ef4444 !important; background-color: #fee2e2 !important; }
-        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
-
-        .draggable-item {
-            width: 75px; height: 80px; border: 2px solid #333; border-radius: 8px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            font-weight: bold; cursor: grab; position: absolute; box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
-            touch-action: none; user-select: none; z-index: 50; transition: transform 0.1s;
-        }
-        .draggable-item .label { font-size: 13px; color: #333; text-align: center; line-height: 1.1; margin-bottom: 2px; padding: 0 2px; }
-        .draggable-item .val { font-size: 24px; color: #000; font-weight: 900; line-height: 1; }
-        .draggable-item:active { cursor: grabbing; box-shadow: 5px 5px 15px rgba(0,0,0,0.4); transform: scale(1.1); z-index: 1000 !important; }
-        
-        .win-overlay { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
@@ -162,23 +118,6 @@
         <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
         <span class="warning-text">輸入票所編號號(1282-1419)，點擊輸入即可解鎖試算！</span>
     </div>
-
-    <!-- 練習模式專屬頂部 UI -->
-    <div id="practice-ui-header">
-        <h2 id="p-header-title" class="text-2xl font-bold text-blue-900">🗳️ 結算模擬 (請選擇上方選票種類開始)</h2>
-        <div class="flex gap-2" id="p-btn-group">
-            <button class="p-type-btn" data-type="mayor">市長</button>
-            <button class="p-type-btn" data-type="councilor">區域議員</button>
-            <button class="p-type-btn" data-type="flatland">平地原住民議員</button>
-            <button class="p-type-btn" data-type="mountain">山地原住民議員</button>
-            <button class="p-type-btn" data-type="village">里長</button>
-            <button class="p-type-btn" data-type="referendum">公投</button>
-        </div>
-        <button onclick="window.close()" class="text-gray-500 hover:text-red-500 font-bold text-xl px-4 py-2 bg-gray-200 rounded-lg">關閉視窗</button>
-    </div>
-
-    <!-- 練習模式專屬場景區 -->
-    <div id="pr-scene"></div>
 
     <div class="flex flex-wrap justify-between items-center px-4 py-1 bg-white font-bold text-[15px] border-b border-gray-300">
         <h1 class="tracking-widest mr-4">115年地方公職暨公投選舉</h1>
@@ -379,7 +318,6 @@
 
     <!-- 按鈕區 -->
     <div class="action-buttons-container">
-        <button id="btn-practice" class="action-btn btn-yellow">亂數練習(填寫報表)</button>
         <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
         <button id="btn-lock" class="action-btn btn-green">鎖住 / 解鎖</button>
         <button id="btn-submit" class="action-btn btn-blue">傳送資料(含A3報表圖)</button>
@@ -419,14 +357,6 @@
     </div>
 </div>
 
-<!-- 勝利特效 -->
-<div class="win-overlay" id="win-overlay">
-    <div class="text-6xl mb-4">🎉</div>
-    <h2 class="text-4xl font-bold text-green-600 mb-2">恭喜，試算完全正確！</h2>
-    <p class="text-gray-600 text-lg mb-6">您已掌握此張報表的填寫邏輯</p>
-    <button onclick="document.getElementById('win-overlay').style.display='none'" class="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600">繼續練習</button>
-</div>
-
 <div class="toast-msg" id="toast"></div>
 
 <script>
@@ -435,45 +365,33 @@
 
     let globalStationCache = null; 
     let currentStationId = null;   
-    let practiceTargetCheck = 0;
-    let activePracticeType = null;
 
     // === 初始化與預先載入 (Bulk Caching) ===
     window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
         
         document.querySelectorAll('input.data-cell').forEach((input, idx) => {
             if(!input.id) input.id = 'cand_input_' + idx;
         });
 
-        if (!urlParams.has('mode')) {
-            showToast("初次載入，正在將雲端資料庫快取至本地端...", 2000);
-            fetch(`${GAS_API_URL}?action=getAll`)
-                .then(res => res.json())
-                .then(json => {
-                    if (json.status === 'success') {
-                        globalStationCache = json.data;
-                        showToast("⚡ 資料庫已全數快取，輸入票所可瞬間載入！", 3000);
-                    } else {
-                        throw new Error(json.message);
-                    }
-                })
-                .catch(err => {
-                    console.error("快取失敗:", err);
-                    showToast("⚠️ 網路連線失敗，已載入本機備用測試資料。", 4000);
-                    globalStationCache = getFallbackData();
-                });
-        } else if (urlParams.get('mode') === 'practice') {
-            const stId = urlParams.get('station');
-            const cache = localStorage.getItem('practice_cache');
-            if (cache) globalStationCache = JSON.parse(cache);
-            if (!globalStationCache) globalStationCache = getFallbackData();
-            
-            initPracticeMode(stId);
-        }
+        showToast("初次載入，正在將雲端資料庫快取至本地端...", 2000);
+        fetch(`${GAS_API_URL}?action=getAll`)
+            .then(res => res.json())
+            .then(json => {
+                if (json.status === 'success') {
+                    globalStationCache = json.data;
+                    showToast("⚡ 資料庫已全數快取，輸入票所可瞬間載入！", 3000);
+                } else {
+                    throw new Error(json.message);
+                }
+            })
+            .catch(err => {
+                console.error("快取失敗:", err);
+                showToast("⚠️ 網路連線失敗，已載入本機備用測試資料。", 4000);
+                globalStationCache = getFallbackData();
+            });
     });
 
-    // === 輸入票所事件 (改成點擊按鈕才觸發) ===
+    // === 輸入票所事件 ===
     const stationIdInput = document.getElementById('station-id-input');
     const btnLoadStation = document.getElementById('btn-load-station');
 
@@ -671,7 +589,7 @@
     }
 
 
-    // === 虛擬鍵盤拖曳修復 (Pointer Events) ===
+    // === 虛擬鍵盤拖曳修復 ===
     let isDraggingPanel = false;
     let pStartX, pStartY, initialLeft, initialTop;
     const draggablePanel = document.getElementById('draggable-panel');
@@ -718,7 +636,7 @@
         });
     }
 
-    // === 連續模式與語音核心 (恢復) ===
+    // === 連續模式與語音核心 ===
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
     
@@ -829,7 +747,7 @@
         };
     }
 
-    // === 鍵盤與刪除功能 (恢復) ===
+    // === 鍵盤與刪除功能 ===
     document.querySelectorAll('.num-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -896,16 +814,7 @@
         });
     }
 
-
     // === 按鈕功能 ===
-    if(document.getElementById('btn-practice')) {
-        document.getElementById('btn-practice').addEventListener('click', () => {
-            const stId = currentStationId || '1282'; 
-            if(globalStationCache) localStorage.setItem('practice_cache', JSON.stringify(globalStationCache));
-            window.open(`?mode=practice&station=${stId}`, '_blank');
-        });
-    }
-
     if(document.getElementById('btn-submit')) {
         document.getElementById('btn-submit').addEventListener('click', () => {
             if (!currentStationId) { showToast('⚠️ 請先輸入並載入票所編號！'); return; }
@@ -958,209 +867,14 @@
 
     if(document.getElementById('btn-clear-all')) {
         document.getElementById('btn-clear-all').addEventListener('click', () => {
-            // 清空所有未被鎖定（非空置）的輸入框
             document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => {
                 input.value = "";
             });
-            // 重新觸發所有選舉種類的加總（恢復清零狀態）
             ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
                 calculateTotals(type);
             });
             showToast('🗑️ 已清除所有輸入資料。');
         });
-    }
-
-    // ==========================================
-    // 獨立子系統：SPA 亂數拖曳遊戲模組
-    // ==========================================
-    function initPracticeMode(stId) {
-        document.body.classList.add('practice-mode');
-        applyStationData(globalStationCache[stId]);
-        document.getElementById('table-wrapper').classList.remove('locked');
-
-        let candCounters = { mayor: 0, councilor: 0, flatland: 0, mountain: 0, village: 0, referendum: 0 };
-
-        document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => {
-            let typeMatch = input.className.match(/(mayor|councilor|flatland|mountain|village|referendum)-input/);
-            if(typeMatch) {
-                let type = typeMatch[1];
-                let dz = document.createElement('div');
-                dz.className = `drop-zone dz-${type}`;
-                dz.dataset.type = type;
-                dz.dataset.targetId = input.id;
-                
-                if (input.id.includes('invalid')) dz.dataset.field = 'invalid';
-                else if (input.id.includes('not_voted')) dz.dataset.field = 'not_voted';
-                else if (input.id.includes('remaining')) dz.dataset.field = 'remaining';
-                else {
-                    dz.dataset.field = 'cand'; 
-                    dz.dataset.candIdx = candCounters[type]++;
-                }
-
-                input.parentNode.appendChild(dz);
-            }
-        });
-
-        document.querySelectorAll('.p-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => startPracticeRound(btn.dataset.type, btn, stId));
-        });
-    }
-
-    function getElectionColor(type) {
-        const colors = { mayor: '#fef08a', councilor: '#ffffff', flatland: '#bfdbfe', mountain: '#bbf7d0', village: '#fbcfe8', referendum: '#ffffff' };
-        return colors[type] || '#ffffff';
-    }
-    function getElectionName(type) {
-        const names = { mayor: '市長', councilor: '區域議員', flatland: '平地原住民', mountain: '山地原住民', village: '里長', referendum: '公投' };
-        return names[type];
-    }
-
-    function startPracticeRound(type, btnEl, stId) {
-        const checkInput = document.getElementById(`${type}_check`);
-        if (checkInput.classList.contains('locked-empty') || !checkInput.value || checkInput.value === "0") {
-            showToast('⚠️ 此票所無此選票種類，無法練習！', 3000);
-            return;
-        }
-
-        document.querySelectorAll('.p-type-btn').forEach(b => b.classList.remove('active'));
-        btnEl.classList.add('active');
-        practiceTargetCheck = parseInt(checkInput.value);
-        activePracticeType = type;
-        
-        document.getElementById('p-header-title').textContent = `🗳️ ${getElectionName(type)}結算模擬 (票所: ${stId} .. 檢查值: ${practiceTargetCheck})`;
-
-        document.querySelectorAll('.stats-input:not(.check-val)').forEach(el => el.value = '');
-        document.querySelectorAll('input.data-cell, input.editable-stat').forEach(el => { el.value = ''; el.dispatchEvent(new Event('input', {bubbles:true})); });
-        
-        document.querySelectorAll('.drop-zone').forEach(dz => {
-            dz.innerHTML = ''; dz.classList.remove('filled', 'active-zone'); dz.style.backgroundColor = ''; dz.style.border = '';
-        });
-        document.getElementById('pr-scene').innerHTML = ''; 
-        
-        document.querySelectorAll(`.dz-${type}`).forEach(dz => dz.classList.add('active-zone'));
-
-        const candInputs = document.querySelectorAll(`.${type}-cand:not(.locked-empty)`);
-        const numCands = candInputs.length;
-        
-        let issued = Math.floor(practiceTargetCheck * (0.75 + Math.random() * 0.1)); 
-        let remaining = practiceTargetCheck - issued;
-        let issuedNotVoted = Math.floor(Math.random() * 3); 
-        let total = issued - issuedNotVoted;
-        let invalid = Math.floor(issued * (0.04 + Math.random() * 0.04)); 
-        let valid = total - invalid;
-
-        let candsVotes = new Array(numCands).fill(0);
-        for(let i = 0; i < valid; i++) { candsVotes[Math.floor(Math.random() * numCands)]++; }
-
-        const scene = document.getElementById('pr-scene');
-        candsVotes.forEach((votes, i) => {
-            let nameDiv = candInputs[i].closest('td').querySelector('.cand-name');
-            let name = nameDiv ? nameDiv.textContent.trim() : `候選人${i+1}`;
-            
-            if (type === 'referendum') {
-                name = (i === 0) ? '同意' : '不同意';
-            }
-            createDraggableNote(type, 'cand', name, votes, 'left', scene, i);
-        });
-        
-        // 將無效票的 position 改為 'left'，使其與候選人放置在同一側
-        createDraggableNote(type, 'invalid', '無效票', invalid, 'left', scene);
-        createDraggableNote(type, 'not_voted', '已領未投', issuedNotVoted, 'right', scene);
-        createDraggableNote(type, 'remaining', '用餘票數', remaining, 'right', scene);
-    }
-
-    function createDraggableNote(type, field, label, val, position, container, candIdx = null) {
-        const el = document.createElement('div');
-        el.className = 'draggable-item';
-        el.style.backgroundColor = getElectionColor(type);
-        
-        const baseLeft = position === 'left' ? 10 : 70;
-        el.style.top = (10 + Math.random() * 50) + '%';
-        el.style.left = (baseLeft + Math.random() * 15) + '%';
-        
-        el.dataset.type = type;
-        el.dataset.field = field;
-        if (candIdx !== null) el.dataset.candIdx = candIdx;
-        el.dataset.val = val;
-        el.innerHTML = `<span class="label">${label}</span><span class="val">${val}</span>`;
-        
-        let isDraggingItem = false, offsetX, offsetY;
-        
-        el.addEventListener('pointerdown', (e) => {
-            isDraggingItem = true;
-            el.setPointerCapture(e.pointerId);
-            el.style.zIndex = '1000';
-            const rect = el.getBoundingClientRect();
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
-        });
-        
-        el.addEventListener('pointermove', (e) => {
-            if(!isDraggingItem) return;
-            el.style.position = 'absolute'; 
-            
-            const containerRect = container.getBoundingClientRect();
-            let newLeft = e.clientX - containerRect.left - offsetX;
-            let newTop = e.clientY - containerRect.top - offsetY;
-            
-            el.style.left = newLeft + 'px';
-            el.style.top = newTop + 'px';
-        });
-        
-        el.addEventListener('pointerup', (e) => {
-            if(!isDraggingItem) return;
-            isDraggingItem = false;
-            el.releasePointerCapture(e.pointerId);
-            el.style.zIndex = '50';
-
-            el.style.display = 'none'; 
-            let elemBelow = document.elementFromPoint(e.clientX, e.clientY);
-            el.style.display = 'flex'; 
-            
-            let dropZone = elemBelow ? elemBelow.closest('.drop-zone.active-zone') : null;
-            
-            let isFieldMatch = dropZone && (dropZone.dataset.field === el.dataset.field);
-            let isCandMatch = dropZone && (el.dataset.field !== 'cand' || dropZone.dataset.candIdx === el.dataset.candIdx);
-
-            if (dropZone && isFieldMatch && isCandMatch && !dropZone.classList.contains('filled')) {
-                el.style.position = 'static'; 
-                el.style.transform = 'none';
-                dropZone.innerHTML = '';
-                dropZone.appendChild(el);
-                dropZone.classList.add('filled');
-                dropZone.style.backgroundColor = getElectionColor(el.dataset.type);
-                
-                el.style.pointerEvents = 'none'; 
-                el.style.boxShadow = 'none';
-                el.style.border = 'none';
-                el.style.width = '100%';
-                el.style.height = '100%';
-                el.style.backgroundColor = 'transparent';
-                
-                let hiddenInput = document.getElementById(dropZone.dataset.targetId);
-                if(hiddenInput) {
-                    hiddenInput.value = el.dataset.val;
-                    hiddenInput.dispatchEvent(new Event('input', {bubbles: true}));
-                }
-                
-                checkWinCondition(el.dataset.type);
-            } else if (dropZone) {
-                dropZone.classList.add('error-shake');
-                setTimeout(() => dropZone.classList.remove('error-shake'), 400);
-            }
-        });
-        
-        container.appendChild(el);
-    }
-
-    function checkWinCondition(type) {
-        const electorsEl = document.getElementById(`${type}_electors`);
-        if (electorsEl && parseInt(electorsEl.value) === practiceTargetCheck) {
-            let allFilled = Array.from(document.querySelectorAll(`.dz-${type}`)).every(dz => dz.classList.contains('filled'));
-            if(allFilled) {
-                document.getElementById('win-overlay').style.display = 'flex';
-            }
-        }
     }
 
     function getFallbackData() {

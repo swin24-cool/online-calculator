@@ -460,29 +460,7 @@
     }
 
     function applyStationData(data) {
-        const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
-        
-        types.forEach(type => {
-            const checkEl = document.getElementById(`${type}_check`);
-            const val = data.checkValues[type];
-            
-            if (type === 'flatland' || type === 'mountain') {
-                if (!val || Number(val) === 0) {
-                    if (checkEl) { checkEl.value = ""; checkEl.classList.add('locked-empty'); }
-                    document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
-                        if (el.tagName === 'INPUT') { el.value = ""; el.classList.add('locked-empty'); el.setAttribute('tabindex', '-1'); }
-                    });
-                } else {
-                    if (checkEl) { checkEl.value = val; checkEl.classList.remove('locked-empty'); }
-                    document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
-                        if (el.tagName === 'INPUT') { el.classList.remove('locked-empty'); el.removeAttribute('tabindex'); }
-                    });
-                }
-            } else {
-                if (checkEl) checkEl.value = val || 0;
-            }
-        });
-
+        // 先動態生成里長欄位 (必須先生成，後續的鎖定邏輯才能抓到它們)
         const villageHeaderRow = document.getElementById('village-row-header');
         const villageInputsRow = document.getElementById('village-row-inputs');
         document.querySelectorAll('.village-name-cell, .village-empty-cell, .village-input-td').forEach(el => el.remove());
@@ -502,6 +480,26 @@
         }
         villageHeaderRow.firstElementChild.insertAdjacentHTML('afterend', nameHtml);
         villageInputsRow.innerHTML = inputHtml;
+
+        const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
+        
+        types.forEach(type => {
+            const checkEl = document.getElementById(`${type}_check`);
+            const val = data.checkValues[type];
+            
+            // 統一防呆邏輯：只要該票所該選票檢查值為 0 或沒有值，一律徹底鎖定反灰該區域
+            if (!val || Number(val) === 0) {
+                if (checkEl) { checkEl.value = ""; checkEl.classList.add('locked-empty'); }
+                document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
+                    if (el.tagName === 'INPUT') { el.value = ""; el.classList.add('locked-empty'); el.setAttribute('tabindex', '-1'); }
+                });
+            } else {
+                if (checkEl) { checkEl.value = val; checkEl.classList.remove('locked-empty'); }
+                document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
+                    if (el.tagName === 'INPUT') { el.classList.remove('locked-empty'); el.removeAttribute('tabindex'); }
+                });
+            }
+        });
 
         types.forEach(type => calculateTotals(type));
     }
@@ -830,12 +828,12 @@
 
     if(document.getElementById('vk-tab')) {
         document.getElementById('vk-tab').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (currentFocusedInput) autoTabToNextCell(currentFocusedInput);
-        });
-    }
+        e.preventDefault();
+        if (!currentFocusedInput) return;
+        autoTabToNextCell(currentFocusedInput);
+    });
 
-    // === 自訂強制警告對話框 ===
+    // === 自訂強制警告對話框 (優化版，支援多行詳細錯誤) ===
     function showCustomAlert(msg) {
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed'; overlay.style.top = '0'; overlay.style.left = '0';
@@ -847,14 +845,17 @@
         const box = document.createElement('div');
         box.style.backgroundColor = 'white'; box.style.padding = '24px';
         box.style.borderRadius = '12px'; box.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
-        box.style.textAlign = 'center'; box.style.maxWidth = '400px';
+        box.style.textAlign = 'center'; box.style.minWidth = '300px'; box.style.maxWidth = '80vw';
         
-        const text = document.createElement('p');
-        text.textContent = msg; text.style.fontWeight = 'bold';
+        const text = document.createElement('div');
+        text.innerHTML = msg.replace(/\n/g, '<br>'); // 支援換行符號
+        text.style.fontWeight = 'bold';
         text.style.color = '#dc2626'; text.style.marginBottom = '20px'; text.style.fontSize = '18px';
+        text.style.textAlign = 'left'; // 靠左對齊，方便閱讀錯誤清單
+        text.style.lineHeight = '1.6';
         
         const btn = document.createElement('button');
-        btn.textContent = '確定'; btn.style.padding = '8px 32px';
+        btn.textContent = '我知道了'; btn.style.padding = '8px 32px';
         btn.style.backgroundColor = '#3b82f6'; btn.style.color = 'white';
         btn.style.borderRadius = '6px'; btn.style.fontWeight = 'bold';
         btn.style.cursor = 'pointer';
@@ -872,9 +873,12 @@
             const fileGov = document.getElementById('upload-gov').files[0];
             const fileRef = document.getElementById('upload-ref').files[0];
             
-            let isCalcCorrect = true;
             let hasData = false;
+            let errorMessages = [];
+            let calcErrors = [];
             const payloadData = {};
+            
+            const typeNames = { mayor: '市長', councilor: '區域議員', flatland: '平地原住民', mountain: '山地原住民', village: '里長', referendum: '公投' };
             
             ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
                 const checkEl = document.getElementById(`${type}_check`);
@@ -885,7 +889,7 @@
                     
                     // 檢核邏輯：要有檢查值，且運算總數必須精準等於檢查值
                     if (electors !== checkVal || checkVal === 0) {
-                        isCalcCorrect = false;
+                        calcErrors.push(typeNames[type]);
                     }
                     
                     const data = {
@@ -906,9 +910,16 @@
                 }
             });
 
-            // 嚴格阻擋機制：必須全對且包含兩張圖檔
-            if (!hasData || !isCalcCorrect || !fileGov || !fileRef) {
-                showCustomAlert("必須試算正確且上傳2張報表拍照圖檔(公職.公投)..才能傳送資料..");
+            // 嚴格阻擋機制：彙整所有具體錯誤訊息，一次報告給使用者
+            if (!fileGov) errorMessages.push("❌ 未上傳【公職報表圖檔】");
+            if (!fileRef) errorMessages.push("❌ 未上傳【公投報表圖檔】");
+            if (calcErrors.length > 0) {
+                errorMessages.push(`❌ 以下選票試算錯誤或漏填寫：\n   👉 ${calcErrors.join('、')}`);
+            }
+            if (!hasData) errorMessages.push("❌ 沒有可傳送的票所資料");
+
+            if (errorMessages.length > 0) {
+                showCustomAlert("【資料無法傳送】請修正以下問題：\n\n" + errorMessages.join("\n"));
                 return;
             }
 

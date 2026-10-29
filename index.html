@@ -828,10 +828,11 @@
 
     if(document.getElementById('vk-tab')) {
         document.getElementById('vk-tab').addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!currentFocusedInput) return;
-        autoTabToNextCell(currentFocusedInput);
-    });
+            e.preventDefault();
+            if (!currentFocusedInput) return;
+            autoTabToNextCell(currentFocusedInput);
+        });
+    }
 
     // === 自訂強制警告對話框 (優化版，支援多行詳細錯誤) ===
     function showCustomAlert(msg) {

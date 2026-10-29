@@ -316,11 +316,33 @@
         </table>
     </div>
 
-    <!-- 按鈕區 -->
-    <div class="action-buttons-container">
-        <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
-        <button id="btn-lock" class="action-btn btn-green">鎖住 / 解鎖</button>
-        <button id="btn-submit" class="action-btn btn-blue">傳送資料(含A3報表圖)</button>
+    <!-- 按鈕區 (重新排版：清除全部在左，上傳與傳送在右) -->
+    <div class="action-buttons-container" style="justify-content: space-between; align-items: flex-end;">
+        <!-- 左側 -->
+        <div>
+            <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
+        </div>
+        
+        <!-- 右側 -->
+        <div style="display: flex; gap: 15px; align-items: flex-end;">
+            <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
+            
+            <!-- 圖片上傳區塊 -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                    <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-gov').click()">載入圖檔(公職)</button>
+                    <span id="file-name-gov" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
+                    <input type="file" id="upload-gov" accept="image/*" style="display:none" onchange="document.getElementById('file-name-gov').textContent = this.files[0] ? this.files[0].name : '未選擇檔案'">
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                    <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-ref').click()">載入圖檔(公投)</button>
+                    <span id="file-name-ref" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
+                    <input type="file" id="upload-ref" accept="image/*" style="display:none" onchange="document.getElementById('file-name-ref').textContent = this.files[0] ? this.files[0].name : '未選擇檔案'">
+                </div>
+            </div>
+
+            <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
+        </div>
     </div>
 </div>
 
@@ -588,7 +610,6 @@
         }
     }
 
-
     // === 虛擬鍵盤拖曳修復 ===
     let isDraggingPanel = false;
     let pStartX, pStartY, initialLeft, initialTop;
@@ -814,16 +835,59 @@
         });
     }
 
+    // === 自訂強制警告對話框 ===
+    function showCustomAlert(msg) {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed'; overlay.style.top = '0'; overlay.style.left = '0';
+        overlay.style.width = '100%'; overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        overlay.style.zIndex = '10000'; overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center'; overlay.style.alignItems = 'center';
+        
+        const box = document.createElement('div');
+        box.style.backgroundColor = 'white'; box.style.padding = '24px';
+        box.style.borderRadius = '12px'; box.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+        box.style.textAlign = 'center'; box.style.maxWidth = '400px';
+        
+        const text = document.createElement('p');
+        text.textContent = msg; text.style.fontWeight = 'bold';
+        text.style.color = '#dc2626'; text.style.marginBottom = '20px'; text.style.fontSize = '18px';
+        
+        const btn = document.createElement('button');
+        btn.textContent = '確定'; btn.style.padding = '8px 32px';
+        btn.style.backgroundColor = '#3b82f6'; btn.style.color = 'white';
+        btn.style.borderRadius = '6px'; btn.style.fontWeight = 'bold';
+        btn.style.cursor = 'pointer';
+        btn.onclick = () => document.body.removeChild(overlay);
+        
+        box.appendChild(text); box.appendChild(btn); overlay.appendChild(box);
+        document.body.appendChild(overlay);
+    }
+
     // === 按鈕功能 ===
     if(document.getElementById('btn-submit')) {
-        document.getElementById('btn-submit').addEventListener('click', () => {
+        document.getElementById('btn-submit').addEventListener('click', async () => {
             if (!currentStationId) { showToast('⚠️ 請先輸入並載入票所編號！'); return; }
-            const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
             
+            const fileGov = document.getElementById('upload-gov').files[0];
+            const fileRef = document.getElementById('upload-ref').files[0];
+            
+            let isCalcCorrect = true;
+            let hasData = false;
             const payloadData = {};
+            
             ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
                 const checkEl = document.getElementById(`${type}_check`);
                 if (checkEl && !checkEl.classList.contains('locked-empty')) {
+                    hasData = true;
+                    const electors = Number(document.getElementById(`${type}_electors`).value || 0);
+                    const checkVal = Number(checkEl.value || 0);
+                    
+                    // 檢核邏輯：要有檢查值，且運算總數必須精準等於檢查值
+                    if (electors !== checkVal || checkVal === 0) {
+                        isCalcCorrect = false;
+                    }
+                    
                     const data = {
                         candidates: {},
                         valid: document.getElementById(`${type}_valid`)?.value || "",
@@ -842,13 +906,47 @@
                 }
             });
 
-            const payload = { stationId: currentStationId, txId: txId, timestamp: new Date().toLocaleString('zh-TW'), data: payloadData };
-            const submitBtn = document.getElementById('btn-submit');
-            submitBtn.textContent = "傳送中..."; submitBtn.disabled = true;
+            // 嚴格阻擋機制：必須全對且包含兩張圖檔
+            if (!hasData || !isCalcCorrect || !fileGov || !fileRef) {
+                showCustomAlert("必須試算正確且上傳2張報表拍照圖檔(公職.公投)..才能傳送資料..");
+                return;
+            }
 
-            fetch(GAS_API_URL, { method: 'POST', mode: 'cors', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
-            .then(res => res.text()).then(t => showToast(`✅ 傳送已成功送出！`)).catch(e => showToast(`✅ 傳送已送出！`))
-            .finally(() => { submitBtn.textContent = "傳送資料(含A3報表圖)"; submitBtn.disabled = false; });
+            const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
+            
+            // 轉換圖檔為 Base64
+            const toBase64 = file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+
+            const submitBtn = document.getElementById('btn-submit');
+            submitBtn.textContent = "傳送中(含圖檔)..."; submitBtn.disabled = true;
+
+            try {
+                const govBase64 = await toBase64(fileGov);
+                const refBase64 = await toBase64(fileRef);
+                const govExt = fileGov.name.split('.').pop();
+                const refExt = fileRef.name.split('.').pop();
+
+                const payload = { 
+                    stationId: currentStationId, 
+                    txId: txId, 
+                    timestamp: new Date().toLocaleString('zh-TW'), 
+                    data: payloadData,
+                    imageGov: { base64: govBase64, ext: govExt },
+                    imageRef: { base64: refBase64, ext: refExt }
+                };
+
+                fetch(GAS_API_URL, { method: 'POST', mode: 'cors', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
+                .then(res => res.text()).then(t => showToast(`✅ 傳送與圖檔皆已成功送出！`)).catch(e => showToast(`✅ 傳送與圖檔皆已送出！`))
+                .finally(() => { submitBtn.textContent = "傳送資料(含A3報表圖)"; submitBtn.disabled = false; });
+            } catch (err) {
+                showToast(`❌ 圖檔處理發生異常`);
+                submitBtn.textContent = "傳送資料(含A3報表圖)"; submitBtn.disabled = false;
+            }
         });
     }
 
@@ -867,6 +965,13 @@
 
     if(document.getElementById('btn-clear-all')) {
         document.getElementById('btn-clear-all').addEventListener('click', () => {
+            // 防呆：確認是否已鎖定
+            const tableWrapper = document.getElementById('table-wrapper');
+            if (tableWrapper.classList.contains('locked')) {
+                showToast('🔒 表格已鎖定，無法清除資料！請先解鎖。', 3000);
+                return;
+            }
+
             document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => {
                 input.value = "";
             });
@@ -874,6 +979,12 @@
                 calculateTotals(type);
             });
             showToast('🗑️ 已清除所有輸入資料。');
+            
+            // 清除圖檔與檔名顯示
+            document.getElementById('upload-gov').value = '';
+            document.getElementById('file-name-gov').textContent = '未選擇檔案';
+            document.getElementById('upload-ref').value = '';
+            document.getElementById('file-name-ref').textContent = '未選擇檔案';
         });
     }
 

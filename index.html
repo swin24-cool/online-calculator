@@ -952,9 +952,24 @@
                     imageRef: { base64: refBase64, ext: refExt }
                 };
 
+                // 修正：確實讀取伺服器回傳的真實訊息，不再報喜不報憂！
                 fetch(GAS_API_URL, { method: 'POST', mode: 'cors', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
-                .then(res => res.text()).then(t => showToast(`✅ 傳送與圖檔皆已成功送出！`)).catch(e => showToast(`✅ 傳送與圖檔皆已送出！`))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // 如果有包含警告(⚠️)，就用明顯的 CustomAlert 跳出；如果是純成功，就用 Toast
+                        if (data.message.includes('⚠️')) {
+                            showCustomAlert(data.message);
+                        } else {
+                            showToast(data.message, 4000);
+                        }
+                    } else {
+                        showCustomAlert("❌ 傳送失敗：\n" + data.message);
+                    }
+                })
+                .catch(e => showCustomAlert(`❌ 網路連線失敗或伺服器無回應：\n${e}`))
                 .finally(() => { submitBtn.textContent = "傳送資料(含A3報表圖)"; submitBtn.disabled = false; });
+                
             } catch (err) {
                 showToast(`❌ 圖檔處理發生異常`);
                 submitBtn.textContent = "傳送資料(含A3報表圖)"; submitBtn.disabled = false;

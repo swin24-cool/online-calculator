@@ -817,6 +817,42 @@
             currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
         });
     });
+
+    if(document.getElementById('vk-del-left')) {
+        document.getElementById('vk-del-left').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!currentFocusedInput) return;
+            let currentVal = currentFocusedInput.value;
+            let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
+            let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
+            if (start === end && start > 0) {
+                currentFocusedInput.value = currentVal.slice(0, start - 1) + currentVal.slice(start);
+                try { currentFocusedInput.setSelectionRange(start - 1, start - 1); } catch(err) {}
+            } else if (start !== end) {
+                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
+                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
+            }
+            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+
+    if(document.getElementById('vk-del-right')) {
+        document.getElementById('vk-del-right').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!currentFocusedInput) return;
+            let currentVal = currentFocusedInput.value;
+            let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
+            let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
+            if (start === end && start < currentVal.length) {
+                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(start + 1);
+                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
+            } else if (start !== end) {
+                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
+                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
+            }
+            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
     
     if(document.getElementById('vk-clear')) {
         document.getElementById('vk-clear').addEventListener('click', (e) => {
@@ -900,6 +936,7 @@
             let hasData = false;
             let errorMessages = [];
             let calcErrors = [];
+            let emptyErrors = []; // 新增：紀錄哪些選票種類有漏填
             const payloadData = {};
             
             const typeNames = { mayor: '市長', councilor: '區域議員', flatland: '平地原住民', mountain: '山地原住民', village: '里長', referendum: '公投' };
@@ -911,11 +948,31 @@
                     const electors = Number(document.getElementById(`${type}_electors`).value || 0);
                     const checkVal = Number(checkEl.value || 0);
                     
-                    // 檢核邏輯：要有檢查值，且運算總數必須精準等於檢查值
+                    // 檢核邏輯 1：檢查值必須吻合
                     if (electors !== checkVal || checkVal === 0) {
                         calcErrors.push(typeNames[type]);
                     }
                     
+                    // 檢核邏輯 2：嚴格防呆，該區塊「所有未被鎖定」的格子都不能是空白
+                    let typeHasEmpty = false;
+                    
+                    // 檢查候選人欄位是否為空
+                    document.querySelectorAll(`.${type}-cand:not(.locked-empty)`).forEach(input => {
+                        if (input.value.trim() === "") typeHasEmpty = true;
+                    });
+                    // 檢查統計欄位是否為空 (無效票, 已領未投, 用餘票)
+                    ['invalid', 'issued_not_voted', 'remaining'].forEach(statName => {
+                        let el = document.getElementById(`${type}_${statName}`);
+                        if (el && !el.classList.contains('locked-empty') && el.value.trim() === "") {
+                            typeHasEmpty = true;
+                        }
+                    });
+
+                    if (typeHasEmpty) {
+                        emptyErrors.push(typeNames[type]);
+                    }
+                    
+                    // 準備打包資料
                     const data = {
                         candidates: {},
                         valid: document.getElementById(`${type}_valid`)?.value || "",
@@ -934,11 +991,21 @@
                 }
             });
 
+            // 圖檔雙重比對防呆：確保兩張圖檔不是同一個檔案
+            if (fileGov && fileRef) {
+                if (fileGov.name === fileRef.name && fileGov.size === fileRef.size) {
+                    errorMessages.push("❌ 公職與公投不能上傳「同一張」報表圖檔！請分別拍攝上傳。");
+                }
+            }
+
             // 嚴格阻擋機制：彙整所有具體錯誤訊息，一次報告給使用者
             if (!fileGov) errorMessages.push("❌ 未上傳【公職報表圖檔】");
             if (!fileRef) errorMessages.push("❌ 未上傳【公投報表圖檔】");
             if (calcErrors.length > 0) {
-                errorMessages.push(`❌ 以下選票試算錯誤或漏填寫：\n   👉 ${calcErrors.join('、')}`);
+                errorMessages.push(`❌ 以下選票試算錯誤：\n   👉 ${calcErrors.join('、')}`);
+            }
+            if (emptyErrors.length > 0) {
+                errorMessages.push(`❌ 以下選票有「漏填」欄位 (沒有得票也必須填 0)：\n   👉 ${emptyErrors.join('、')}`);
             }
             if (!hasData) errorMessages.push("❌ 沒有可傳送的票所資料");
 
@@ -960,27 +1027,27 @@
             const submitBtn = document.getElementById('btn-submit');
             submitBtn.textContent = "傳送中(含圖檔)..."; submitBtn.disabled = true;
 
-            try {
-                const govBase64 = await toBase64(fileGov);
-                const refBase64 = await toBase64(fileRef);
-                const govExt = fileGov.name.split('.').pop();
-                const refExt = fileRef.name.split('.').pop();
+            // 使用 async/await 處理上傳流程
+            (async () => {
+                try {
+                    const govBase64 = await toBase64(fileGov);
+                    const refBase64 = await toBase64(fileRef);
+                    const govExt = fileGov.name.split('.').pop();
+                    const refExt = fileRef.name.split('.').pop();
 
-                const payload = { 
-                    stationId: currentStationId, 
-                    txId: txId, 
-                    timestamp: new Date().toLocaleString('zh-TW'), 
-                    data: payloadData,
-                    imageGov: { base64: govBase64, ext: govExt },
-                    imageRef: { base64: refBase64, ext: refExt }
-                };
+                    const payload = { 
+                        stationId: currentStationId, 
+                        txId: txId, 
+                        timestamp: new Date().toLocaleString('zh-TW'), 
+                        data: payloadData,
+                        imageGov: { base64: govBase64, ext: govExt },
+                        imageRef: { base64: refBase64, ext: refExt }
+                    };
 
-                // 修正：確實讀取伺服器回傳的真實訊息，不再報喜不報憂！
-                fetch(GAS_API_URL, { method: 'POST', mode: 'cors', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } })
-                .then(res => res.json())
-                .then(data => {
+                    const res = await fetch(GAS_API_URL, { method: 'POST', mode: 'cors', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+                    const data = await res.json();
+                    
                     if (data.status === 'success') {
-                        // 如果有包含警告(⚠️)，就用明顯的 CustomAlert 跳出；如果是純成功，就用 Toast
                         if (data.message.includes('⚠️')) {
                             showCustomAlert(data.message);
                         } else {
@@ -989,14 +1056,13 @@
                     } else {
                         showCustomAlert("❌ 傳送失敗：\n" + data.message);
                     }
-                })
-                .catch(e => showCustomAlert(`❌ 網路連線失敗或伺服器無回應：\n${e}`))
-                .finally(() => { submitBtn.textContent = "傳送資料(含A3報表圖)"; submitBtn.disabled = false; });
-                
-            } catch (err) {
-                showToast(`❌ 圖檔處理發生異常`);
-                submitBtn.textContent = "傳送資料(含A3報表圖)"; submitBtn.disabled = false;
-            }
+                } catch (err) {
+                    showCustomAlert(`❌ 網路連線失敗或圖檔處理異常：\n${err}`);
+                } finally {
+                    submitBtn.textContent = "傳送資料(含A3報表圖)"; 
+                    submitBtn.disabled = false;
+                }
+            })();
         });
     }
 

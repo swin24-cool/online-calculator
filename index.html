@@ -1014,7 +1014,9 @@
                 return;
             }
 
-            const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
+            // 💡 修正：為「公職」與「公投」分別產生獨立的交易序號，避免後端檢核狀態連動
+            const txIdGov = currentStationId + '-G-' + Math.floor(1000 + Math.random() * 9000);
+            const txIdRef = currentStationId + '-R-' + Math.floor(1000 + Math.random() * 9000);
             
             // 轉換圖檔為 Base64
             const toBase64 = file => new Promise((resolve, reject) => {
@@ -1037,7 +1039,8 @@
 
                     const payload = { 
                         stationId: currentStationId, 
-                        txId: txId, 
+                        txIdGov: txIdGov,
+                        txIdRef: txIdRef, 
                         timestamp: new Date().toLocaleString('zh-TW'), 
                         data: payloadData,
                         imageGov: { base64: govBase64, ext: govExt },

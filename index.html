@@ -49,9 +49,11 @@
         th { background-color: #f9fafb; font-weight: bold; }
         
         .row-header { font-size: 18px; font-weight: bold; text-align: center; white-space: nowrap; padding: 0 10px; }
-        .candidate-cell { min-width: 70px; height: 48px; vertical-align: top; text-align: center; position: relative; }
-        .cand-number { font-size: 12px; text-align: left; margin-bottom: 2px; color: #4b5563; }
-        .cand-name { font-size: 15px; font-weight: 500; line-height: 1.2; word-break: break-all; }
+        
+        /* ==== 候選人欄位排版優化 (水平並排) ==== */
+        .candidate-cell { min-width: 70px; height: 38px; vertical-align: middle; text-align: center; white-space: nowrap; }
+        .cand-number { display: inline-block; font-size: 13px; font-weight: normal; color: #6b7280; margin-right: 4px; vertical-align: middle; }
+        .cand-name { display: inline-block; font-size: 16px; font-weight: 700; line-height: 1; vertical-align: middle; }
         
         /* ==== 填寫欄位視覺升級 ==== */
         input[type="text"][inputmode="numeric"], input[type="text"][inputmode="none"] {
@@ -138,17 +140,16 @@
 <div class="report-container" id="main-container">
     
     <!-- 一般模式UI -->
-    <div class="station-input-area">
+    <div class="station-input-area flex-wrap items-center">
         <label class="font-bold">投開票所編號:</label>
         <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
         <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
-        <span class="warning-text">輸入票所編號號(1282-1419)，點擊輸入即可解鎖試算！</span>
-    </div>
-
-    <div class="flex flex-wrap justify-between items-center px-4 py-1 bg-white font-bold text-[15px] border-b border-gray-300">
-        <h1 class="tracking-widest mr-4">115年地方公職暨公投選舉</h1>
-        <div>臺北市萬華區</div>
-        <div id="display-date">115年11月28日</div>
+        <span class="warning-text">輸入票所編號(1282-1419)，點擊輸入即可解鎖試算！</span>
+        
+        <!-- 新增：合併後的標題列 -->
+        <span class="ml-4 font-bold text-gray-800 text-[16px] tracking-wide" style="white-space: nowrap;">
+            115年地方公職暨公投選舉&nbsp;&nbsp;&nbsp;&nbsp;臺北市萬華區&nbsp;&nbsp;&nbsp;&nbsp;<span id="display-date">115年11月28日</span>
+        </span>
     </div>
 
     <!-- 表格區塊 -->
@@ -320,8 +321,8 @@
                 <!-- 公投 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px;">公投</td>
-                    <td class="candidate-cell"><div class="cand-name mt-3 text-lg">同意</div></td>
-                    <td class="candidate-cell"><div class="cand-name mt-3 text-lg">不同意</div></td>
+                    <td class="candidate-cell"><div class="cand-name text-lg">同意</div></td>
+                    <td class="candidate-cell"><div class="cand-name text-lg">不同意</div></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     
                     <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_valid" class="stats-input" readonly></td>

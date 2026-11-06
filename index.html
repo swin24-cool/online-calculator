@@ -49,11 +49,9 @@
         th { background-color: #f9fafb; font-weight: bold; }
         
         .row-header { font-size: 18px; font-weight: bold; text-align: center; white-space: nowrap; padding: 0 10px; }
-        
-        /* ==== 候選人欄位排版優化 (水平並排) ==== */
-        .candidate-cell { min-width: 70px; height: 38px; vertical-align: middle; text-align: center; white-space: nowrap; }
-        .cand-number { display: inline-block; font-size: 13px; font-weight: normal; color: #6b7280; margin-right: 4px; vertical-align: middle; }
-        .cand-name { display: inline-block; font-size: 16px; font-weight: 700; line-height: 1; vertical-align: middle; }
+        .candidate-cell { min-width: 70px; height: 48px; vertical-align: top; text-align: center; position: relative; }
+        .cand-number { font-size: 12px; text-align: left; margin-bottom: 2px; color: #4b5563; }
+        .cand-name { font-size: 15px; font-weight: 500; line-height: 1.2; word-break: break-all; }
         
         /* ==== 填寫欄位視覺升級 ==== */
         input[type="text"][inputmode="numeric"], input[type="text"][inputmode="none"] {
@@ -76,6 +74,9 @@
         /* 修正：強制蓋過預設透明背景的狀態檢核顏色 (使用指定 RGB) */
         input:read-only.check-val.match-true { background-color: rgb(37, 249, 44) !important; color: #000000 !important; }
         input:read-only.check-val.match-false { background-color: rgb(247, 123, 138) !important; color: #000000 !important; }
+
+        /* 新增：欄位防呆黃色警示背景 */
+        .warn-bg, input:read-only.stats-input.warn-bg { background-color: #fef08a !important; transition: background-color 0.3s; }
 
         .empty-cell { background-color: #fdfdfd; }
         
@@ -140,16 +141,17 @@
 <div class="report-container" id="main-container">
     
     <!-- 一般模式UI -->
-    <div class="station-input-area flex-wrap items-center">
+    <div class="station-input-area">
         <label class="font-bold">投開票所編號:</label>
         <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
         <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
-        <span class="warning-text">輸入票所編號(1282-1419)後才可試算！</span>
-        
-        <!-- 新增：合併後的標題列 -->
-        <span class="ml-auto font-bold text-gray-800 text-[16px] tracking-wide" style="white-space: nowrap;">
-            115年地方公職暨公投選舉&nbsp;&nbsp;&nbsp;&nbsp;臺北市萬華區&nbsp;&nbsp;&nbsp;&nbsp;<span id="display-date">115.11.28</span>
-        </span>
+        <span class="warning-text">輸入票所編號號(1282-1419)，點擊輸入即可解鎖試算！</span>
+    </div>
+
+    <div class="flex flex-wrap justify-between items-center px-4 py-1 bg-white font-bold text-[15px] border-b border-gray-300">
+        <h1 class="tracking-widest mr-4">115年地方公職暨公投選舉</h1>
+        <div>臺北市萬華區</div>
+        <div id="display-date">115年11月28日</div>
     </div>
 
     <!-- 表格區塊 -->
@@ -321,8 +323,8 @@
                 <!-- 公投 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px;">公投</td>
-                    <td class="candidate-cell"><div class="cand-name text-lg">同意</div></td>
-                    <td class="candidate-cell"><div class="cand-name text-lg">不同意</div></td>
+                    <td class="candidate-cell"><div class="cand-name mt-3 text-lg">同意</div></td>
+                    <td class="candidate-cell"><div class="cand-name mt-3 text-lg">不同意</div></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
                     
                     <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_valid" class="stats-input" readonly></td>
@@ -568,6 +570,63 @@
                 checkInput.classList.add('match-true');
             } else {
                 checkInput.classList.add('match-false');
+            }
+
+            // === 新增：防呆警示邏輯 (黃底色) ===
+            if (checkValue > 0) {
+                const invalidEl = document.getElementById(`${prefix}_invalid`);
+                const issuedNotVotedEl = document.getElementById(`${prefix}_issued_not_voted`);
+                const remainingEl = document.getElementById(`${prefix}_remaining`);
+                const validEl = document.getElementById(`${prefix}_valid`);
+                
+                // 每次計算前，先清除舊的警示
+                if (invalidEl) invalidEl.classList.remove('warn-bg');
+                if (issuedNotVotedEl) issuedNotVotedEl.classList.remove('warn-bg');
+                if (remainingEl) remainingEl.classList.remove('warn-bg');
+                if (validEl) validEl.classList.remove('warn-bg');
+                
+                // 條件 2: 無效票應在檢查值的 1.5% 以內
+                if (invalidEl && invalidVotes > checkValue * 0.015) {
+                    invalidEl.classList.add('warn-bg');
+                }
+                
+                // 條件 3: 已領未投的欄位不超過 2
+                if (issuedNotVotedEl && issuedNotVoted > 2) {
+                    issuedNotVotedEl.classList.add('warn-bg');
+                }
+                
+                // 條件 4: 用餘票應在檢查值的 35% 以內
+                if (remainingEl && remainingVotes > checkValue * 0.35) {
+                    remainingEl.classList.add('warn-bg');
+                }
+                
+                // 條件 5: 選舉人數與檢查值誤差約 100/200 票 (+-2誤差範圍) -> 警示有效票與用餘票
+                const diff = Math.abs(electors - checkValue);
+                if ((diff >= 98 && diff <= 102) || (diff >= 196 && diff <= 204)) {
+                    if (validEl) validEl.classList.add('warn-bg');
+                    if (remainingEl) remainingEl.classList.add('warn-bg');
+                }
+
+                // 條件 1: 市長選票中，特定候選人是否沒在前2名
+                if (prefix === 'mayor') {
+                    const candInputs = document.querySelectorAll(`.${prefix}-cand:not(.locked-empty)`);
+                    candInputs.forEach(input => input.classList.remove('warn-bg'));
+                    let votesArray = Array.from(candInputs).map(input => Number(input.value) || 0);
+                    
+                    if (votesArray.length >= 5) {
+                        // 將得票數由大到小排序，找出第二名的票數門檻
+                        let sortedVotes = [...votesArray].sort((a, b) => b - a);
+                        let threshold = sortedVotes[1]; 
+                        
+                        // 沈伯洋為 3號 (陣列索引 2)，蔣萬安為 5號 (陣列索引 4)
+                        if (votesArray[2] < threshold && candInputs[2]) {
+                            candInputs[2].classList.add('warn-bg');
+                        }
+                        if (votesArray[4] < threshold && candInputs[4]) {
+                            candInputs[4].classList.add('warn-bg');
+                        }
+                    }
+                }
             }
         }
     }
@@ -1015,9 +1074,7 @@
                 return;
             }
 
-            // 💡 修正：為「公職」與「公投」分別產生獨立的交易序號，避免後端檢核狀態連動
-            const txIdGov = currentStationId + '-G-' + Math.floor(1000 + Math.random() * 9000);
-            const txIdRef = currentStationId + '-R-' + Math.floor(1000 + Math.random() * 9000);
+            const txId = currentStationId + '-' + Math.floor(1000 + Math.random() * 9000);
             
             // 轉換圖檔為 Base64
             const toBase64 = file => new Promise((resolve, reject) => {
@@ -1040,8 +1097,7 @@
 
                     const payload = { 
                         stationId: currentStationId, 
-                        txIdGov: txIdGov,
-                        txIdRef: txIdRef, 
+                        txId: txId, 
                         timestamp: new Date().toLocaleString('zh-TW'), 
                         data: payloadData,
                         imageGov: { base64: govBase64, ext: govExt },

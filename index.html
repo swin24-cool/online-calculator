@@ -90,13 +90,14 @@
         .btn-green { background-color: #bbf7d0; color: #166534; }
 
         /* === 新增：放大視窗 (Focus Modal) 樣式 === */
-        .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); touch-action: none; }
-        .focus-modal-content { background: white; width: 96vw; max-width: 900px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 4px solid #3b82f6; display: flex; flex-direction: column; max-height: 85vh; }
+        /* 移除 touch-action: none，改為外層 overlay 負責滾動，完美解放雙指縮放與點擊 */
+        .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: flex-start; justify-content: center; backdrop-filter: blur(3px); overflow-y: auto; padding-top: 5vh; padding-bottom: 20vh; }
+        .focus-modal-content { background: white; width: 96vw; max-width: 900px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 4px solid #3b82f6; display: flex; flex-direction: column; margin: auto; }
         .focus-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #eff6ff; border-bottom: 2px solid #bfdbfe; border-radius: 8px 8px 0 0; }
         .focus-modal-title { font-size: 24px; font-weight: 900; color: #1e3a8a; display: flex; align-items: center; gap: 10px; }
         .focus-modal-close { font-size: 32px; font-weight: bold; color: #64748b; cursor: pointer; line-height: 1; padding: 0 10px; border-radius: 8px; transition: background 0.2s; }
         .focus-modal-close:active { background: #e2e8f0; color: #ef4444; }
-        .focus-modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .focus-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
         
         .focus-cand-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
         .focus-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; border-top: 3px dashed #cbd5e1; padding-top: 20px; }

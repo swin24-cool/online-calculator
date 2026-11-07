@@ -613,15 +613,65 @@
 
             // === 新增：防呆警示邏輯 (黃底色) ===
             if (checkValue > 0) {
-                        if (votesArray[4] < threshold && candInputs[4]) {
-                            candInputs[4].classList.add('warn-bg');
+                const invalidEl = document.getElementById(`${prefix}_invalid`);
+                const issuedNotVotedEl = document.getElementById(`${prefix}_issued_not_voted`);
+                const remainingEl = document.getElementById(`${prefix}_remaining`);
+                const validEl = document.getElementById(`${prefix}_valid`);
+                
+                // 每次計算前，先清除舊的警示
+                if (invalidEl) invalidEl.classList.remove('warn-bg');
+                if (issuedNotVotedEl) issuedNotVotedEl.classList.remove('warn-bg');
+                if (remainingEl) remainingEl.classList.remove('warn-bg');
+                if (validEl) validEl.classList.remove('warn-bg');
+                
+                // 條件 2: 無效票應在檢查值的 1.5% 以內
+                if (invalidEl && invalidVotes > checkValue * 0.015) {
+                    invalidEl.classList.add('warn-bg');
+                }
+                
+                // 條件 3: 已領未投的欄位不超過 2
+                if (issuedNotVotedEl && issuedNotVoted > 2) {
+                    issuedNotVotedEl.classList.add('warn-bg');
+                }
+                
+                // 條件 4: 用餘票應在檢查值的 35% 以內
+                if (remainingEl && remainingVotes > checkValue * 0.35) {
+                    remainingEl.classList.add('warn-bg');
+                }
+                
+                // 條件 5: 選舉人數與檢查值誤差約 100/200 票 (+-2誤差範圍) -> 警示有效票與用餘票
+                const diff = Math.abs(electors - checkValue);
+                if ((diff >= 98 && diff <= 102) || (diff >= 196 && diff <= 204)) {
+                    if (validEl) validEl.classList.add('warn-bg');
+                    if (remainingEl) remainingEl.classList.add('warn-bg');
+                }
+
+                // 條件 1: 市長選票中，特定候選人是否沒在前2名
+                if (prefix === 'mayor') {
+                    const candInputsNode = document.querySelectorAll(`.${prefix}-cand:not(.locked-empty)`);
+                    candInputsNode.forEach(input => input.classList.remove('warn-bg'));
+                    let votesArray = Array.from(candInputsNode).map(input => Number(input.value) || 0);
+                    
+                    if (votesArray.length >= 5) {
+                        // 將得票數由大到小排序，找出第二名的票數門檻
+                        let sortedVotes = [...votesArray].sort((a, b) => b - a);
+                        let threshold = sortedVotes[1]; 
+                        
+                        // 沈伯洋為 3號 (陣列索引 2)，蔣萬安為 5號 (陣列索引 4)
+                        if (votesArray[2] < threshold && candInputsNode[2]) {
+                            candInputsNode[2].classList.add('warn-bg');
+                        }
+                        if (votesArray[4] < threshold && candInputsNode[4]) {
+                            candInputsNode[4].classList.add('warn-bg');
                         }
                     }
                 }
             }
             
             // 💡 呼叫同步函數，讓主表格的計算結果與顏色瞬間折射回放大視窗中
-            syncMainToModal(prefix);
+            if (typeof syncMainToModal === 'function') {
+                syncMainToModal(prefix);
+            }
         }
     }
 

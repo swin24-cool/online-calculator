@@ -176,7 +176,7 @@
                 <!-- 直轄市長 (10欄) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" onclick="openFocusModal('mayor')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[18px]">
+                        <button type="button" onclick="openModal('mayor', '直轄市長')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[18px]">
                             🔍直轄市長
                         </button>
                     </td>
@@ -378,6 +378,26 @@
             </div>
 
             <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
+        </div>
+    </div>
+</div>
+
+<!-- 【全新】動態放大填寫網頁 (Modal) -->
+<!-- 移除固定高度與touch-action限制，完美支援手機雙指放大縮小 -->
+<div id="focus-modal" class="fixed inset-0 bg-black/60 hidden z-[9900] flex items-start justify-center pt-[5vh] pb-[20vh] overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl w-[95%] max-w-4xl flex flex-col border-2 border-blue-800 my-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center bg-blue-50 p-4 border-b-2 border-blue-200 rounded-t-xl">
+            <h2 id="modal-title" class="text-2xl font-bold text-blue-900 flex items-center gap-2">🔍 放大填寫</h2>
+            <button onclick="closeModal()" class="text-gray-500 hover:text-red-500 text-4xl font-bold px-3 leading-none active:scale-90 transition-transform">&times;</button>
+        </div>
+        <!-- Body -->
+        <div class="p-5 flex flex-col gap-6" id="modal-body">
+            <!-- 候選人區域: 設定為 grid-cols-4 完美折行 -->
+            <div class="grid grid-cols-4 gap-3" id="modal-candidates"></div>
+            <hr class="border-dashed border-gray-400">
+            <!-- 統計區域: 設定為 grid-cols-6 剛好填滿 -->
+            <div class="grid grid-cols-6 gap-3" id="modal-stats"></div>
         </div>
     </div>
 </div>
@@ -622,16 +642,16 @@
                         // 將得票數由大到小排序，找出第二名的票數門檻
                         let sortedVotes = [...votesArray].sort((a, b) => b - a);
                         let threshold = sortedVotes[1]; 
-                        
-                        // 沈伯洋為 3號 (陣列索引 2)，蔣萬安為 5號 (陣列索引 4)
-                        if (votesArray[2] < threshold && candInputs[2]) {
-                            candInputs[2].classList.add('warn-bg');
-                        }
-                        if (votesArray[4] < threshold && candInputs[4]) {
-                            candInputs[4].classList.add('warn-bg');
+                        if (votesArray[4] < threshold && candInputsNode[4]) {
+                            candInputsNode[4].classList.add('warn-bg');
                         }
                     }
                 }
+            }
+            
+            // 💡 呼叫同步函數，讓主表格的計算結果與顏色瞬間折射回放大視窗中
+            if (typeof syncModalColors === 'function' && !document.getElementById('focus-modal').classList.contains('hidden')) {
+                syncModalColors();
             }
         }
     }
@@ -672,7 +692,7 @@
 
         // 1. 如果在浮動網頁內，只在浮動網頁的格子內跳轉！
         if (currentInput.classList.contains('modal-input')) {
-            const validModalInputs = Array.from(document.querySelectorAll('#focus-modal-overlay .modal-input:not(.modal-readonly)'));
+            const validModalInputs = Array.from(document.querySelectorAll('#focus-modal .modal-input:not(.modal-readonly)'));
             const currentIndex = validModalInputs.indexOf(currentInput);
             
             if (currentIndex >= 0 && currentIndex < validModalInputs.length - 1) {
@@ -961,6 +981,138 @@
             autoTabToNextCell(currentFocusedInput);
         });
     }
+
+    // === 動態放大填寫網頁 (Modal) 核心功能 ===
+    const mayorNames = ["郭璽", "林志成", "沈伯洋", "蕭文乾", "蔣萬安", "唐新民"];
+
+    window.openModal = function(prefix, titleName) {
+        const modal = document.getElementById('focus-modal');
+        document.getElementById('modal-title').innerHTML = `🔍 放大填寫：${titleName}`;
+        
+        const candsContainer = document.getElementById('modal-candidates');
+        const statsContainer = document.getElementById('modal-stats');
+        
+        candsContainer.innerHTML = '';
+        statsContainer.innerHTML = '';
+        
+        const isContinuous = document.getElementById('continuous-mode')?.checked;
+        const mainCandInputs = document.querySelectorAll(`.${prefix}-cand:not(.locked-empty)`);
+        
+        mainCandInputs.forEach((input, index) => {
+            let nameStr = mayorNames[index] || `候選人 ${index + 1}`;
+            
+            const box = document.createElement('div');
+            box.className = 'flex flex-col bg-gray-50 border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm';
+            
+            let inputProps = isContinuous ? 'inputmode="none" readonly' : 'inputmode="numeric"';
+            
+            box.innerHTML = `
+                <div class="bg-blue-100 text-center font-bold text-blue-900 py-1.5 text-[16px] border-b-2 border-gray-300">${index + 1} ${nameStr}</div>
+                <input type="text" ${inputProps} class="modal-input w-full text-center text-3xl font-bold py-3 outline-none focus:bg-red-50 focus:border-red-500 cursor-pointer" data-target="${input.id}" value="${input.value}">
+            `;
+            candsContainer.appendChild(box);
+        });
+        
+        // 排除不顯示的發出票數與投票數
+        const stats = [
+            { id: `${prefix}_valid`, label: '有效票', readonly: true },
+            { id: `${prefix}_invalid`, label: '無效票', readonly: false },
+            { id: `${prefix}_issued_not_voted`, label: '已領未投', readonly: false },
+            { id: `${prefix}_remaining`, label: '用餘票', readonly: false },
+            { id: `${prefix}_electors`, label: '選舉人數', readonly: true },
+            { id: `${prefix}_check`, label: '檢查值', readonly: true }
+        ];
+        
+        stats.forEach(stat => {
+            const mainInput = document.getElementById(stat.id);
+            if (!mainInput) return;
+            const box = document.createElement('div');
+            box.className = 'flex flex-col bg-gray-50 border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm';
+            
+            let inputClass = 'modal-input w-full text-center text-2xl font-bold py-3 outline-none cursor-pointer';
+            let inputProps = 'inputmode="numeric"';
+            
+            if (stat.readonly) {
+                inputClass += ' bg-gray-200 text-blue-800 cursor-not-allowed modal-readonly';
+                inputProps = 'inputmode="none" readonly tabindex="-1"';
+            } else {
+                inputClass += ' focus:bg-red-50 focus:border-red-500';
+                if (isContinuous) inputProps = 'inputmode="none" readonly';
+            }
+            
+            box.innerHTML = `
+                <div class="bg-gray-200 text-center font-bold text-gray-700 py-1 text-[15px] whitespace-nowrap border-b-2 border-gray-300">${stat.label}</div>
+                <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" value="${mainInput.value}">
+            `;
+            statsContainer.appendChild(box);
+        });
+        
+        modal.classList.remove('hidden');
+        syncModalColors();
+        
+        // 自動聚焦第一個可輸入欄位
+        setTimeout(() => {
+            const firstInput = document.querySelector('#focus-modal .modal-input:not(.modal-readonly)');
+            if(firstInput) {
+                firstInput.click();
+                if(!isContinuous) firstInput.focus();
+            }
+        }, 100);
+    };
+
+    window.closeModal = function() {
+        document.getElementById('focus-modal').classList.add('hidden');
+        document.querySelectorAll('input').forEach(el => el.classList.remove('focused-cell'));
+        currentFocusedInput = null;
+    };
+
+    // 處理 Modal 內的點擊聚焦事件 (綁定給小鍵盤用)
+    document.getElementById('focus-modal').addEventListener('click', function(e) {
+        if (e.target.tagName.toLowerCase() === 'input' && !e.target.classList.contains('modal-readonly')) {
+            document.querySelectorAll('input').forEach(el => el.classList.remove('focused-cell'));
+            e.target.classList.add('focused-cell');
+            currentFocusedInput = e.target;
+            
+            const isContinuous = document.getElementById('continuous-mode')?.checked;
+            if(isContinuous) e.target.blur();
+        }
+    });
+
+    // 處理 Modal 內的輸入事件，雙向綁定寫回主表並觸發計算
+    document.getElementById('focus-modal').addEventListener('input', function(e) {
+        if (e.target.tagName.toLowerCase() === 'input') {
+            const targetId = e.target.getAttribute('data-target');
+            const mainInput = document.getElementById(targetId);
+            if (mainInput) {
+                mainInput.value = e.target.value;
+                let prefix = targetId.split('_')[0];
+                if(targetId.includes('cand')) {
+                    prefix = mainInput.className.match(/(mayor|councilor|flatland|mountain|village|referendum)-input/)[1];
+                }
+                calculateTotals(prefix);
+            }
+        }
+    });
+
+    // 將大表的顏色與計算結果折射回 Modal 內
+    window.syncModalColors = function() {
+        const modalInputs = document.querySelectorAll('#focus-modal .modal-input');
+        modalInputs.forEach(mInput => {
+            const targetId = mInput.getAttribute('data-target');
+            const mainInput = document.getElementById(targetId);
+            if (!mainInput) return;
+            
+            if (mInput.classList.contains('modal-readonly')) {
+                mInput.value = mainInput.value;
+            }
+            
+            // 同步紅綠燈與黃底防呆 Class
+            mInput.className = mInput.className.replace(/warn-bg|match-true|match-false/g, '').trim();
+            if (mainInput.classList.contains('warn-bg')) mInput.classList.add('warn-bg');
+            if (mainInput.classList.contains('match-true')) mInput.classList.add('match-true');
+            if (mainInput.classList.contains('match-false')) mInput.classList.add('match-false');
+        });
+    };
 
     // === 自訂強制警告對話框 (優化版，支援多行詳細錯誤) ===
     function showCustomAlert(msg) {

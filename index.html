@@ -37,11 +37,12 @@
         .table-wrapper { min-width: 1400px; max-height: 70vh; overflow: auto; }
         
         /* 唯讀鎖定模式設計 */
-        .table-wrapper.locked input { pointer-events: none; background-color: #f3f4f6 !important; color: #9ca3af !important; border-color: #cbd5e1 !important; }
+        .table-wrapper.locked input, .table-wrapper.locked button.modal-trigger-btn { pointer-events: none; background-color: #f3f4f6 !important; color: #9ca3af !important; border-color: #cbd5e1 !important; box-shadow: none !important; }
         .table-wrapper.locked .check-val { background-color: #f3f4f6 !important; color: #9ca3af !important; }
 
         /* 原住民無選票時的徹底鎖定設計 */
         .locked-empty { background-color: #e2e8f0 !important; pointer-events: none !important; color: transparent !important; border-color: transparent !important; }
+        button.modal-trigger-btn.locked-empty { pointer-events: none !important; background-color: #e2e8f0 !important; color: #9ca3af !important; border-color: transparent !important; box-shadow: none !important; }
 
         thead th { position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; text-align: center; }
@@ -195,8 +196,8 @@
                 <!-- 直轄市長 (10欄) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" onclick="openFocusModal('mayor')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            🔍直轄市長
+                        <button type="button" id="btn-modal-mayor" onclick="openFocusModal('mayor')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
+                            直轄市長
                         </button>
                     </td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">郭璽</div></td>
@@ -229,8 +230,8 @@
                 <!-- 區域議員 (2列，14人) -->
                 <tr>
                     <td colspan="2" rowspan="4" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" onclick="openFocusModal('councilor')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            🔍區域議員
+                        <button type="button" id="btn-modal-councilor" onclick="openFocusModal('councilor')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
+                            區域議員
                         </button>
                     </td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">張延廷</div></td>
@@ -283,8 +284,8 @@
                 <!-- 平地原住民議員 (2人) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" onclick="openFocusModal('flatland')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-1 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[14px] whitespace-nowrap">
-                            🔍平地原住民
+                        <button type="button" id="btn-modal-flatland" onclick="openFocusModal('flatland')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-1 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[14px] whitespace-nowrap">
+                            平地原住民
                         </button>
                     </td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">李芳儒</div></td>
@@ -309,8 +310,8 @@
                 <!-- 山地原住民議員 (3人) -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" onclick="openFocusModal('mountain')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-1 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[14px] whitespace-nowrap">
-                            🔍山地原住民
+                        <button type="button" id="btn-modal-mountain" onclick="openFocusModal('mountain')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-1 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[14px] whitespace-nowrap">
+                            山地原住民
                         </button>
                     </td>
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">林家豪</div></td>
@@ -337,8 +338,8 @@
                 <!-- 里長 (動態寫入，預設防塌陷假資料) -->
                 <tr id="village-row-header">
                     <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" onclick="openFocusModal('village')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            🔍里長
+                        <button type="button" id="btn-modal-village" onclick="openFocusModal('village')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
+                            里長
                         </button>
                     </td>
                     <td class="candidate-cell village-name-cell"><div class="cand-number">1</div><div class="cand-name text-gray-400">AAA</div></td>
@@ -363,8 +364,8 @@
                 <!-- 公投 -->
                 <tr>
                     <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px; vertical-align: middle; padding: 4px;">
-                        <button type="button" onclick="openFocusModal('referendum')" class="bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            🔍公投
+                        <button type="button" id="btn-modal-referendum" onclick="openFocusModal('referendum')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
+                            公投
                         </button>
                     </td>
                     <td class="candidate-cell"><div class="cand-name text-lg">同意</div></td>
@@ -597,11 +598,15 @@
                 document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
                     if (el.tagName === 'INPUT') { el.value = ""; el.classList.add('locked-empty'); el.setAttribute('tabindex', '-1'); }
                 });
+                const btn = document.getElementById(`btn-modal-${type}`);
+                if (btn) btn.classList.add('locked-empty');
             } else {
                 if (checkEl) { checkEl.value = val; checkEl.classList.remove('locked-empty'); }
                 document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
                     if (el.tagName === 'INPUT') { el.classList.remove('locked-empty'); el.removeAttribute('tabindex'); }
                 });
+                const btn = document.getElementById(`btn-modal-${type}`);
+                if (btn) btn.classList.remove('locked-empty');
             }
         });
 
@@ -750,7 +755,7 @@
             
             box.innerHTML = `
                 <div class="bg-blue-100 text-center font-bold text-blue-900 py-1.5 text-[16px] border-b-2 border-gray-300">${displayName}</div>
-                <input type="text" ${inputProps} class="modal-input w-full text-center text-3xl font-bold py-3 outline-none focus:bg-red-50 focus:border-red-500 cursor-pointer fm-input" data-target="${mainInput.id}" id="fm_${mainInput.id}">
+                <input type="text" ${inputProps} class="modal-input w-full text-center text-3xl font-bold py-3 outline-none focus:bg-red-50 focus:border-red-500 cursor-pointer fm-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
             `;
             candContainer.appendChild(box);
         });

@@ -464,7 +464,7 @@
     const imgElement = document.getElementById('report-img');
     const imgContainer = document.getElementById('img-container');
     const loadingMsg = document.getElementById('loading-msg');
-    let scale = 1, posX = 0, posY = 0, isPanning = false, startX, startY;
+    let scale = 1, posX = 0, posY = 0, imgAngle = 0, isPanning = false, startX, startY;
 
     async function loadCanvasImage(stationId, type) {
         imgElement.style.display = 'none';
@@ -481,6 +481,7 @@
                     imgElement.style.display = 'block';
                     scale = imgContainer.clientWidth / imgElement.naturalWidth;
                     if(scale > 1) scale = 1; 
+                    imgAngle = 0; // 載入新圖時重置角度
                     updateTransform();
                 };
             } else { loadingMsg.textContent = "❌ 找不到圖檔"; }
@@ -488,14 +489,32 @@
     }
 
     function zoom(factor) { scale *= factor; updateTransform(); }
-    function resetZoom() { scale = imgContainer.clientWidth / imgElement.naturalWidth; posX = 0; posY = 0; updateTransform(); }
-    function updateTransform() { imgElement.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
+    
+    // 新增：旋轉微調邏輯
+    function rotateImg(dir) {
+        const deg = Number(document.getElementById('rotate-deg').value) || 1;
+        if (dir === 'cw') imgAngle += deg;
+        else imgAngle -= deg;
+        updateTransform();
+    }
+    
+    function resetZoom() { 
+        scale = imgContainer.clientWidth / imgElement.naturalWidth; 
+        if(scale > 1) scale = 1;
+        posX = 0; posY = 0; imgAngle = 0; 
+        updateTransform(); 
+    }
+    
+    function updateTransform() { 
+        imgElement.style.transform = `translate(${posX}px, ${posY}px) scale(${scale}) rotate(${imgAngle}deg)`; 
+    }
 
     imgContainer.addEventListener('wheel', (e) => { e.preventDefault(); zoom(e.deltaY > 0 ? 0.9 : 1.1); });
     
     // 支援手機端觸控拖曳 Canvas 圖片
     imgContainer.addEventListener('pointerdown', (e) => { 
-        if (e.target.closest('.zoom-btn')) return;
+        // 避免點擊按鈕或輸入框時觸發圖片拖曳
+        if (e.target.closest('.zoom-btn') || e.target.closest('input')) return;
         isPanning = true; 
         startX = e.clientX - posX; 
         startY = e.clientY - posY; 

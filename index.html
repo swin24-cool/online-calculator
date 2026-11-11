@@ -49,8 +49,6 @@
         th, td { border: 1px solid #333; padding: 4px; font-size: 14px; }
         th { background-color: #f9fafb; font-weight: bold; }
         
-        .row-header { font-size: 18px; font-weight: bold; text-align: center; white-space: nowrap; padding: 0 10px; }
-        
         /* ==== 候選人欄位排版優化 (水平並排) ==== */
         .candidate-cell { min-width: 70px; height: 38px; vertical-align: middle; text-align: center; white-space: nowrap; }
         .cand-number { display: inline-block; font-size: 13px; font-weight: normal; color: #6b7280; margin-right: 4px; vertical-align: middle; }
@@ -59,9 +57,9 @@
         /* ==== 填寫欄位視覺升級 ==== */
         input[type="text"][inputmode="numeric"], input[type="text"][inputmode="none"] {
             width: 100%; height: 100%; min-height: 36px; box-sizing: border-box; text-align: right;
-            border: 1px solid #94a3b8; /* 加入明顯邊框 */
-            background-color: #ffffff; /* 確保內部白底 */
-            border-radius: 6px;        /* 圓角設計 */
+            border: 1px solid #94a3b8;
+            background-color: #ffffff;
+            border-radius: 6px;
             font-size: 18px; font-weight: bold;
             font-family: monospace; padding-right: 6px; transition: all 0.2s; cursor: pointer;
         }
@@ -74,11 +72,11 @@
         input.stats-input[readonly] { background-color: transparent !important; border: 1px solid transparent !important; }
         input.stats-input[readonly]:focus { outline: none !important; border: 1px solid transparent !important; background-color: transparent !important; }
 
-        /* 強制蓋過所有背景的全局狀態顏色 (主表與 Modal 皆生效，採用最強跨瀏覽器相容寫法) */
+        /* 強制蓋過所有背景的紅綠燈狀態顏色 (主表與 Modal 檢查值皆生效) */
         input.stats-input[readonly].match-true, input.check-val.match-true, input.modal-input.match-true { background-color: rgb(37, 249, 44) !important; color: #000000 !important; }
         input.stats-input[readonly].match-false, input.check-val.match-false, input.modal-input.match-false { background-color: rgb(247, 123, 138) !important; color: #000000 !important; }
         
-        /* 防呆黃色警示背景 */
+        /* 防呆黃色警示背景 (限制只在主表發亮，浮動視窗不受影響) */
         input.warn-bg, input.stats-input[readonly].warn-bg { background-color: #fef08a !important; color: #b91c1c !important; transition: background-color 0.3s; }
 
         .empty-cell { background-color: #fdfdfd; }
@@ -90,8 +88,8 @@
         .btn-green { background-color: #bbf7d0; color: #166534; }
 
         /* === 新增：放大視窗 (Focus Modal) 樣式 === */
-        /* 移除 touch-action: none，改為外層 overlay 負責滾動，完美解放雙指縮放與點擊 */
-        .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: flex-start; justify-content: center; backdrop-filter: blur(3px); overflow-y: auto; padding-top: 5vh; padding-bottom: 20vh; }
+        /* 移除 touch-action: none，改為外層 overlay 負責滾動，完美解放雙指縮放 */
+        .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: flex-start; justify-content: center; backdrop-filter: blur(3px); padding-top: 5vh; padding-bottom: 20vh; overflow-y: auto; }
         .focus-modal-content { background: white; width: 96vw; max-width: 900px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 4px solid #3b82f6; display: flex; flex-direction: column; margin: auto; }
         .focus-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #eff6ff; border-bottom: 2px solid #bfdbfe; border-radius: 8px 8px 0 0; }
         .focus-modal-title { font-size: 24px; font-weight: 900; color: #1e3a8a; display: flex; align-items: center; gap: 10px; }
@@ -172,7 +170,7 @@
         <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
         <span class="warning-text">輸入票所編號(1282-1419)後才可試算！</span>
         
-        <!-- 合併後的標題列，優化手機端靠右切齊 -->
+        <!-- 新增：合併後的標題列，優化手機端靠右切齊 -->
         <div class="w-full sm:w-auto sm:ml-auto text-right font-bold text-gray-800 text-[16px] tracking-wide mt-2 sm:mt-0 whitespace-nowrap">
             115年地方公職暨公投選舉(萬華區)&nbsp;&nbsp;&nbsp;&nbsp;<span id="display-date">115.11.28</span>
         </div>
@@ -420,7 +418,16 @@
                 </div>
             </div>
 
-            <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
+            <!-- 傳送與查看結果按鈕區 -->
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
+                
+                <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
+                    <!-- 永久停駐的成功提示文字 -->
+                    <span id="submit-success-text" class="text-red-600 font-black text-xl hidden absolute" style="top: -35px; white-space: nowrap; text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; letter-spacing: 2px;">傳送成功！</span>
+                    <button type="button" onclick="window.open('https://news.google.com', '_blank')" class="action-btn" style="height: 40px; margin-bottom: 2px; background-color: #f1f5f9; border: 2px solid #0f172a; color: #0f172a;">查看結果</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -496,6 +503,12 @@
         'referendum': ['同意', '不同意']
     };
 
+    // 隱藏成功訊息的共用函數
+    function hideSuccessMessage() {
+        const successText = document.getElementById('submit-success-text');
+        if (successText) successText.classList.add('hidden');
+    }
+
     // === 初始化與預先載入 (Bulk Caching) ===
     window.addEventListener('DOMContentLoaded', () => {
         
@@ -536,12 +549,13 @@
     }
 
     function triggerLoadStation() {
+        hideSuccessMessage(); // 載入新票所時隱藏成功訊息
         const inputId = stationIdInput.value.trim();
         if (inputId.length >= 4) {
             loadStationById(inputId);
         } else {
             showToast('⚠️ 請輸入完整的票所編號');
-            // 移除原本在這裡的 lockTableStructure()，避免輸入未滿4碼時強制鎖定
+            lockTableStructure();
         }
     }
 
@@ -611,7 +625,6 @@
         
         types.forEach(type => {
             const checkEl = document.getElementById(`${type}_check`);
-            // 加上安全防護，避免找不到 checkValues 時當機
             const val = data.checkValues ? data.checkValues[type] : 0;
             
             // 統一防呆邏輯：只要該票所該選票檢查值為 0 或沒有值，一律徹底鎖定反灰該區域
@@ -1144,42 +1157,6 @@
         });
     });
 
-    if(document.getElementById('vk-del-left')) {
-        document.getElementById('vk-del-left').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!currentFocusedInput) return;
-            let currentVal = currentFocusedInput.value;
-            let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
-            let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
-            if (start === end && start > 0) {
-                currentFocusedInput.value = currentVal.slice(0, start - 1) + currentVal.slice(start);
-                try { currentFocusedInput.setSelectionRange(start - 1, start - 1); } catch(err) {}
-            } else if (start !== end) {
-                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
-                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
-            }
-            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-    }
-
-    if(document.getElementById('vk-del-right')) {
-        document.getElementById('vk-del-right').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!currentFocusedInput) return;
-            let currentVal = currentFocusedInput.value;
-            let start = (currentFocusedInput.selectionStart !== null && currentFocusedInput.selectionStart !== undefined) ? currentFocusedInput.selectionStart : currentVal.length;
-            let end = (currentFocusedInput.selectionEnd !== null && currentFocusedInput.selectionEnd !== undefined) ? currentFocusedInput.selectionEnd : currentVal.length;
-            if (start === end && start < currentVal.length) {
-                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(start + 1);
-                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
-            } else if (start !== end) {
-                currentFocusedInput.value = currentVal.slice(0, start) + currentVal.slice(end);
-                try { currentFocusedInput.setSelectionRange(start, start); } catch(err) {}
-            }
-            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-    }
-    
     if(document.getElementById('vk-clear')) {
         document.getElementById('vk-clear').addEventListener('click', (e) => {
             e.preventDefault();
@@ -1334,6 +1311,7 @@
 
             const submitBtn = document.getElementById('btn-submit');
             submitBtn.textContent = "傳送中(含圖檔)..."; submitBtn.disabled = true;
+            hideSuccessMessage(); // 重新傳送時先隱藏提示
 
             (async () => {
                 try {
@@ -1356,8 +1334,13 @@
                     const data = await res.json();
                     
                     if (data.status === 'success') {
-                        if (data.message.includes('⚠️')) showCustomAlert(data.message);
-                        else showToast(data.message, 4000);
+                        if (data.message.includes('⚠️')) {
+                            showCustomAlert(data.message);
+                        } else {
+                            showToast(data.message, 4000);
+                            // 💡 新增：成功後顯示永久停駐的成功文字
+                            document.getElementById('submit-success-text').classList.remove('hidden');
+                        }
                     } else {
                         showCustomAlert("❌ 傳送失敗：\n" + data.message);
                     }
@@ -1394,6 +1377,8 @@
             
             clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');
             clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref');
+            
+            hideSuccessMessage(); // 清除全部時隱藏成功訊息
         });
     }
 

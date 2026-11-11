@@ -54,13 +54,14 @@
         .zoom-btn { background: white; border: 1px solid #94a3b8; border-radius: 6px; width: 36px; height: 36px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .zoom-btn:active { background: #e2e8f0; }
 
-        /* 數據表格樣式 */
+        /* 數據表格樣式與紅綠燈 */
         table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
         th, td { border: 1px solid #94a3b8; padding: 4px; font-size: 13px; }
         th { background-color: #f1f5f9; font-weight: bold; position: sticky; top: 0; z-index: 5; }
         .row-header { font-weight: bold; background: #f8fafc; font-size: 15px; }
         .val-cell { font-family: monospace; font-size: 15px; font-weight: bold; color: #0f172a; min-width: 40px; }
         .check-cell { background-color: #f8fafc; color: #1e3a8a; }
+        .check-ok { background-color: #dcfce7 !important; color: #166534 !important; }
         .err-cell { background-color: #fee2e2 !important; color: #dc2626 !important; }
 
         /* 列印專用隱藏區塊 */
@@ -131,11 +132,24 @@
             
             <div class="canvas-container" id="img-container">
                 <div id="loading-msg" class="absolute inset-0 flex items-center justify-center font-bold text-gray-500 hidden text-xl bg-gray-200 bg-opacity-70 z-10">載入影像中，請稍候...</div>
-                <img id="report-img" src="" style="display:none;">
+                
+                <!-- 新增：draggable="false" 防呆干擾原生拖拉 -->
+                <img id="report-img" src="" style="display:none;" draggable="false">
+                
                 <div class="zoom-controls">
-                    <button class="zoom-btn" onclick="zoom(1.2)">+</button>
-                    <button class="zoom-btn" onclick="zoom(0.8)">-</button>
-                    <button class="zoom-btn" onclick="resetZoom()" style="font-size: 14px;">↺</button>
+                    <button class="zoom-btn" onclick="zoom(1.2)" title="放大">+</button>
+                    <button class="zoom-btn" onclick="zoom(0.8)" title="縮小">-</button>
+                    <button class="zoom-btn" onclick="resetZoom()" style="font-size: 14px;" title="重置">↺</button>
+                    
+                    <!-- 新增：旋轉微調控制面板 -->
+                    <div class="flex flex-col items-center mt-2 gap-1 bg-white p-1.5 border border-slate-400 rounded-lg shadow">
+                        <span class="text-[11px] font-bold text-slate-500">旋轉微調</span>
+                        <input type="number" id="rotate-deg" value="1" min="1" max="90" class="w-10 text-center border border-slate-300 rounded text-[13px] font-bold font-mono">
+                        <div class="flex gap-1 mt-1">
+                            <button class="zoom-btn !w-7 !h-7 text-sm !border-slate-300 bg-slate-100" onclick="rotateImg('ccw')" title="逆時針">↶</button>
+                            <button class="zoom-btn !w-7 !h-7 text-sm !border-slate-300 bg-slate-100" onclick="rotateImg('cw')" title="順時針">↷</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -383,27 +397,57 @@
             if (item.records && item.records[type]) {
                 const rec = item.records[type];
                 let candsHtml = '';
+                let candSum = 0;
+                
                 for(let i=0; i<14; i++) {
                     let val = rec.candidates[i];
+                    if (val && !isNaN(val)) candSum += Number(val);
                     candsHtml += `<td class="val-cell ${val ? '' : 'bg-gray-100'}">${val || ''}</td>`;
                 }
 
+                // 取得各項數值
+                let valid = Number(rec.stats.valid || 0);
+                let invalid = Number(rec.stats.invalid || 0);
+                let total = Number(rec.stats.total || 0);
+                let issuedNotVoted = Number(rec.stats.issuedNotVoted || 0);
+                let issued = Number(rec.stats.issued || 0);
+                let remaining = Number(rec.stats.remaining || 0);
                 let electors = Number(rec.stats.electors || 0);
                 let checkVal = Number(rec.stats.check || 0);
-                let checkClass = (electors !== checkVal || checkVal === 0) ? 'err-cell' : 'text-green-700';
+
+                let hasData = (checkVal > 0);
+                
+                // 四大檢核邏輯與紅綠燈判定
+                let classValid = 'check-cell';
+                let classTotal = 'check-cell';
+                let classIssued = 'check-cell';
+                let classCheck = 'check-cell';
+
+                if (hasData) {
+                    classValid = (candSum === valid) ? 'check-ok' : 'err-cell';
+                    classTotal = (valid + invalid === total) ? 'check-ok' : 'err-cell';
+                    classIssued = (total + issuedNotVoted === issued) ? 'check-ok' : 'err-cell';
+                    classCheck = (electors === checkVal) ? 'check-ok' : 'err-cell';
+                } else if (valid > 0 || total > 0 || issued > 0) {
+                    // 若沒有抓到 check 檢查值，但底下有打票數的例外防護
+                    classValid = (candSum === valid) ? 'check-ok' : 'err-cell';
+                    classTotal = (valid + invalid === total) ? 'check-ok' : 'err-cell';
+                    classIssued = (total + issuedNotVoted === issued) ? 'check-ok' : 'err-cell';
+                    classCheck = 'err-cell'; 
+                }
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td colspan="2" class="row-header">${type}</td>
                     ${candsHtml}
-                    <td class="val-cell check-cell">${rec.stats.valid}</td>
+                    <td class="val-cell font-bold ${classValid}">${rec.stats.valid}</td>
                     <td class="val-cell check-cell">${rec.stats.invalid}</td>
-                    <td class="val-cell check-cell">${rec.stats.total}</td>
+                    <td class="val-cell font-bold ${classTotal}">${rec.stats.total}</td>
                     <td class="val-cell check-cell">${rec.stats.issuedNotVoted}</td>
-                    <td class="val-cell check-cell">${rec.stats.issued}</td>
+                    <td class="val-cell font-bold ${classIssued}">${rec.stats.issued}</td>
                     <td class="val-cell check-cell">${rec.stats.remaining}</td>
                     <td class="val-cell check-cell">${rec.stats.electors}</td>
-                    <td class="val-cell font-bold ${checkClass}">${rec.stats.check}</td>
+                    <td class="val-cell font-bold ${classCheck}">${rec.stats.check}</td>
                 `;
                 tbody.appendChild(tr);
             }

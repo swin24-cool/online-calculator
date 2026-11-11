@@ -76,8 +76,8 @@
         input.stats-input[readonly].match-true, input.check-val.match-true, input.modal-input.match-true { background-color: rgb(37, 249, 44) !important; color: #000000 !important; }
         input.stats-input[readonly].match-false, input.check-val.match-false, input.modal-input.match-false { background-color: rgb(247, 123, 138) !important; color: #000000 !important; }
         
-        /* 防呆黃色警示背景 (限制只在主表發亮，浮動視窗不受影響) */
-        input.warn-bg, input.stats-input[readonly].warn-bg { background-color: #fef08a !important; color: #b91c1c !important; transition: background-color 0.3s; }
+        /* 防呆黃色警示背景 (主表與浮動視窗皆連動發亮) */
+        input.warn-bg, input.stats-input[readonly].warn-bg, input.modal-input.warn-bg { background-color: #fef08a !important; color: #b91c1c !important; transition: background-color 0.3s; }
 
         .empty-cell { background-color: #fdfdfd; }
         
@@ -418,8 +418,8 @@
                 </div>
             </div>
 
-            <!-- 傳送與查看結果按鈕區 -->
-            <div style="display: flex; gap: 10px; align-items: flex-end;">
+            <!-- 傳送與查看結果按鈕區 (加大間距為 30px) -->
+            <div style="display: flex; gap: 30px; align-items: flex-end;">
                 <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
                 
                 <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
@@ -882,6 +882,13 @@
             const fmInput = document.getElementById(`fm_${mainInput.id}`);
             if (fmInput) {
                 if (fmInput.classList.contains('modal-readonly')) fmInput.value = mainInput.value;
+                
+                // 同步黃色警示
+                if (mainInput.classList.contains('warn-bg')) {
+                    fmInput.classList.add('warn-bg');
+                } else {
+                    fmInput.classList.remove('warn-bg');
+                }
             }
         });
         
@@ -899,9 +906,14 @@
                 
                 // 重置樣式
                 fmInput.style.backgroundColor = 'transparent'; fmInput.style.color = '';
-                fmInput.classList.remove('match-true', 'match-false');
+                fmInput.classList.remove('match-true', 'match-false', 'warn-bg');
                 
-                // 同步檢查值紅綠燈 (浮動視窗中不顯示黃色警告，只顯示紅綠燈)
+                // 同步黃色警示
+                if (mainInput.classList.contains('warn-bg')) {
+                    fmInput.classList.add('warn-bg');
+                }
+                
+                // 同步檢查值紅綠燈
                 if (field === 'check') {
                     if (mainInput.classList.contains('match-true')) {
                         fmInput.classList.add('match-true');

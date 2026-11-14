@@ -3,55 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>萬華區選務計票後端調閱系統</title>
+    <title>計票中心 - 後端調閱系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif; background-color: #f1f5f9; height: 100vh; overflow: hidden; margin: 0; }
-        .top-bar { background-color: #1e293b; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); z-index: 10; flex-shrink: 0; }
-        .main-container { display: flex; flex: 1; height: calc(100vh - 60px); overflow: hidden; }
-        .sidebar { width: 320px; background-color: white; border-right: 1px solid #cbd5e1; display: flex; flex-direction: column; z-index: 5; }
-        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: #f8fafc; }
+        body { font-family: 'Helvetica Neue', Helvetica, 'PingFang TC', '微軟正黑體', sans-serif; background-color: #f1f5f9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; margin: 0;}
         
-        .tab-container { display: flex; border-bottom: 2px solid #e2e8f0; }
-        .tab { flex: 1; text-align: center; padding: 12px; font-weight: bold; cursor: pointer; color: #64748b; background-color: #f8fafc; transition: all 0.2s; }
-        .tab.active { background-color: #1e293b; color: white; border-bottom: 2px solid #3b82f6; }
+        /* 頂部列 */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: white; border-bottom: 2px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); z-index: 10; }
         
-        .list-container { flex: 1; overflow-y: auto; padding: 10px; }
-        .list-item { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s, border-color 0.2s; }
-        .list-item:hover { border-color: #94a3b8; transform: translateY(-1px); }
-        .list-item.active { border-color: #3b82f6; background-color: #eff6ff; box-shadow: 0 0 0 1px #3b82f6; }
-        .list-item.status-green { border-left: 6px solid #10b981; }
-        .list-item.status-yellow { border-left: 6px solid #eab308; }
-        .list-item.status-red { border-left: 6px solid #ef4444; }
+        /* 主要版面分割 */
+        .main-content { display: flex; flex-direction: column; flex: 1; overflow: hidden; padding: 10px 15px; gap: 8px; }
+        .top-section { display: flex; flex: 0 0 45%; gap: 10px; min-height: 250px; }
+        .bottom-section { flex: 1; background: white; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: auto; padding: 10px; }
         
-        .data-panel { height: 40%; background: white; border-bottom: 2px solid #cbd5e1; overflow-y: auto; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); z-index: 2; flex-shrink: 0; }
-        .image-panel { flex: 1; background: #e2e8f0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        /* 可拉動的分隔線 (水平與垂直) - 支援手機觸控 */
+        .resizer-h {
+            height: 10px; background-color: #cbd5e1; cursor: row-resize; border-radius: 4px; 
+            display: flex; justify-content: center; align-items: center; transition: background-color 0.2s;
+            touch-action: none; /* 防止拖曳時觸發手機頁面滾動 */
+        }
+        .resizer-h::after { content: '===='; color: #64748b; font-size: 14px; letter-spacing: 2px; }
+        .resizer-h:hover, .resizer-h:active { background-color: #94a3b8; }
+
+        .resizer-v {
+            width: 10px; background-color: #cbd5e1; cursor: col-resize; border-radius: 4px;
+            display: flex; justify-content: center; align-items: center; transition: background-color 0.2s;
+            touch-action: none;
+        }
+        .resizer-v::after { content: '⋮'; color: #64748b; font-size: 20px; font-weight: bold; }
+        .resizer-v:hover, .resizer-v:active { background-color: #94a3b8; }
+
+        /* 區塊樣式 */
+        .canvas-area { flex: 2; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; min-width: 250px; }
+        .lists-area { flex: 1; display: flex; gap: 10px; min-width: 300px; }
+        .list-box { flex: 1; background: white; border-radius: 8px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
         
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; background: white; }
-        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: center; font-size: 14px; }
-        th { background-color: #f1f5f9; font-weight: bold; color: #334155; }
-        .highlight-cell { font-weight: bold; color: #0f172a; }
-        .bg-green-100 { background-color: #d1fae5 !important; }
+        /* 狀態徽章 */
+        .badge { padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; min-width: 20px; }
+        .badge-err { background-color: #ef4444; }
+        .badge-warn { background-color: #eab308; }
+        .badge-ok1 { background-color: #22c55e; }
+        .badge-ok2 { background-color: #16a34a; }
         
-        .toolbar { padding: 10px; background: rgba(255,255,255,0.9); border-bottom: 1px solid #cbd5e1; display: flex; gap: 10px; align-items: center; z-index: 10; backdrop-filter: blur(4px); }
-        .canvas-container { flex: 1; overflow: auto; position: relative; display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
-        #reportImage { max-width: none; transform-origin: top center; transition: transform 0.1s ease-out; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        
-        .btn { padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; border: 1px solid transparent; transition: all 0.15s; }
-        .btn-blue { background-color: #3b82f6; color: white; }
-        .btn-blue:hover { background-color: #2563eb; }
-        .btn-gray { background-color: #e2e8f0; color: #334155; border-color: #cbd5e1; }
-        .btn-gray:hover { background-color: #cbd5e1; }
-        .btn-red { background-color: #ef4444; color: white; }
-        .btn-red:hover { background-color: #dc2626; }
-        
-        /* 提示泡泡 */
+        /* Canvas 控制區 */
+        .canvas-toolbar { padding: 10px; background: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; }
+        .canvas-container { flex: 1; overflow: hidden; position: relative; background: #e2e8f0; cursor: grab; touch-action: none; }
+        .canvas-container:active { cursor: grabbing; }
+        /* 修正：將基準點改為中心，並設定置中對齊 */
+        #report-img { position: absolute; top: 50%; left: 50%; transform-origin: center center; transition: transform 0.1s ease-out; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        .zoom-controls { position: absolute; right: 15px; top: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
+        .zoom-btn { background: white; border: 1px solid #94a3b8; border-radius: 6px; width: 36px; height: 36px; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .zoom-btn:active { background: #e2e8f0; }
+
+        /* 數據表格樣式與紅綠燈 */
+        table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
+        th, td { border: 1px solid #94a3b8; padding: 4px; font-size: 13px; }
+        th { background-color: #f1f5f9; font-weight: bold; position: sticky; top: 0; z-index: 5; }
+        .row-header { font-weight: bold; background: #f8fafc; font-size: 15px; }
+        .val-cell { font-family: monospace; font-size: 15px; font-weight: bold; color: #0f172a; min-width: 40px; }
+        .check-cell { background-color: #f8fafc; color: #1e3a8a; }
+        /* 修正：加深顏色改為深底白字 */
+        .check-ok { background-color: #16a34a !important; color: #ffffff !important; }
+        .err-cell { background-color: #dc2626 !important; color: #ffffff !important; }
+
+        /* 列印專用隱藏區塊 */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+            #print-area img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+            @page { size: A3 landscape; margin: 0; }
+        }
+
+        /* 提示框 */
         .toast-msg { position: fixed; bottom: 30px; right: 30px; background-color: rgba(30, 41, 59, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 16px; opacity: 0; transition: opacity 0.3s; z-index: 10002; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: bold; }
         .toast-msg.show { opacity: 1; }
 
-        /* 登入視窗與背景遮罩 */
-        #login-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
-        .login-box { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: 100%; max-width: 380px; text-align: center; }
+        /* 🔒 新增：密碼登入遮罩，絕對置頂 */
+        #login-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
+        .login-box { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: 100%; max-width: 380px; text-align: center; border: 4px solid #3b82f6; }
     </style>
 </head>
 <body>
@@ -69,23 +99,23 @@
     </div>
 </div>
 
-<!-- 主要內容 (驗證成功前隱藏) -->
-<div id="app-wrapper" class="flex flex-col h-full opacity-0 pointer-events-none transition-opacity duration-500">
+<!-- 💡 使用 app-wrapper 完美包覆原始佈局，不干擾 Flex 設定 -->
+<div id="app-wrapper" style="display:none; flex-direction:column; flex:1; height:100%; width:100%; overflow:hidden;">
     <div class="top-bar">
-        <div class="text-xl font-bold tracking-wider">📊 萬華區選務計票 後端調閱系統</div>
-        <div class="flex gap-4 items-center">
-            <label class="font-bold text-sm text-slate-300">目前帳號身分：</label>
-            <!-- 💡 調整後的管理者清單 -->
-            <select id="user-role" class="border border-gray-400 rounded px-3 py-1 font-bold text-slate-800 bg-white">
+        <h1 class="text-xl font-bold text-gray-800">📊 後端 Canvas 調閱系統</h1>
+        <div class="flex items-center gap-3">
+            <label class="font-bold text-gray-600">目前帳號身分：</label>
+            <!-- 💡 更新：縮減為3位管理員，並修改提示字眼 -->
+            <select id="user-role" class="border border-gray-400 rounded px-3 py-1 font-bold bg-white">
                 <option value="">-- 請選擇身分 --</option>
                 <optgroup label="檢核人員 (可鎖定與檢核)">
-                    <option value="檢核人員 A">檢核人員 A</option>
-                    <option value="檢核人員 B">檢核人員 B</option>
-                    <option value="檢核人員 C">檢核人員 C</option>
-                    <option value="檢核人員 D">檢核人員 D</option>
-                    <option value="檢核人員 E">檢核人員 E</option>
-                    <option value="檢核人員 F">檢核人員 F</option>
-                    <option value="檢核人員 G">檢核人員 G</option>
+                    <option value="A">檢核人員 A</option>
+                    <option value="B">檢核人員 B</option>
+                    <option value="C">檢核人員 C</option>
+                    <option value="D">檢核人員 D</option>
+                    <option value="E">檢核人員 E</option>
+                    <option value="F">檢核人員 F</option>
+                    <option value="G">檢核人員 G</option>
                 </optgroup>
                 <optgroup label="系統管理者 (僅可強制解鎖)">
                     <option value="AdminX">管理員 X</option>
@@ -93,69 +123,106 @@
                     <option value="AdminZ">管理員 Z</option>
                 </optgroup>
             </select>
-            <button type="button" onclick="fetchListData(false)" class="bg-blue-600 border border-blue-400 px-4 py-1 rounded hover:bg-blue-500 font-bold shadow-sm text-white">🔄 重新載入清單</button>
+            <button type="button" onclick="fetchListData(false)" class="bg-blue-100 border border-blue-400 px-3 py-1 rounded hover:bg-blue-200 font-bold shadow-sm">🔄 重新載入清單</button>
         </div>
     </div>
 
-    <div class="main-container">
-        <!-- 左側清單 -->
-        <div class="sidebar">
-            <div class="tab-container">
-                <div class="tab active" id="tab-gov" onclick="switchTab('gov')">公職報表</div>
-                <div class="tab" id="tab-ref" onclick="switchTab('ref')">公投報表</div>
+    <div class="main-content">
+        <!-- 上半部 (包含圖檔區、垂直分隔線、清單區) -->
+        <div class="top-section" id="top-section">
+            <!-- Canvas 看圖區 -->
+            <div class="canvas-area" id="canvas-area">
+                <div class="canvas-toolbar">
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-gray-600">調閱票所：</span>
+                        <input type="text" id="current-station" class="border border-gray-300 rounded px-2 py-1 w-24 bg-gray-100 text-center font-bold text-blue-900" readonly placeholder="尚未選擇">
+                        <button type="button" onclick="printReport()" class="bg-green-600 text-white font-bold px-4 py-1 rounded hover:bg-green-700 flex items-center gap-1 shadow-sm">🖨️ 列印(A3)</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-gray-600">檢核判定：</span>
+                        <select id="status-select" class="border border-gray-400 rounded px-2 py-1 font-bold">
+                            <option value="">-- 尚未判定 --</option>
+                            <option value="數字有誤(紅)">數字有誤(紅)</option>
+                            <option value="待補正(黃)">待補正(黃)</option>
+                            <option value="一聯報表ok(綠)">一聯報表ok(綠)</option>
+                            <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
+                        </select>
+                        <button type="button" onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
+                        <!-- 強制解鎖按鈕 -->
+                        <button type="button" onclick="unlockRecord()" id="btn-unlock" class="bg-red-500 text-white font-bold px-3 py-1 rounded hover:bg-red-600 shadow-sm hidden">🔒強制解鎖</button>
+                    </div>
+                </div>
+                
+                <div class="canvas-container" id="img-container">
+                    <div id="loading-msg" class="absolute inset-0 flex items-center justify-center font-bold text-gray-500 hidden text-xl bg-gray-200 bg-opacity-70 z-10">載入影像中，請稍候...</div>
+                    
+                    <!-- 新增：draggable="false" 防呆干擾原生拖拉 -->
+                    <img id="report-img" src="" style="display:none;" draggable="false">
+                    
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoom(1.2)" title="放大">+</button>
+                        <button class="zoom-btn" onclick="zoom(0.8)" title="縮小">-</button>
+                        <button class="zoom-btn" onclick="resetZoom()" style="font-size: 14px;" title="重置">↺</button>
+                        
+                        <!-- 新增：旋轉微調控制面板 -->
+                        <div class="flex flex-col items-center mt-2 gap-1 bg-white p-1.5 border border-slate-400 rounded-lg shadow">
+                            <span class="text-[11px] font-bold text-slate-500">旋轉微調</span>
+                            <input type="number" id="rotate-deg" value="1" min="1" max="90" class="w-10 text-center border border-slate-300 rounded text-[13px] font-bold font-mono">
+                            <div class="flex gap-1 mt-1">
+                                <button class="zoom-btn !w-7 !h-7 text-sm !border-slate-300 bg-slate-100" onclick="rotateImg('ccw')" title="逆時針">↶</button>
+                                <button class="zoom-btn !w-7 !h-7 text-sm !border-slate-300 bg-slate-100" onclick="rotateImg('cw')" title="順時針">↷</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <!-- 公職清單 -->
-            <div class="list-container" id="list-gov">
-                <div class="text-center text-slate-400 py-10 font-bold">載入中...</div>
-            </div>
-            
-            <!-- 公投清單 -->
-            <div class="list-container hidden" id="list-ref">
-                <div class="text-center text-slate-400 py-10 font-bold">載入中...</div>
+
+            <!-- 垂直分隔線 (調整左右) -->
+            <div class="resizer-v" id="resizer-v" title="左右拖曳以調整版面寬度"></div>
+
+            <!-- 清單區 -->
+            <div class="lists-area">
+                <!-- 公職清單 -->
+                <div class="list-box">
+                    <div class="bg-slate-800 text-white p-2 text-center font-bold text-sm">已回傳報表清單 (公職)</div>
+                    <div id="header-gov" class="grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
+                    </div>
+                    <div class="flex-1 overflow-y-auto bg-white" id="list-gov"></div>
+                </div>
+                
+                <!-- 公投清單 -->
+                <div class="list-box">
+                    <div class="bg-teal-700 text-white p-2 text-center font-bold text-sm">已回傳報表清單 (公投)</div>
+                    <div id="header-ref" class="grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-1 bg-gray-100 border-b text-xs font-bold text-gray-600">
+                    </div>
+                    <div class="flex-1 overflow-y-auto bg-white" id="list-ref"></div>
+                </div>
             </div>
         </div>
 
-        <!-- 右側內容 -->
-        <div class="content-area">
-            <!-- 上方數據檢核區 -->
-            <div class="data-panel" id="dataPanel">
-                <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl font-black text-slate-800 tracking-wide" id="detail-station">請選擇票所</span>
-                        <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-sm font-bold border border-slate-300" id="detail-txid">ID: -</span>
-                    </div>
-                    
-                    <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-lg border border-slate-200 shadow-sm">
-                        <label class="font-bold text-slate-700">檢核判定：</label>
-                        <select id="status-select" class="border-2 border-slate-300 rounded px-3 py-1.5 font-bold outline-none focus:border-blue-500">
-                            <option value="">-- 尚未判定 --</option>
-                            <option value="一二聯報表ok(綠)">🟢 一二聯報表ok (綠)</option>
-                            <option value="缺二聯報表(黃)">🟡 缺二聯報表 (黃)</option>
-                            <option value="資料錯誤(紅)">🔴 資料錯誤 (紅)</option>
-                        </select>
-                        <button onclick="updateStatus()" class="btn btn-blue shadow-sm">更新狀態</button>
-                        <button id="btn-unlock" onclick="unlockRecord()" class="btn btn-red shadow-sm" style="display:none;">強制解鎖</button>
-                    </div>
-                </div>
+        <!-- 水平分隔線 (調整上下) -->
+        <div class="resizer-h" id="resizer-h" title="上下拖曳以調整版面大小"></div>
 
-                <div id="table-container" class="text-slate-500 text-center py-10 font-bold">點擊左側清單載入報表數據</div>
-            </div>
-
-            <!-- 下方圖檔檢視區 -->
-            <div class="image-panel">
-                <div class="toolbar">
-                    <span class="font-bold text-slate-700 mr-2">📷 原始報表圖檔：</span>
-                    <button class="btn btn-gray" onclick="zoomImage(0.1)">🔍 放大</button>
-                    <button class="btn btn-gray" onclick="zoomImage(-0.1)">🔍 縮小</button>
-                    <button class="btn btn-gray" onclick="resetZoom()">🔄 原始大小</button>
-                    <button class="btn btn-gray ml-auto" onclick="printImage()">🖨️ 列印圖檔</button>
-                </div>
-                <div class="canvas-container" id="canvasContainer">
-                    <div id="image-loading" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-bold text-slate-500 hidden">圖檔載入中...</div>
-                    <img id="reportImage" src="" alt="報表圖檔" style="display:none;">
-                </div>
-            </div>
+        <!-- 下半部資料表格 -->
+        <div class="bottom-section">
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="2" rowspan="2">選舉種類</th>
+                        <th colspan="14">各 候 選 人 得 票 數</th>
+                        <th rowspan="2">有效票數</th><th rowspan="2">無效票數</th><th rowspan="2">投票數</th>
+                        <th rowspan="2">已領未投</th><th rowspan="2">發出票數</th><th rowspan="2">用餘票數</th>
+                        <th rowspan="2">選舉人數</th><th rowspan="2">檢查值</th>
+                    </tr>
+                    <tr>
+                        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                        <th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
+                    </tr>
+                </thead>
+                <tbody id="data-tbody">
+                    <tr><td colspan="26" class="py-10 text-gray-400 font-bold text-lg">請由右側清單點選欲調閱之票所</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -164,16 +231,16 @@
 <div class="toast-msg" id="toast"></div>
 
 <script>
-    // ⚠️ 請替換為您專屬的 GAS 網址！
+    // ⚠️ 請確保這是您最新的 API 網址
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
     
-    let sessionToken = null; // 登入成功後保存的憑證
+    let sessionToken = null; // 💡 系統通行證
     let rawData = { govList: [], refList: [] };
-    let currentListType = 'gov';
-    let currentRecord = null;
     let currentTxId = null;
-    let imageScale = 1.0;
-    
+    let currentRecord = null;
+    let currentListType = null;
+    let sortOrders = { gov: { by: 'time', asc: false }, ref: { by: 'time', asc: false } };
+
     function showToast(msg) {
         const toast = document.getElementById('toast');
         toast.textContent = msg;
@@ -206,8 +273,9 @@
                 sessionToken = json.token;
                 document.getElementById('login-overlay').style.display = 'none';
                 
+                // 💡 驗證成功後，解放背景佈局，保證不跑版！
                 const appWrapper = document.getElementById('app-wrapper');
-                appWrapper.classList.remove('opacity-0', 'pointer-events-none');
+                appWrapper.style.display = 'flex';
                 
                 showToast("✅ 登入成功，系統已解鎖！");
                 fetchListData(false); // 登入成功後才開始抓資料
@@ -225,92 +293,140 @@
         }
     }
 
-    // === 撈取清單 (帶有 Token) ===
+    // === 加入憑證抓取清單 ===
     async function fetchListData(isSilent = false) {
-        if (!sessionToken) return;
-        
+        if (!sessionToken) return; // 💡 沒登入就擋掉
+
         try {
             if (!isSilent) {
-                document.getElementById('list-gov').innerHTML = '<div class="text-center text-slate-400 py-10 font-bold">🔄 載入中...</div>';
-                document.getElementById('list-ref').innerHTML = '<div class="text-center text-slate-400 py-10 font-bold">🔄 載入中...</div>';
+                document.getElementById('list-gov').innerHTML = '<div class="p-4 text-center text-gray-500 font-bold">載入中...</div>';
+                document.getElementById('list-ref').innerHTML = '<div class="p-4 text-center text-gray-500 font-bold">載入中...</div>';
             }
-
+            
+            // 💡 掛上 Token
             const res = await fetch(`${GAS_API_URL}?action=getDashboardData&token=${sessionToken}`);
             const json = await res.json();
-            
             if (json.status === 'success') {
                 rawData = json.data;
-                renderList('gov');
-                renderList('ref');
-                if (!isSilent) showToast('✅ 清單已更新');
-            } else {
-                if(json.message.includes('憑證')) {
+                sortList('gov', sortOrders.gov.by, true); 
+                sortList('ref', sortOrders.ref.by, true);
+                if (!isSilent) showToast("✅ 清單已更新");
+            } else { 
+                if (json.message.includes('憑證')) {
                     alert('登入時效過期或無效，請重新整理網頁！');
-                } else {
-                    showToast('❌ 讀取失敗: ' + json.message);
+                } else if (!isSilent) {
+                    showToast("❌ 讀取清單失敗：" + json.message); 
                 }
             }
-        } catch (err) {
-            showToast('❌ 網路連線錯誤');
+        } catch (err) { 
+            if (!isSilent) showToast("❌ 網路錯誤，無法載入清單"); 
         }
     }
 
-    function switchTab(type) {
-        currentListType = type;
-        document.getElementById('tab-gov').classList.toggle('active', type === 'gov');
-        document.getElementById('tab-ref').classList.toggle('active', type === 'ref');
-        
-        document.getElementById('list-gov').style.display = type === 'gov' ? 'block' : 'none';
-        document.getElementById('list-ref').style.display = type === 'ref' ? 'block' : 'none';
+    // 💡 設定 60 秒無感自動更新背景清單 (有 Token 才執行)
+    setInterval(() => { if(sessionToken) fetchListData(true); }, 60000);
+
+    function getSortIcon(type, criteria) {
+        if (sortOrders[type].by === criteria) {
+            return sortOrders[type].asc ? '↑' : '↓';
+        }
+        return '↕';
     }
 
+    // === 渲染清單 (Tailwind Grid) ===
     function renderList(type) {
         const container = document.getElementById(`list-${type}`);
-        const listData = type === 'gov' ? rawData.govList : rawData.refList;
-        
+        const headerContainer = document.getElementById(`header-${type}`);
         container.innerHTML = '';
-        if (listData.length === 0) {
-            container.innerHTML = '<div class="text-center text-slate-400 py-10 font-bold">目前無資料</div>';
-            return;
-        }
-
-        const table = document.createElement('table');
-        table.className = "w-full text-left";
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th class="py-2 px-2 bg-slate-800 text-white border-none rounded-tl">票所編號</th>
-                    <th class="py-2 px-2 bg-slate-800 text-white border-none">回傳時間</th>
-                    <th class="py-2 px-2 bg-slate-800 text-white border-none rounded-tr">狀態</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
+        
+        headerContainer.innerHTML = `
+            <div class="cursor-pointer hover:text-blue-600 select-none text-left" onclick="sortList('${type}', 'station')">票所編號 ${getSortIcon(type, 'station')}</div>
+            <div class="cursor-pointer hover:text-blue-600 select-none text-center" onclick="sortList('${type}', 'time')">回傳時間 ${getSortIcon(type, 'time')}</div>
+            <div class="cursor-pointer hover:text-blue-600 select-none text-right" onclick="sortList('${type}', 'status')">狀態 ${getSortIcon(type, 'status')}</div>
         `;
-        const tbody = table.querySelector('tbody');
 
-        listData.forEach(item => {
-            const row = document.createElement('tr');
-            row.className = `list-item border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition`;
-            if (currentTxId === item.txId) row.classList.add('bg-blue-50');
-
-            let statusLight = '<span class="w-3 h-3 rounded-full bg-slate-300 inline-block mr-1"></span> 未處理';
-            if (item.status === '一二聯報表ok(綠)') statusLight = '<span class="w-3 h-3 rounded-full bg-green-500 inline-block mr-1"></span> OK';
-            if (item.status === '缺二聯報表(黃)') statusLight = '<span class="w-3 h-3 rounded-full bg-yellow-400 inline-block mr-1"></span> 缺二聯';
-            if (item.status === '資料錯誤(紅)') statusLight = '<span class="w-3 h-3 rounded-full bg-red-500 inline-block mr-1"></span> 錯誤';
+        let list = rawData[`${type}List`];
+        
+        list.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-2 border-b border-gray-200 cursor-pointer text-sm transition-colors hover:bg-slate-50';
             
-            let lockedTag = item.lockedBy ? `<div class="text-[10px] text-red-500 font-bold mt-1">🔒 ${item.lockedBy} 處理中</div>` : '';
+            let isClosed = item.status === '一二聯報表ok(綠)';
+            let isLocked = item.lockedBy && item.lockedBy !== '' && !isClosed;
+            
+            if(isClosed) {
+                row.classList.add('bg-slate-200', 'text-slate-500', 'line-through');
+            } else if(isLocked) {
+                row.classList.add('bg-yellow-100');
+            }
 
+            let badgeHtml = '';
+            if (item.status === '數字有誤(紅)') badgeHtml += '<span class="badge badge-err">1</span>';
+            else if (item.status === '待補正(黃)') badgeHtml += '<span class="badge badge-warn">1</span>';
+            else if (item.status === '一聯報表ok(綠)') badgeHtml += '<span class="badge badge-ok1">1</span>';
+            else if (isClosed) badgeHtml += '<span class="badge badge-ok2">1.2</span>';
+
+            if (isLocked) {
+                badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中" style="margin-left:4px;">🔒${item.lockedBy}</span>`;
+            }
+
+            // 💡 強化版的日期擷取器：統一轉換為 11/14 15:22 的優雅格式
+            let timeStr = item.timestamp;
+            try {
+                const dateMatch = item.timestamp.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                const timeMatch = item.timestamp.match(/(\d{1,2}):(\d{2})/);
+                const isPM = item.timestamp.includes('下午');
+                
+                if (dateMatch && timeMatch) {
+                    let m = dateMatch[2].padStart(2, '0');
+                    let d = dateMatch[3].padStart(2, '0');
+                    let hh = parseInt(timeMatch[1], 10);
+                    let mins = timeMatch[2];
+                    
+                    if (isPM && hh < 12) hh += 12;
+                    if (!isPM && hh === 12) hh = 0;
+                    
+                    timeStr = `${m}/${d} ${hh.toString().padStart(2, '0')}:${mins}`;
+                }
+            } catch(e) {}
+            
             row.innerHTML = `
-                <td class="py-3 px-2 font-black text-lg text-slate-700 border-none">${item.stationId}</td>
-                <td class="py-3 px-2 font-mono text-sm text-slate-600 border-none">${item.timestamp}</td>
-                <td class="py-3 px-2 text-sm font-bold border-none">${statusLight}${lockedTag}</td>
+                <div class="font-bold tracking-wider text-left truncate">${item.stationId}</div>
+                <div class="font-mono text-center truncate ${isClosed ? 'text-slate-500' : 'text-slate-600'}" title="${item.timestamp}">${timeStr}</div>
+                <div class="flex justify-end items-center">${badgeHtml}</div>
             `;
             
             row.onclick = () => loadRecord(item, type);
-            tbody.appendChild(row);
+            container.appendChild(row);
+        });
+    }
+
+    function sortList(type, criteria, keepOrder = false) {
+        let list = rawData[`${type}List`];
+        
+        if (!keepOrder) {
+            if (sortOrders[type].by === criteria) sortOrders[type].asc = !sortOrders[type].asc;
+            else { sortOrders[type].by = criteria; sortOrders[type].asc = true; }
+        }
+
+        let isAsc = sortOrders[type].asc;
+
+        list.sort((a, b) => {
+            if (sortOrders[type].by === 'station') {
+                let res = a.stationId.localeCompare(b.stationId, undefined, {numeric: true});
+                return isAsc ? res : -res;
+            } else if (sortOrders[type].by === 'status') {
+                let valA = a.status || "";
+                let valB = b.status || "";
+                let res = valA.localeCompare(valB);
+                return isAsc ? res : -res;
+            } else {
+                let res = b.timestamp.localeCompare(a.timestamp); 
+                return isAsc ? -res : res;
+            }
         });
         
-        container.appendChild(table);
+        renderList(type);
     }
 
     async function loadRecord(item, type) {
@@ -318,7 +434,7 @@
         if (!role) { showToast("⚠️ 請先於右上角選擇帳號身分，才能調閱資料！"); return; }
         
         let isClosed = item.status === '一二聯報表ok(綠)';
-        let isAdmin = role.startsWith('Admin');
+        let isAdmin = role.startsWith('Admin') || role.startsWith('管理員'); // 💡 寬鬆判定管理員
 
         if (isClosed && !isAdmin) {
             showToast(`⚠️ 此筆資料已結案，僅限系統管理者操作與解鎖！`);
@@ -334,8 +450,7 @@
         currentTxId = item.txId;
         currentListType = type;
         
-        document.getElementById('detail-station').textContent = `票所：${item.stationId}`;
-        document.getElementById('detail-txid').textContent = `ID: ${item.txId}`;
+        document.getElementById('current-station').value = item.stationId;
         document.getElementById('status-select').value = item.status || '';
         
         document.getElementById('btn-unlock').style.display = (isAdmin && (item.lockedBy || item.status)) ? 'block' : 'none';
@@ -354,59 +469,74 @@
     }
 
     function renderTable(item) {
-        const container = document.getElementById('table-container');
-        container.innerHTML = '';
+        const tbody = document.getElementById('data-tbody');
+        tbody.innerHTML = ''; 
         
-        const types = currentListType === 'gov' ? ['市長', '區域議員', '平地原住民議員', '山地原住民議員', '里長'] : ['公投'];
+        const orderedTypes = ['市長', '區域議員', '平地原住民議員', '山地原住民議員', '里長', '公投'];
         
-        types.forEach(tName => {
-            if (item.records[tName]) {
-                const d = item.records[tName];
+        orderedTypes.forEach(type => {
+            if (item.records && item.records[type]) {
+                const rec = item.records[type];
                 let candsHtml = '';
-                if (tName === '公投') {
-                    candsHtml = `<th>同意</th><th>不同意</th>`;
-                    candsHtml += `<tr><td class="font-bold text-lg">${d.candidates[0]}</td><td class="font-bold text-lg">${d.candidates[1]}</td></tr>`;
-                } else {
-                    let h1 = '', h2 = '';
-                    d.candidates.forEach((c, idx) => {
-                        if (c !== '') { h1 += `<th>${idx+1}</th>`; h2 += `<td class="font-bold text-lg">${c}</td>`; }
-                    });
-                    if(h1 === '') return; 
-                    candsHtml = h1 + `</tr><tr>` + h2;
+                let candSum = 0;
+                
+                for(let i=0; i<14; i++) {
+                    let val = rec.candidates[i];
+                    if (val && !isNaN(val)) candSum += Number(val);
+                    candsHtml += `<td class="val-cell ${val ? '' : 'bg-gray-100'}">${val || ''}</td>`;
                 }
 
-                const s = d.stats;
-                const isMatch = Number(s.electors) === Number(s.check) && Number(s.check) > 0;
-                const checkColor = isMatch ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                // 取得各項數值
+                let valid = Number(rec.stats.valid || 0);
+                let invalid = Number(rec.stats.invalid || 0);
+                let total = Number(rec.stats.total || 0);
+                let issuedNotVoted = Number(rec.stats.issuedNotVoted || 0);
+                let issued = Number(rec.stats.issued || 0);
+                let remaining = Number(rec.stats.remaining || 0);
+                let electors = Number(rec.stats.electors || 0);
+                let checkVal = Number(rec.stats.check || 0);
 
-                container.innerHTML += `
-                    <div class="mb-4 font-bold text-blue-900 border-l-4 border-blue-500 pl-2 text-lg">${tName}</div>
-                    <div style="overflow-x:auto;">
-                        <table class="mb-6 whitespace-nowrap">
-                            <thead>
-                                <tr>${tName === '公投' ? candsHtml : `<tr>${candsHtml}</tr>`}</tr>
-                            </thead>
-                        </table>
-                        <table class="whitespace-nowrap">
-                            <thead>
-                                <tr>
-                                    <th>有效票</th><th>無效票</th><th>投票數</th>
-                                    <th>已領未投</th><th>發出票數</th><th>用餘票數</th>
-                                    <th>選舉人數</th><th>檢查值</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="highlight-cell">${s.valid}</td><td class="highlight-cell">${s.invalid}</td><td class="highlight-cell">${s.total}</td>
-                                    <td class="highlight-cell">${s.issuedNotVoted}</td><td class="highlight-cell">${s.issued}</td><td class="highlight-cell">${s.remaining}</td>
-                                    <td class="highlight-cell">${s.electors}</td><td class="highlight-cell ${checkColor}">${s.check}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                let hasData = (checkVal > 0);
+                
+                // 四大檢核邏輯與紅綠燈判定
+                let classValid = 'check-cell';
+                let classTotal = 'check-cell';
+                let classIssued = 'check-cell';
+                let classCheck = 'check-cell';
+
+                if (hasData) {
+                    classValid = (candSum === valid) ? 'check-ok' : 'err-cell';
+                    classTotal = (valid + invalid === total) ? 'check-ok' : 'err-cell';
+                    classIssued = (total + issuedNotVoted === issued) ? 'check-ok' : 'err-cell';
+                    classCheck = (electors === checkVal) ? 'check-ok' : 'err-cell';
+                } else if (valid > 0 || total > 0 || issued > 0) {
+                    // 若沒有抓到 check 檢查值，但底下有打票數的例外防護
+                    classValid = (candSum === valid) ? 'check-ok' : 'err-cell';
+                    classTotal = (valid + invalid === total) ? 'check-ok' : 'err-cell';
+                    classIssued = (total + issuedNotVoted === issued) ? 'check-ok' : 'err-cell';
+                    classCheck = 'err-cell'; 
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td colspan="2" class="row-header">${type}</td>
+                    ${candsHtml}
+                    <td class="val-cell font-bold ${classValid}">${rec.stats.valid}</td>
+                    <td class="val-cell check-cell">${rec.stats.invalid}</td>
+                    <td class="val-cell font-bold ${classTotal}">${rec.stats.total}</td>
+                    <td class="val-cell check-cell">${rec.stats.issuedNotVoted}</td>
+                    <td class="val-cell font-bold ${classIssued}">${rec.stats.issued}</td>
+                    <td class="val-cell check-cell">${rec.stats.remaining}</td>
+                    <td class="val-cell check-cell">${rec.stats.electors}</td>
+                    <td class="val-cell font-bold ${classCheck}">${rec.stats.check}</td>
                 `;
+                tbody.appendChild(tr);
             }
         });
+        
+        if(tbody.innerHTML === '') {
+            tbody.innerHTML = `<tr><td colspan="26" class="py-10 text-gray-400 font-bold text-lg">此票所查無詳細選票數據</td></tr>`;
+        }
     }
 
     async function updateStatus() {
@@ -416,7 +546,7 @@
         
         if (!role) { showToast("⚠️ 請先選擇身分"); return; }
 
-        let isAdmin = role.startsWith('Admin');
+        let isAdmin = role.startsWith('Admin') || role.startsWith('管理員');
         
         // 💡 阻擋管理員修改狀態燈號
         if (isAdmin) {
@@ -434,84 +564,180 @@
         if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; 
 
         try {
+            // 💡 掛上 Token 請求授權
             const res = await fetch(GAS_API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, status: newStatus, lockedBy: lockedBy, token: sessionToken })
             });
             const json = await res.json();
-            if (json.status === 'success') {
-                showToast("✅ 狀態已更新");
+            if(json.status === 'success') {
                 currentRecord.status = newStatus;
                 currentRecord.lockedBy = lockedBy;
                 renderList(currentListType);
-            } else { showToast("❌ 更新失敗"); }
-        } catch (err) { showToast("❌ 網路錯誤"); }
+                showToast("✅ 狀態已更新並連動至主資料表");
+            } else {
+                showToast("❌ 更新失敗：" + json.message);
+            }
+        } catch(e) { showToast("❌ 更新失敗，請檢查網路"); }
     }
 
     async function unlockRecord() {
         if (!currentTxId) return;
         try {
+            // 💡 強制解鎖同樣帶上 Token
             await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', txId: currentTxId, lockedBy: '', status: '', token: sessionToken }) });
             currentRecord.lockedBy = '';
-            currentRecord.status = '';
-            document.getElementById('status-select').value = '';
-            document.getElementById('btn-unlock').style.display = 'none';
+            currentRecord.status = ''; 
+            document.getElementById('status-select').value = ''; 
+            
             renderList(currentListType);
-            showToast("🔓 已強制解除鎖定與狀態");
-        } catch (err) { showToast("❌ 解鎖失敗"); }
+            document.getElementById('btn-unlock').style.display = 'none';
+            showToast("🔓 已強制解鎖並清除檢核狀態");
+        } catch(e) { showToast("❌ 解鎖失敗"); }
     }
 
+    // === Canvas 圖片控制 ===
+    const imgElement = document.getElementById('report-img');
+    const imgContainer = document.getElementById('img-container');
+    const loadingMsg = document.getElementById('loading-msg');
+    let scale = 1, posX = 0, posY = 0, imgAngle = 0, isPanning = false, startX, startY;
+
     async function loadCanvasImage(stationId, type) {
-        const imgElement = document.getElementById('reportImage');
-        const loadingMsg = document.getElementById('image-loading');
-        
         imgElement.style.display = 'none';
         loadingMsg.classList.remove('hidden');
         resetZoom();
 
         try {
+            // 💡 讀取影像帶上 Token
             const res = await fetch(`${GAS_API_URL}?action=getImage&stationId=${stationId}&type=${type}&token=${sessionToken}`);
             const json = await res.json();
-            
             if (json.status === 'success') {
                 imgElement.src = json.data;
                 imgElement.onload = () => {
                     loadingMsg.classList.add('hidden');
                     imgElement.style.display = 'block';
+                    scale = imgContainer.clientWidth / imgElement.naturalWidth;
+                    if(scale > 1) scale = 1; 
+                    imgAngle = 0; // 載入新圖時重置角度
+                    updateTransform();
                 };
-            } else {
-                loadingMsg.textContent = '❌ 找不到圖檔';
-            }
-        } catch (err) {
-            loadingMsg.textContent = '❌ 載入圖檔失敗';
-        }
+            } else { loadingMsg.textContent = "❌ 找不到圖檔"; }
+        } catch(e) { loadingMsg.textContent = "❌ 圖檔載入發生錯誤"; }
     }
 
-    function zoomImage(delta) {
-        imageScale = Math.max(0.2, Math.min(imageScale + delta, 3.0));
-        document.getElementById('reportImage').style.transform = `scale(${imageScale})`;
+    function zoom(factor) { scale *= factor; updateTransform(); }
+    
+    // 旋轉微調邏輯
+    function rotateImg(dir) {
+        const deg = Number(document.getElementById('rotate-deg').value) || 1;
+        if (dir === 'cw') imgAngle += deg;
+        else imgAngle -= deg;
+        updateTransform();
     }
-
-    function resetZoom() {
-        imageScale = 1.0;
-        document.getElementById('reportImage').style.transform = `scale(1)`;
-    }
-
-    function printImage() {
-        const imgSrc = document.getElementById('reportImage').src;
-        if (!imgSrc) return showToast("⚠️ 沒有可列印的圖檔");
+    
+    function resetZoom() { 
+        // 改進：確保長寬都能適應視窗，讓圖片載入時預設尺寸更完美
+        const scaleX = imgContainer.clientWidth / imgElement.naturalWidth;
+        const scaleY = imgContainer.clientHeight / imgElement.naturalHeight;
+        scale = Math.min(scaleX, scaleY) * 0.95; // 留 5% 邊距
+        if(scale > 1) scale = 1;
         
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html><head><title>列印圖檔</title></head>
-            <body style="margin:0;display:flex;justify-content:center;align-items:center;">
-                <img src="${imgSrc}" style="max-width:100%;height:auto;">
-            </body>
-            <script>window.onload=function(){window.print();window.close();}<\/script>
-            </html>
-        `);
-        printWindow.document.close();
+        posX = 0; posY = 0; imgAngle = 0; 
+        updateTransform(); 
     }
+    
+    function updateTransform() { 
+        // 修正：搭配 CSS top/left 50%，使用 calc(-50% + 偏移量) 來實現真正的中心旋轉與平移
+        imgElement.style.transform = `translate(calc(-50% + ${posX}px), calc(-50% + ${posY}px)) scale(${scale}) rotate(${imgAngle}deg)`; 
+    }
+
+    imgContainer.addEventListener('wheel', (e) => { e.preventDefault(); zoom(e.deltaY > 0 ? 0.9 : 1.1); });
+    
+    // 支援手機端觸控拖曳 Canvas 圖片
+    imgContainer.addEventListener('pointerdown', (e) => { 
+        // 避免點擊按鈕或輸入框時觸發圖片拖曳
+        if (e.target.closest('.zoom-btn') || e.target.closest('input')) return;
+        isPanning = true; 
+        startX = e.clientX - posX; 
+        startY = e.clientY - posY; 
+        imgContainer.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+    window.addEventListener('pointermove', (e) => {
+        if (!isPanning) return;
+        posX = e.clientX - startX; posY = e.clientY - startY;
+        updateTransform();
+    });
+    window.addEventListener('pointerup', (e) => { 
+        if(isPanning) {
+            isPanning = false; 
+            try { imgContainer.releasePointerCapture(e.pointerId); } catch(err) {}
+        }
+    });
+
+    function printReport() {
+        if (!imgElement.src || imgElement.style.display === 'none') { showToast("⚠️ 請先載入報表圖檔才能列印！"); return; }
+        document.getElementById('print-img').src = imgElement.src;
+        window.print();
+    }
+
+    // === 支援手機端 Pointer Events 的拖曳分隔線 ===
+    const resizerH = document.getElementById('resizer-h');
+    const resizerV = document.getElementById('resizer-v');
+    const topSection = document.getElementById('top-section');
+    const canvasArea = document.getElementById('canvas-area');
+    let isResizingH = false;
+    let isResizingV = false;
+
+    // 水平分隔線 (上下調整)
+    resizerH.addEventListener('pointerdown', (e) => {
+        isResizingH = true;
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none'; 
+        resizerH.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+
+    // 垂直分隔線 (左右調整)
+    resizerV.addEventListener('pointerdown', (e) => {
+        isResizingV = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        resizerV.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+
+    window.addEventListener('pointermove', (e) => {
+        if (isResizingH) {
+            const newHeight = e.clientY - topSection.getBoundingClientRect().top;
+            if (newHeight > 200 && newHeight < window.innerHeight - 150) {
+                topSection.style.flex = `0 0 ${newHeight}px`;
+            }
+        }
+        if (isResizingV) {
+            const newWidth = e.clientX - topSection.getBoundingClientRect().left;
+            if (newWidth > 300 && newWidth < window.innerWidth - 200) {
+                canvasArea.style.flex = `0 0 ${newWidth}px`;
+            }
+        }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+        if (isResizingH) {
+            isResizingH = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            try { resizerH.releasePointerCapture(e.pointerId); } catch(err){}
+        }
+        if (isResizingV) {
+            isResizingV = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            try { resizerV.releasePointerCapture(e.pointerId); } catch(err){}
+        }
+    });
+
+    // 💡 移除初始 onload 抓資料 (改由 verifyLogin 成功後驅動)
 </script>
 </body>
 </html>

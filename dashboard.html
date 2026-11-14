@@ -234,7 +234,8 @@
     // ⚠️ 請確保這是您最新的 API 網址
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
     
-    let sessionToken = null; // 💡 系統通行證
+    // 💡 修改 1：從 sessionStorage 讀取通行證，避免 F5 刷新後遺失
+    let sessionToken = sessionStorage.getItem('sessionToken') || null; 
     let rawData = { govList: [], refList: [] };
     let currentTxId = null;
     let currentRecord = null;
@@ -271,6 +272,7 @@
             
             if (json.status === 'success') {
                 sessionToken = json.token;
+                sessionStorage.setItem('sessionToken', sessionToken); // 💡 修改 2：將驗證成功的通行證存起來
                 document.getElementById('login-overlay').style.display = 'none';
                 
                 // 💡 驗證成功後，解放背景佈局，保證不跑版！
@@ -737,7 +739,28 @@
         }
     });
 
-    // 💡 移除初始 onload 抓資料 (改由 verifyLogin 成功後驅動)
+    // 💡 修改 3：處理頁面載入與 F5 重新整理的邏輯 (這段加在 script 尾部)
+    window.addEventListener('DOMContentLoaded', () => {
+        const roleSelect = document.getElementById('user-role');
+        const savedRole = sessionStorage.getItem('userRole');
+        
+        // 恢復 F5 刷新前選擇的身分
+        if (savedRole) {
+            roleSelect.value = savedRole;
+        }
+        
+        // 綁定事件：當下拉選單改變身分時，自動存起來記住
+        roleSelect.addEventListener('change', (e) => {
+            sessionStorage.setItem('userRole', e.target.value);
+        });
+
+        // 如果已有通行證，代表是 F5 刷新，直接跳過密碼驗證畫面！
+        if (sessionToken) {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('app-wrapper').style.display = 'flex';
+            fetchListData(false);
+        }
+    });
 </script>
 </body>
 </html>

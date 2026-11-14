@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>115年地方公職暨公投選舉 - 投開票所報告表</title>
+    
+    <!-- PWA 必備標籤 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="apple-touch-icon" href="PWA_icon(192x192).png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -76,12 +82,13 @@
         input.stats-input[readonly].match-true, input.check-val.match-true, input.modal-input.match-true { background-color: rgb(37, 249, 44) !important; color: #000000 !important; }
         input.stats-input[readonly].match-false, input.check-val.match-false, input.modal-input.match-false { background-color: rgb(247, 123, 138) !important; color: #000000 !important; }
         
-        /* 防呆黃色警示背景 (主表與浮動視窗皆連動發亮) */
-        input.warn-bg, input.stats-input[readonly].warn-bg, input.modal-input.warn-bg { background-color: #fef08a !important; color: #b91c1c !important; transition: background-color 0.3s; }
+        /* 防呆黃色警示背景 (限制只在主表發亮，浮動視窗不受影響) */
+        input.warn-bg, input.stats-input[readonly].warn-bg { background-color: #fef08a !important; color: #b91c1c !important; transition: background-color 0.3s; }
 
         .empty-cell { background-color: #fdfdfd; }
         
-        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; }
+        /* 調整按鈕區容器的基礎樣式，依賴 Tailwind 控制響應式 */
+        .action-buttons-container { padding-top: 15px; border-top: 1px solid #ccc; margin-top: 15px; }
         .action-btn { padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
         .action-btn:active { transform: scale(0.95); }
         .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
@@ -204,7 +211,7 @@
                     <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">郭璽</div></td>
                     <td class="candidate-cell"><div class="cand-number">2</div><div class="cand-name">林志成</div></td>
                     <td class="candidate-cell"><div class="cand-number">3</div><div class="cand-name">沈伯洋</div></td>
-                    <td class="candidate-cell"><div class="cand-number">4</div><div class="cand-name">蕭文乾</div></td>
+                    <td class="candidate-cell"><div class="cand-number">4</div><div class="cand-name">萧文乾</div></td>
                     <td class="candidate-cell"><div class="cand-number">5</div><div class="cand-name">蔣萬安</div></td>
                     <td class="candidate-cell"><div class="cand-number">6</div><div class="cand-name">唐新民</div></td>
                     <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
@@ -391,42 +398,43 @@
         </table>
     </div>
 
-    <!-- 按鈕區 -->
-    <div class="action-buttons-container">
-        <!-- 左側 -->
-        <div>
+    <!-- 按鈕區：全新手機 RWD 響應式排版 -->
+    <div class="action-buttons-container flex flex-col xl:flex-row justify-center xl:justify-between items-center xl:items-end gap-6">
+        
+        <!-- 左側：清除按鈕 -->
+        <div class="flex justify-center w-full xl:w-auto">
             <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
         </div>
         
-        <!-- 右側：將內縮拿掉，讓按鈕完全靠右切齊 -->
-        <div style="display: flex; gap: 30px; align-items: flex-end;">
-            <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
+        <!-- 右側：上傳、鎖定、傳送與查看按鈕 -->
+        <div class="flex flex-col md:flex-row gap-4 items-center md:items-end justify-center w-full xl:w-auto">
+            
+            <button id="btn-lock" class="action-btn btn-green h-[40px] mb-0 md:mb-[2px]">鎖住 / 解鎖</button>
             
             <!-- 圖片上傳區塊 -->
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                    <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-gov').click()">載入圖檔(公職)</button>
-                    <span id="file-name-gov" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
+            <div class="flex flex-col gap-2 w-full md:w-auto">
+                <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-md border border-slate-300">
+                    <button class="action-btn !py-1 !px-2 bg-yellow-200 text-yellow-900 border-yellow-500 whitespace-nowrap" onclick="document.getElementById('upload-gov').click()">載入圖檔(公職)</button>
+                    <span id="file-name-gov" class="text-sm text-slate-700 max-w-[120px] truncate font-mono">未選擇檔案</span>
                     <span id="clear-file-gov" class="remove-file-btn" onclick="clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov')">x</span>
-                    <input type="file" id="upload-gov" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'file-name-gov', 'clear-file-gov')">
+                    <input type="file" id="upload-gov" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'file-name-gov', 'clear-file-gov')">
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                    <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-ref').click()">載入圖檔(公投)</button>
-                    <span id="file-name-ref" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
+                <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-md border border-slate-300">
+                    <button class="action-btn !py-1 !px-2 bg-yellow-200 text-yellow-900 border-yellow-500 whitespace-nowrap" onclick="document.getElementById('upload-ref').click()">載入圖檔(公投)</button>
+                    <span id="file-name-ref" class="text-sm text-slate-700 max-w-[120px] truncate font-mono">未選擇檔案</span>
                     <span id="clear-file-ref" class="remove-file-btn" onclick="clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref')">x</span>
-                    <input type="file" id="upload-ref" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'file-name-ref', 'clear-file-ref')">
+                    <input type="file" id="upload-ref" accept="image/*" class="hidden" onchange="handleFileSelect(this, 'file-name-ref', 'clear-file-ref')">
                 </div>
             </div>
 
-            <!-- 傳送與查看結果按鈕區 (加大間距為 30px) -->
-            <div style="display: flex; gap: 30px; align-items: flex-end;">
-                <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
-                
-                <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
-                    <!-- 永久停駐的成功提示文字 -->
-                    <span id="submit-success-text" class="text-red-600 font-black text-xl hidden absolute" style="top: -35px; white-space: nowrap; text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; letter-spacing: 2px;">傳送成功！</span>
-                    <button type="button" onclick="window.open('https://news.google.com', '_blank')" class="action-btn" style="height: 40px; margin-bottom: 2px; background-color: #f1f5f9; border: 2px solid #0f172a; color: #0f172a;">查看結果</button>
+            <!-- 傳送與查看結果按鈕 (允許在手機上自動換行與置中) -->
+            <div class="relative flex flex-wrap justify-center gap-3 items-end w-full md:w-auto mt-4 md:mt-0">
+                <!-- 傳送成功提示文字 (持續浮動彈跳動畫) -->
+                <div id="submitSuccessMsg" class="hidden absolute -top-12 left-1/2 transform -translate-x-1/2 text-red-600 font-bold text-2xl whitespace-nowrap drop-shadow-md animate-bounce z-50">
+                    傳送成功！
                 </div>
+                <button id="btn-submit" class="action-btn btn-blue h-[40px] mb-0 md:mb-[2px]">傳送資料(含A3圖)</button>
+                <button type="button" class="action-btn bg-blue-50 text-blue-800 border-blue-400 hover:bg-blue-100 h-[40px] mb-0 md:mb-[2px]" onclick="window.open('https://news.google.com', '_blank')">查看結果</button>
             </div>
         </div>
     </div>
@@ -503,12 +511,6 @@
         'referendum': ['同意', '不同意']
     };
 
-    // 隱藏成功訊息的共用函數
-    function hideSuccessMessage() {
-        const successText = document.getElementById('submit-success-text');
-        if (successText) successText.classList.add('hidden');
-    }
-
     // === 初始化與預先載入 (Bulk Caching) ===
     window.addEventListener('DOMContentLoaded', () => {
         
@@ -549,7 +551,10 @@
     }
 
     function triggerLoadStation() {
-        hideSuccessMessage(); // 載入新票所時隱藏成功訊息
+        // 新載入票所時，自動隱藏傳送成功訊息
+        const successMsg = document.getElementById('submitSuccessMsg');
+        if (successMsg) successMsg.classList.add('hidden');
+
         const inputId = stationIdInput.value.trim();
         if (inputId.length >= 4) {
             loadStationById(inputId);
@@ -571,26 +576,8 @@
             document.getElementById('table-wrapper').classList.remove('locked');
             showToast(`⚡ 已成功載入第 ${inputId} 票所資料`);
         } else {
-            // 💡 核心修復：如果雲端找不到這筆資料，強制解鎖讓使用者可以自由填寫
-            currentStationId = inputId;
-            
-            // 給予虛擬的 1，解除所有的 disabled/locked-empty 鎖定，讓淺藍色按鈕都能按
-            applyStationData({
-                checkValues: { mayor: 1, councilor: 1, flatland: 1, mountain: 1, village: 1, referendum: 1 },
-                villageCandidates: ["候選人1", "候選人2"]
-            });
-            
-            // 清除畫面上的虛擬檢查值 1，保持畫面乾淨
-            ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
-                const checkEl = document.getElementById(`${type}_check`);
-                if(checkEl) {
-                    checkEl.value = "";
-                    checkEl.classList.remove('match-true', 'match-false');
-                }
-            });
-            
-            document.getElementById('table-wrapper').classList.remove('locked');
-            showToast(`⚠️ 雲端無此票所 (${inputId})，已為您強制解鎖空白表！`, 4000);
+            showToast('❌ 找不到該票所編號！');
+            lockTableStructure();
         }
     }
 
@@ -625,7 +612,7 @@
         
         types.forEach(type => {
             const checkEl = document.getElementById(`${type}_check`);
-            const val = data.checkValues ? data.checkValues[type] : 0;
+            const val = data.checkValues[type];
             
             // 統一防呆邏輯：只要該票所該選票檢查值為 0 或沒有值，一律徹底鎖定反灰該區域
             if (!val || Number(val) === 0) {
@@ -720,8 +707,8 @@
         }
         
         // 確保每次計算完畢，立刻強制將結果同步到浮動網頁
-        if (typeof syncMainToModal === 'function' && !document.getElementById('focus-modal-overlay').classList.contains('hidden')) {
-            syncMainToModal(prefix);
+        if (typeof syncModalColors === 'function' && !document.getElementById('focus-modal-overlay').classList.contains('hidden')) {
+            syncModalColors();
         }
     }
 
@@ -771,7 +758,7 @@
         const isContinuous = document.getElementById('continuous-mode')?.checked;
         const mainCandInputs = document.querySelectorAll(`.${type}-cand:not(.locked-empty)`);
         
-        // 從我們建立的字典中提取該選舉種類對應的所有姓名 (完美解決按鈕無效當機問題)
+        // 從我們建立的字典中提取該選舉種類對應的所有姓名 (里長為動態抓取)
         let names = [];
         if (type === 'village') {
             names = (globalStationCache && currentStationId && globalStationCache[currentStationId]) ? globalStationCache[currentStationId].villageCandidates : [];
@@ -784,17 +771,19 @@
             let candName = names[idx] ? names[idx] : `候選人 ${idx+1}`;
             let displayName = type === 'referendum' ? candName : `${idx+1} ${candName}`;
             
+            const box = document.createElement('div');
+            box.className = 'flex flex-col bg-gray-50 border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm';
+            
             let inputProps = isContinuous ? 'inputmode="none" readonly' : 'inputmode="numeric"';
             
-            candContainer.innerHTML += `
-                <div class="focus-box" id="fm_box_${mainInput.id}">
-                    <div class="focus-box-title">${displayName}</div>
-                    <input type="text" ${inputProps} class="focus-input fm-input modal-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
-                </div>
+            box.innerHTML = `
+                <div class="bg-blue-100 text-center font-bold text-blue-900 py-1.5 text-[16px] border-b-2 border-gray-300">${displayName}</div>
+                <input type="text" ${inputProps} class="modal-input w-full text-center text-3xl font-bold py-3 outline-none focus:bg-red-50 focus:border-red-500 cursor-pointer fm-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
             `;
+            candContainer.appendChild(box);
         });
         
-        // 2. 生成統計資料欄位 (過濾掉發出票數與投票數)
+        // 2. 生成統計資料欄位 (已過濾掉發出票數與投票數)
         const stats = [
             { id: `${type}_valid`, label: '有效票', readonly: true },
             { id: `${type}_invalid`, label: '無效票', readonly: false },
@@ -807,32 +796,33 @@
         stats.forEach(stat => {
             const mainInput = document.getElementById(stat.id);
             if (!mainInput) return;
+            const box = document.createElement('div');
+            box.className = 'focus-box' + (stat.readonly ? ' readonly' : '');
             
-            let inputClass = 'focus-input fm-input modal-input w-full text-center text-2xl font-bold py-3 outline-none cursor-pointer';
+            let inputClass = 'focus-input modal-input w-full text-center text-2xl font-bold py-3 outline-none cursor-pointer';
             let inputProps = 'inputmode="numeric"';
             
             if (stat.readonly) {
                 inputClass += ' bg-gray-200 text-blue-800 cursor-not-allowed modal-readonly';
                 inputProps = 'inputmode="none" readonly tabindex="-1"';
             } else {
-                inputClass += ' focus:bg-red-50 focus:border-red-500';
+                inputClass += ' focus:bg-red-50 focus:border-red-500 fm-input';
                 if (isContinuous) inputProps = 'inputmode="none" readonly';
             }
             
-            statContainer.innerHTML += `
-                <div class="focus-box ${stat.readonly ? 'readonly' : ''}" id="fm_box_${stat.id}">
-                    <div class="focus-box-title">${stat.label}</div>
-                    <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" id="fm_${stat.id}" value="${mainInput.value}">
-                </div>
+            box.innerHTML = `
+                <div class="focus-box-title bg-gray-200 text-center font-bold text-gray-700 py-1 text-[15px] whitespace-nowrap border-b-2 border-gray-300">${stat.label}</div>
+                <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" id="fm_${stat.id}" value="${mainInput.value}">
             `;
+            statContainer.appendChild(box);
         });
         
         overlay.style.display = 'flex';
-        syncMainToModal(type); // 開啟瞬間，強制同步底層運算結果
+        syncModalColors(); // 初始開啟時，先把最新的資料與紅綠燈同步進來
         
-        // 自動聚焦
+        // 自動聚焦第一個可輸入欄位
         setTimeout(() => {
-            const firstInput = document.querySelector('#focus-modal-overlay .fm-input:not(.modal-readonly)');
+            const firstInput = document.querySelector('#focus-modal-overlay .modal-input:not(.modal-readonly)');
             if(firstInput) {
                 firstInput.click();
                 if(!isContinuous) firstInput.focus();
@@ -861,67 +851,39 @@
         }
     });
 
-    // 處理 Modal 內的輸入事件，雙向綁定寫回主表並觸發計算 (單一委派機制，效能最佳)
+    // 處理 Modal 內的輸入事件，雙向綁定寫回主表並觸發計算
     document.getElementById('focus-modal-overlay').addEventListener('input', function(e) {
-        if (e.target.classList.contains('fm-input')) {
+        if (e.target.tagName.toLowerCase() === 'input') {
             const targetId = e.target.getAttribute('data-target');
             const mainInput = document.getElementById(targetId);
             if (mainInput) {
                 mainInput.value = e.target.value;
-                if (activeModalType) calculateTotals(activeModalType); // 觸發主表格運算
+                let prefix = targetId.split('_')[0];
+                if(targetId.includes('cand')) {
+                    prefix = mainInput.className.match(/(mayor|councilor|flatland|mountain|village|referendum)-input/)[1];
+                }
+                calculateTotals(prefix);
             }
         }
     });
 
-    // 核心連動引擎：將主表的運算結果與顏色，反向塗回放大視窗中
-    window.syncMainToModal = function(type) {
-        if (activeModalType !== type) return;
-        
-        // 同步候選人
-        document.querySelectorAll(`.${type}-cand:not(.locked-empty)`).forEach(mainInput => {
-            const fmInput = document.getElementById(`fm_${mainInput.id}`);
-            if (fmInput) {
-                if (fmInput.classList.contains('modal-readonly')) fmInput.value = mainInput.value;
-                
-                // 同步黃色警示
-                if (mainInput.classList.contains('warn-bg')) {
-                    fmInput.classList.add('warn-bg');
-                } else {
-                    fmInput.classList.remove('warn-bg');
-                }
-            }
-        });
-        
-        // 同步統計數據
-        const statFields = ['valid', 'invalid', 'issued_not_voted', 'remaining', 'electors', 'check'];
-        statFields.forEach(field => {
-            const mainInput = document.getElementById(`${type}_${field}`);
-            const fmInput = document.getElementById(`fm_${type}_${field}`);
+    // 💡 全新優化：將大表的顏色與計算結果強制折射回 Modal 內 (只同步紅綠燈，移除黃色警告)
+    window.syncModalColors = function() {
+        const modalInputs = document.querySelectorAll('#focus-modal-overlay .modal-input');
+        modalInputs.forEach(mInput => {
+            const targetId = mInput.getAttribute('data-target');
+            const mainInput = document.getElementById(targetId);
+            if (!mainInput) return;
             
-            if (mainInput && fmInput) {
-                // 🔥 關鍵修復：強制將算好的數字帶回浮動頁面中的 Readonly 欄位 (有效票, 選舉人數)
-                if (fmInput.classList.contains('modal-readonly')) {
-                    fmInput.value = mainInput.value;
-                }
-                
-                // 重置樣式
-                fmInput.style.backgroundColor = 'transparent'; fmInput.style.color = '';
-                fmInput.classList.remove('match-true', 'match-false', 'warn-bg');
-                
-                // 同步黃色警示
-                if (mainInput.classList.contains('warn-bg')) {
-                    fmInput.classList.add('warn-bg');
-                }
-                
-                // 同步檢查值紅綠燈
-                if (field === 'check') {
-                    if (mainInput.classList.contains('match-true')) {
-                        fmInput.classList.add('match-true');
-                    } else if (mainInput.classList.contains('match-false')) {
-                        fmInput.classList.add('match-false');
-                    }
-                }
+            // 強制同步數值 (防呆用)
+            if (mInput.classList.contains('modal-readonly')) {
+                mInput.value = mainInput.value;
             }
+            
+            // 徹底清除浮動網頁舊的紅綠燈標籤，重新貼上主表最新的顏色標籤
+            mInput.classList.remove('match-true', 'match-false');
+            if (mainInput.classList.contains('match-true')) mInput.classList.add('match-true');
+            if (mainInput.classList.contains('match-false')) mInput.classList.add('match-false');
         });
     };
 
@@ -931,8 +893,8 @@
         const isContinuous = document.getElementById('continuous-mode')?.checked;
 
         // 1. 如果在浮動網頁內，只在浮動網頁的格子內跳轉！
-        if (currentInput.classList.contains('fm-input')) {
-            const validModalInputs = Array.from(document.querySelectorAll('#focus-modal-overlay .fm-input:not(.modal-readonly)'));
+        if (currentInput.classList.contains('modal-input')) {
+            const validModalInputs = Array.from(document.querySelectorAll('#focus-modal-overlay .modal-input:not(.modal-readonly)'));
             const currentIndex = validModalInputs.indexOf(currentInput);
             
             if (currentIndex >= 0 && currentIndex < validModalInputs.length - 1) {
@@ -992,6 +954,7 @@
             nextInput.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
         }
     }
+
 
     // === 虛擬鍵盤拖曳修復 ===
     let isDraggingPanel = false;
@@ -1136,7 +1099,6 @@
             currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
             showToast(`✅ 已填入: ${votes} 票`);
 
-            // 語音輸入後，確保當前焦點維持在畫面中央
             currentFocusedInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             if (continuousModeCheckbox && continuousModeCheckbox.checked) {
@@ -1234,11 +1196,12 @@
 
     function clearFileInput(inputId, textId, clearBtnId) {
         const input = document.getElementById(inputId);
-        input.value = '';
-        document.getElementById(textId).textContent = '未選擇檔案';
-        document.getElementById(clearBtnId).style.display = 'none';
+        if(input) input.value = '';
+        const textSpan = document.getElementById(textId);
+        if(textSpan) textSpan.textContent = '未選擇檔案';
+        const clearBtn = document.getElementById(clearBtnId);
+        if(clearBtn) clearBtn.style.display = 'none';
     }
-
 
     // === 傳送與送出按鈕 ===
     if(document.getElementById('btn-submit')) {
@@ -1323,7 +1286,6 @@
 
             const submitBtn = document.getElementById('btn-submit');
             submitBtn.textContent = "傳送中(含圖檔)..."; submitBtn.disabled = true;
-            hideSuccessMessage(); // 重新傳送時先隱藏提示
 
             (async () => {
                 try {
@@ -1346,26 +1308,34 @@
                     const data = await res.json();
                     
                     if (data.status === 'success') {
-                        if (data.message.includes('⚠️')) {
-                            showCustomAlert(data.message);
-                        } else {
-                            showToast(data.message, 4000);
-                            // 💡 新增：成功後顯示永久停駐的成功文字
-                            document.getElementById('submit-success-text').classList.remove('hidden');
-                        }
+                        // 顯示傳送成功動畫 (持續顯示，直到載入下一筆票所或點擊清除)
+                        const successMsg = document.getElementById('submitSuccessMsg');
+                        successMsg.classList.remove('hidden');
+
+                        if (data.message.includes('⚠️')) showCustomAlert(data.message);
+                        else showToast(data.message, 4000);
+
+                        currentStationId = null; 
+                        document.getElementById('station-id-input').value = "";
+                        lockTableStructure();
+                        document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => { input.value = ""; });
+                        ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => { calculateTotals(type); });
+                        clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');
+                        clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref');
                     } else {
                         showCustomAlert("❌ 傳送失敗：\n" + data.message);
                     }
                 } catch (err) {
                     showCustomAlert(`❌ 網路連線失敗或圖檔處理異常：\n${err}`);
                 } finally {
-                    submitBtn.textContent = "傳送資料(含A3報表圖)"; 
+                    submitBtn.textContent = "傳送資料(含A3圖)"; 
                     submitBtn.disabled = false;
                 }
             })();
         });
     }
 
+    // === 按鈕功能：鎖定與清除 ===
     if(document.getElementById('btn-lock')) {
         document.getElementById('btn-lock').addEventListener('click', () => {
             const tableWrapper = document.getElementById('table-wrapper');
@@ -1383,14 +1353,16 @@
                 return;
             }
 
+            // 手動清除時，一併隱藏傳送成功訊息
+            const successMsg = document.getElementById('submitSuccessMsg');
+            if (successMsg) successMsg.classList.add('hidden');
+
             document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => { input.value = ""; });
             ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => { calculateTotals(type); });
             showToast('🗑️ 已清除所有輸入資料。');
             
             clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');
             clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref');
-            
-            hideSuccessMessage(); // 清除全部時隱藏成功訊息
         });
     }
 

@@ -20,19 +20,24 @@
             padding-bottom: 120px;
             transition: background-color 0.3s;
         }
+        
+        /* 核心修改：報表容器處理總體的橫向捲動 */
         .report-container {
             background-color: white;
             padding: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             max-width: 1800px;
             margin: 0 auto;
-            overflow-x: auto;
+            overflow-x: auto; 
             transition: all 0.3s;
         }
         
+        /* 核心修改：強制標題區與表格同寬 1400px，不換行 */
         .station-input-area {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px; 
+            min-width: 1400px; 
         }
+        
         .station-input {
             border: 2px solid #94a3b8; border-radius: 4px; padding: 4px 8px; font-size: 16px; width: 100px;
         }
@@ -40,7 +45,13 @@
             background-color: #fef08a; color: #dc2626; font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 14px;
         }
         
-        .table-wrapper { min-width: 1400px; max-height: 70vh; overflow: auto; }
+        /* 核心修改：表格區只負責垂直捲動，水平捲動交給外層 */
+        .table-wrapper { 
+            min-width: 1400px; 
+            max-height: 65vh; 
+            overflow-y: auto; 
+            overflow-x: hidden; 
+        }
         
         /* 唯讀鎖定模式設計 */
         .table-wrapper.locked input, .table-wrapper.locked button.modal-trigger-btn { pointer-events: none; background-color: #f3f4f6 !important; color: #9ca3af !important; border-color: #cbd5e1 !important; box-shadow: none !important; }
@@ -87,15 +98,18 @@
 
         .empty-cell { background-color: #fdfdfd; }
         
-        /* 原版無 RWD，強制橫向展開的按鈕區設定 */
-        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; }
+        /* 核心修改：強制按鈕區與表格同寬 1400px，確保不被手機螢幕擠壓 */
+        .action-buttons-container { 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+            margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; 
+            min-width: 1400px;
+        }
         .action-btn { padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
         .action-btn:active { transform: scale(0.95); }
         .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
         .btn-green { background-color: #bbf7d0; color: #166534; }
 
-        /* === 新增：放大視窗 (Focus Modal) 樣式 === */
-        /* 移除 touch-action: none，改為外層 overlay 負責滾動，完美解放雙指縮放 */
+        /* === 放大視窗 (Focus Modal) 樣式 === */
         .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: flex-start; justify-content: center; backdrop-filter: blur(3px); padding-top: 5vh; padding-bottom: 20vh; overflow-y: auto; }
         .focus-modal-content { background: white; width: 96vw; max-width: 900px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 4px solid #3b82f6; display: flex; flex-direction: column; margin: auto; }
         .focus-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #eff6ff; border-bottom: 2px solid #bfdbfe; border-radius: 8px 8px 0 0; }
@@ -116,33 +130,27 @@
         .focus-box.readonly .focus-box-title { background: #f1f5f9; color: #64748b; border-bottom-color: #cbd5e1; }
         .focus-box.readonly .focus-input { color: #1e3a8a; cursor: not-allowed; }
 
-        /* === 全新優化虛擬鍵盤佈局 === */
+        /* === 虛擬鍵盤佈局 === */
         .control-panel {
             position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: clamp(320px, 33vw, 450px); 
             z-index: 9999; display: flex; flex-direction: column; align-items: center; touch-action: none;
             filter: drop-shadow(0 8px 25px rgba(0,0,0,0.3));
         }
-        /* 獨立的拖曳把手區域 (梯形突出設計) */
         .drag-handle-tab {
             width: 120px; height: 30px; background-color: #7dd3fc; border: 2px solid #38bdf8; border-bottom: none;
             border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; cursor: grab;
         }
         .drag-handle-tab:active { cursor: grabbing; }
-        .drag-indicator {
-            width: 40px; height: 6px; background-color: #0284c7; border-radius: 3px; opacity: 0.6; pointer-events: none;
-        }
-        /* 鍵盤主體 */
+        .drag-indicator { width: 40px; height: 6px; background-color: #0284c7; border-radius: 3px; opacity: 0.6; pointer-events: none; }
         .keyboard-body {
             width: 100%; background-color: #7dd3fc; padding: 12px; border-radius: 12px; border: 2px solid #38bdf8;
             border-top-left-radius: 4px; border-top-right-radius: 4px; display: flex; flex-direction: column; gap: 12px;
         }
         
         .cp-header { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; }
-        
         .vk-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; }
         .vk-row { display: flex; gap: 6px; width: 100%; }
         
-        /* 按鈕樣式微調：讓按鈕在缺少刪除鍵後顯得更寬裕 */
         .vk-btn, .vk-action-btn { 
             flex: 1; background-color: #fef08a; color: #dc2626; font-weight: 900; font-size: 20px; 
             border: 2px solid #ca8a04; border-radius: 8px; height: 42px; cursor: pointer; 
@@ -171,14 +179,14 @@
 <div class="report-container" id="main-container">
     
     <!-- 一般模式UI -->
-    <div class="station-input-area flex-wrap items-center">
+    <div class="station-input-area items-center">
         <label class="font-bold whitespace-nowrap">投開票所編號:</label>
         <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
         <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
         <span class="warning-text">輸入票所編號(1282-1419)後才可試算！</span>
         
-        <!-- 新增：合併後的標題列，優化手機端靠右切齊 -->
-        <div class="w-full sm:w-auto sm:ml-auto text-right font-bold text-gray-800 text-[16px] tracking-wide mt-2 sm:mt-0 whitespace-nowrap">
+        <!-- 透過 margin-left: auto 將標題完美推向最右側 -->
+        <div style="margin-left: auto;" class="font-bold text-gray-800 text-[16px] tracking-wide whitespace-nowrap">
             115年地方公職暨公投選舉(萬華區)&nbsp;&nbsp;&nbsp;&nbsp;<span id="display-date">115.11.28</span>
         </div>
     </div>
@@ -398,7 +406,7 @@
         </table>
     </div>
 
-    <!-- 原版：固定橫向排列按鈕區 (移除 Tailwind RWD，恢復完整平鋪設計) -->
+    <!-- 按鈕區：強制與大表同寬，保證不會被螢幕擠壓切斷 -->
     <div class="action-buttons-container">
         <!-- 左側 -->
         <div>
@@ -791,14 +799,16 @@
             let candName = names[idx] ? names[idx] : `候選人 ${idx+1}`;
             let displayName = type === 'referendum' ? candName : `${idx+1} ${candName}`;
             
+            const box = document.createElement('div');
+            box.className = 'flex flex-col bg-gray-50 border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm';
+            
             let inputProps = isContinuous ? 'inputmode="none" readonly' : 'inputmode="numeric"';
             
-            candContainer.innerHTML += `
-                <div class="focus-box" id="fm_box_${mainInput.id}">
-                    <div class="focus-box-title">${displayName}</div>
-                    <input type="text" ${inputProps} class="focus-input fm-input modal-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
-                </div>
+            box.innerHTML = `
+                <div class="bg-blue-100 text-center font-bold text-blue-900 py-1.5 text-[16px] border-b-2 border-gray-300">${displayName}</div>
+                <input type="text" ${inputProps} class="focus-input fm-input modal-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
             `;
+            candContainer.appendChild(box);
         });
         
         // 2. 生成統計資料欄位 (過濾掉發出票數與投票數)
@@ -814,6 +824,8 @@
         stats.forEach(stat => {
             const mainInput = document.getElementById(stat.id);
             if (!mainInput) return;
+            const box = document.createElement('div');
+            box.className = 'focus-box' + (stat.readonly ? ' readonly' : '');
             
             let inputClass = 'focus-input fm-input modal-input w-full text-center text-2xl font-bold py-3 outline-none cursor-pointer';
             let inputProps = 'inputmode="numeric"';
@@ -822,16 +834,15 @@
                 inputClass += ' bg-gray-200 text-blue-800 cursor-not-allowed modal-readonly';
                 inputProps = 'inputmode="none" readonly tabindex="-1"';
             } else {
-                inputClass += ' focus:bg-red-50 focus:border-red-500';
+                inputClass += ' focus:bg-red-50 focus:border-red-500 fm-input';
                 if (isContinuous) inputProps = 'inputmode="none" readonly';
             }
             
-            statContainer.innerHTML += `
-                <div class="focus-box ${stat.readonly ? 'readonly' : ''}" id="fm_box_${stat.id}">
-                    <div class="focus-box-title">${stat.label}</div>
-                    <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" id="fm_${stat.id}" value="${mainInput.value}">
-                </div>
+            box.innerHTML = `
+                <div class="focus-box-title bg-gray-200 text-center font-bold text-gray-700 py-1 text-[15px] whitespace-nowrap border-b-2 border-gray-300">${stat.label}</div>
+                <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" id="fm_${stat.id}" value="${mainInput.value}">
             `;
+            statContainer.appendChild(box);
         });
         
         overlay.style.display = 'flex';

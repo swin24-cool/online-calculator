@@ -198,11 +198,6 @@
                             </div>
                         `;
 
-                        // 定義 Leaflet DivIcon
-                        const customIcon = L.divIcon({
-                            </div>
-                        `;
-
                         // 💡 將 Marker 加入地圖 (改用計算過防重疊的 displayLat, displayLng)
                         const marker = L.marker([displayLat, displayLng], { icon: customIcon })
                             .bindPopup(popupHtml);

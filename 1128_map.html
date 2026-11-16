@@ -152,12 +152,20 @@
                         const govColor = getColorByStatus(station.govStatus);
                         const refColor = getColorByStatus(station.refStatus);
                         
-                        // 💡 判斷是否要顯示數字 1 或 2
+                        // 💡 判斷是否要顯示數字 1 或 2 (公職)
                         let govText = '';
                         if (station.govStatus && station.govStatus.includes('一二聯')) {
                             govText = '2';
                         } else if (station.govStatus && station.govStatus.includes('一聯')) {
                             govText = '1';
+                        }
+
+                        // 💡 判斷是否要顯示數字 1 或 2 (公投)
+                        let refText = '';
+                        if (station.refStatus && station.refStatus.includes('一二聯')) {
+                            refText = '2';
+                        } else if (station.refStatus && station.refStatus.includes('一聯')) {
+                            refText = '1';
                         }
 
                         // 💡 計算微小偏移量 (黃金角放射排列)，避免同一間學校的票所疊在一起
@@ -176,12 +184,12 @@
                         }
                         locationTracker[locKey]++;
 
-                        // 建立專屬的雙色水滴 HTML (加入 govText 變數)
+                        // 建立專屬的雙色水滴 HTML (加入 govText 與 refText 變數)
                         const iconHtml = `
                             <div class="custom-pin-container">
                                 <div class="pin-circle">
                                     <div class="pin-half" style="background-color: ${govColor};" title="公職: ${station.govStatus || '未處理'}">${govText}</div>
-                                    <div class="pin-half" style="background-color: ${refColor};" title="公投: ${station.refStatus || '未處理'}"></div>
+                                    <div class="pin-half" style="background-color: ${refColor};" title="公投: ${station.refStatus || '未處理'}">${refText}</div>
                                 </div>
                                 <div class="pin-arrow"></div>
                                 <div class="pin-label">${station.id}</div>

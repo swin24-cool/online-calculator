@@ -91,6 +91,16 @@
                 最後更新：<span id="last-update" class="text-blue-600">載入中...</span>
                 <button onclick="fetchMapData()" class="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">🔄 立即刷新</button>
             </div>
+            
+            <!-- 💡 新增：圖層切換選單 -->
+            <div class="mt-1 border-t border-slate-200 pt-2">
+                <div class="text-xs font-bold text-slate-500 mb-1">切換地圖圖層：</div>
+                <div class="flex gap-3 text-sm font-bold text-slate-700">
+                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600"><input type="radio" name="mapLayer" value="light" checked> 淺色簡約</label>
+                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600"><input type="radio" name="mapLayer" value="terrain"> 等高地形</label>
+                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600"><input type="radio" name="mapLayer" value="osm"> 標準街道</label>
+                </div>
+            </div>
         </div>
 
         <div class="panel-box">
@@ -115,11 +125,34 @@
         // 初始化 Leaflet 地圖 (預設中心點設為萬華區)
         const map = L.map('map').setView([25.033, 121.499], 14);
 
-        // 💡 換上您截圖中的 Google Maps「等高線地形圖 (Terrain)」圖層
-        L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-            attribution: '&copy; Google Maps Terrain',
-            maxZoom: 19
-        }).addTo(map);
+        // 💡 定義 3 種簡單、低干擾的圖層
+        const mapLayers = {
+            // 1. 淺色簡約圖 (Esri Gray - 最適合疊加彩色燈號數據，沒有雜訊)
+            light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 16, attribution: 'Esri'
+            }),
+            // 2. 等高線地形圖 (Google Terrain - 帶有綠色與陰影，專業感強)
+            terrain: L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+                maxZoom: 19, attribution: 'Google'
+            }),
+            // 3. 標準街道圖 (OSM - 傳統彩色地圖)
+            osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19, attribution: 'OSM'
+            })
+        };
+
+        // 預設載入「淺色簡約圖」
+        let currentLayer = mapLayers.light;
+        currentLayer.addTo(map);
+
+        // 監聽單選按鈕切換圖層
+        document.querySelectorAll('input[name="mapLayer"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                map.removeLayer(currentLayer);
+                currentLayer = mapLayers[e.target.value];
+                currentLayer.addTo(map);
+            });
+        });
 
         // 建立一個群組，用來統整所有的 Marker (方便後續清除或自動縮放)
         let markersGroup = L.featureGroup().addTo(map);

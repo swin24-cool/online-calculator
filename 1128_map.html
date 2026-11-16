@@ -178,86 +178,49 @@
                     // 清除舊的標記
                     markersGroup.clearLayers();
                     
-                    // 💡 紀錄相同 GPS 座標出現的次數 (用於將同一個學校的票所微調散開)
-                    const locationTracker = {};
-                    
+                    // 💡 步驟 1：先將 GPS 完全相同的票所進行「群組化 (Grouping)」
+                    const locationGroups = {};
                     json.data.forEach(station => {
-                        const govColor = getColorByStatus(station.govStatus);
-                        const refColor = getColorByStatus(station.refStatus);
-                        
-                        // 💡 判斷是否要顯示數字 1 或 2 (公職)
-                        let govText = '';
-                        if (station.govStatus && station.govStatus.includes('一二聯')) {
-                            govText = '2';
-                        } else if (station.govStatus && station.govStatus.includes('一聯')) {
-                            govText = '1';
-                        }
-
-                        // 💡 判斷是否要顯示數字 1 或 2 (公投)
-                        let refText = '';
-                        if (station.refStatus && station.refStatus.includes('一二聯')) {
-                            refText = '2';
-                        } else if (station.refStatus && station.refStatus.includes('一聯')) {
-                            refText = '1';
-                        }
-
-                        // 💡 計算微小偏移量 (黃金角放射排列)，避免同一間學校的票所疊在一起
                         const locKey = `${station.lat},${station.lng}`;
-                        if (!locationTracker[locKey]) locationTracker[locKey] = 0;
+                        if (!locationGroups[locKey]) locationGroups[locKey] = [];
+                        locationGroups[locKey].push(station);
+                    });
+                    
+                    // 💡 步驟 2：針對每一個座標點處理「蜘蛛網放射 (Spiderfying)」
+                    Object.keys(locationGroups).forEach(locKey => {
+                        const stations = locationGroups[locKey];
+                        const [centerLat, centerLng] = locKey.split(',').map(Number);
                         
-                        const offsetIdx = locationTracker[locKey];
-                        let displayLat = station.lat;
-                        let displayLng = station.lng;
-                        
-                        if (offsetIdx > 0) {
-                            // 💡 大幅放寬間距：將半徑放大將近 4 倍，讓 Marker 完全散開不重疊
-                            const angle = (offsetIdx * 137.5) * (Math.PI / 180); // 黃金角均勻散開
-                            const radius = 0.0007 * Math.sqrt(offsetIdx); // 半徑擴大至約 70~80 公尺
-                            displayLat += Math.sin(angle) * radius;
-                            displayLng += Math.cos(angle) * radius;
+                        if (stations.length === 1) {
+                            // 只有單一票所，直接放在中心點
+                            createStationMarker(stations[0], centerLat, centerLng);
+                        } else {
+                            // 同一地點有多個票所！
+                            
+                            // 1. 在正中心畫一個「藍色中心錨點 (Hub)」
+                            L.circleMarker([centerLat, centerLng], {
+                                radius: 5, color: '#1e293b', fillColor: '#ffffff', fillOpacity: 1, weight: 3
+                            }).addTo(markersGroup);
+                            
+                            // 2. 計算散開的半徑 (票所越多，圈圈越大，約 40~100公尺)
+                            const radius = 0.0005 + (stations.length * 0.00004); 
+                            
+                            // 3. 將這些票所 360 度均勻散開，並畫連線
+                            stations.forEach((station, index) => {
+                                // 計算角度 (均勻分佈)
+                                const angle = (index / stations.length) * Math.PI * 2;
+                                const displayLat = centerLat + Math.sin(angle) * radius;
+                                const displayLng = centerLng + Math.cos(angle) * radius;
+                                
+                                // 畫放射狀連結線 (虛線)
+                                L.polyline([[centerLat, centerLng], [displayLat, displayLng]], {
+                                    color: '#64748b', weight: 2, opacity: 0.7, dashArray: '4,4'
+                                }).addTo(markersGroup);
+                                
+                                // 放置票所水滴 Marker
+                                createStationMarker(station, displayLat, displayLng);
+                            });
                         }
-                        locationTracker[locKey]++;
-
-                        // 建立專屬的雙色水滴 HTML (加入 govText 與 refText 變數)
-                        const iconHtml = `
-                            <div class="custom-pin-container">
-                                <div class="pin-circle">
-                                    <div class="pin-half" style="background-color: ${govColor};" title="公職: ${station.govStatus || '未處理'}">${govText}</div>
-                                    <div class="pin-half" style="background-color: ${refColor};" title="公投: ${station.refStatus || '未處理'}">${refText}</div>
-                                </div>
-                                <div class="pin-arrow"></div>
-                                <div class="pin-label">${station.id}</div>
-                            </div>
-                        `;
-
-                        // 定義 Leaflet DivIcon
-                        const customIcon = L.divIcon({
-                            html: iconHtml,
-                            className: 'dummy-class', // 移除預設的白底方塊樣式
-                            iconSize: [60, 60],
-                            iconAnchor: [30, 60] // 定位點在正下方
-                        });
-
-                        // 建立彈出視窗內容
-                        const popupHtml = `
-                            <div class="popup-header">📍 票所 ${station.id}</div>
-                            <div class="popup-body">
-                                <div class="popup-row">
-                                    <span>公職報表：</span>
-                                    <span class="status-badge" style="background-color: ${govColor}">${station.govStatus || '尚未判定'}</span>
-                                </div>
-                                <div class="popup-row">
-                                    <span>公投報表：</span>
-                                    <span class="status-badge" style="background-color: ${refColor}">${station.refStatus || '尚未判定'}</span>
-                                </div>
-                            </div>
-                        `;
-
-                        // 💡 將 Marker 加入地圖 (改用計算過防重疊的 displayLat, displayLng)
-                        const marker = L.marker([displayLat, displayLng], { icon: customIcon })
-                            .bindPopup(popupHtml);
-                        
-                        markersGroup.addLayer(marker);
                     });
 
                     // 自動將地圖縮放至包含所有地標的最佳視野
@@ -275,6 +238,56 @@
                 console.error(err);
                 document.getElementById('last-update').textContent = "網路錯誤";
             }
+        }
+
+        // 💡 將產生水滴圖標的邏輯獨立出來，讓程式碼更乾淨
+        function createStationMarker(station, lat, lng) {
+            const govColor = getColorByStatus(station.govStatus);
+            const refColor = getColorByStatus(station.refStatus);
+            
+            let govText = '';
+            if (station.govStatus && station.govStatus.includes('一二聯')) govText = '2';
+            else if (station.govStatus && station.govStatus.includes('一聯')) govText = '1';
+
+            let refText = '';
+            if (station.refStatus && station.refStatus.includes('一二聯')) refText = '2';
+            else if (station.refStatus && station.refStatus.includes('一聯')) refText = '1';
+
+            const iconHtml = `
+                <div class="custom-pin-container">
+                    <div class="pin-circle">
+                        <div class="pin-half" style="background-color: ${govColor};" title="公職: ${station.govStatus || '未處理'}">${govText}</div>
+                        <div class="pin-half" style="background-color: ${refColor};" title="公投: ${station.refStatus || '未處理'}">${refText}</div>
+                    </div>
+                    <div class="pin-arrow"></div>
+                    <div class="pin-label">${station.id}</div>
+                </div>
+            `;
+
+            const customIcon = L.divIcon({
+                html: iconHtml,
+                className: 'dummy-class', 
+                iconSize: [60, 60],
+                iconAnchor: [30, 60] // 定位點剛好在箭頭尖端
+            });
+
+            const popupHtml = `
+                <div class="popup-header">📍 票所 ${station.id}</div>
+                <div class="popup-body">
+                    <div class="popup-row">
+                        <span>公職報表：</span>
+                        <span class="status-badge" style="background-color: ${govColor}">${station.govStatus || '尚未判定'}</span>
+                    </div>
+                    <div class="popup-row">
+                        <span>公投報表：</span>
+                        <span class="status-badge" style="background-color: ${refColor}">${station.refStatus || '尚未判定'}</span>
+                    </div>
+                </div>
+            `;
+
+            L.marker([lat, lng], { icon: customIcon })
+                .bindPopup(popupHtml)
+                .addTo(markersGroup);
         }
 
         // 初次載入

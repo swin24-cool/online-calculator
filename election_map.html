@@ -140,10 +140,29 @@
                     // 清除舊的標記
                     markersGroup.clearLayers();
                     
+                    // 💡 紀錄相同 GPS 座標出現的次數 (用於將同一個學校的票所微調散開)
+                    const locationTracker = {};
+                    
                     json.data.forEach(station => {
                         const govColor = getColorByStatus(station.govStatus);
                         const refColor = getColorByStatus(station.refStatus);
                         
+                        // 💡 計算微小偏移量 (黃金角放射排列)，避免同一間學校的票所疊在一起
+                        const locKey = `${station.lat},${station.lng}`;
+                        if (!locationTracker[locKey]) locationTracker[locKey] = 0;
+                        
+                        const offsetIdx = locationTracker[locKey];
+                        let displayLat = station.lat;
+                        let displayLng = station.lng;
+                        
+                        if (offsetIdx > 0) {
+                            const angle = (offsetIdx * 137.5) * (Math.PI / 180); // 黃金角均勻散開
+                            const radius = 0.00018 * Math.sqrt(offsetIdx); // 往外擴展約 15~20 公尺
+                            displayLat += Math.sin(angle) * radius;
+                            displayLng += Math.cos(angle) * radius;
+                        }
+                        locationTracker[locKey]++;
+
                         // 建立專屬的雙色水滴 HTML
                         const iconHtml = `
                             <div class="custom-pin-container">
@@ -179,8 +198,13 @@
                             </div>
                         `;
 
-                        // 將 Marker 加入地圖
-                        const marker = L.marker([station.lat, station.lng], { icon: customIcon })
+                        // 定義 Leaflet DivIcon
+                        const customIcon = L.divIcon({
+                            </div>
+                        `;
+
+                        // 💡 將 Marker 加入地圖 (改用計算過防重疊的 displayLat, displayLng)
+                        const marker = L.marker([displayLat, displayLng], { icon: customIcon })
                             .bindPopup(popupHtml);
                         
                         markersGroup.addLayer(marker);

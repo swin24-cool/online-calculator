@@ -131,9 +131,9 @@
             light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 16, attribution: 'Esri'
             }),
-            // 2. 等高線地形圖 (Google Terrain - 帶有綠色與陰影，專業感強)
-            terrain: L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-                maxZoom: 19, attribution: 'Google'
+            // 2. 等高線地形圖 (Esri Topo - 帶有明顯綠地、等高線與地貌，專業指揮中心質感)
+            terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19, attribution: 'Esri'
             }),
             // 3. 標準街道圖 (OSM - 傳統彩色地圖)
             osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -210,8 +210,9 @@
                         let displayLng = station.lng;
                         
                         if (offsetIdx > 0) {
+                            // 💡 大幅放寬間距：將半徑放大將近 4 倍，讓 Marker 完全散開不重疊
                             const angle = (offsetIdx * 137.5) * (Math.PI / 180); // 黃金角均勻散開
-                            const radius = 0.00018 * Math.sqrt(offsetIdx); // 往外擴展約 15~20 公尺
+                            const radius = 0.0007 * Math.sqrt(offsetIdx); // 半徑擴大至約 70~80 公尺
                             displayLat += Math.sin(angle) * radius;
                             displayLng += Math.cos(angle) * radius;
                         }

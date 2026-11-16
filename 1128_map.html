@@ -41,7 +41,12 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.3); z-index: 2;
         }
         
-        .pin-half { flex: 1; height: 100%; transition: background-color 0.3s; }
+        /* 💡 新增文字置中與陰影效果，讓白色數字更清楚 */
+        .pin-half { 
+            flex: 1; height: 100%; transition: background-color 0.3s; 
+            display: flex; justify-content: center; align-items: center; 
+            color: white; font-weight: 900; font-size: 14px; text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
+        }
         
         /* 水滴底下的三角形 */
         .pin-arrow {
@@ -110,9 +115,9 @@
         // 初始化 Leaflet 地圖 (預設中心點設為萬華區)
         const map = L.map('map').setView([25.033, 121.499], 14);
 
-        // 💡 修正：掛載標準 OpenStreetMap 圖層 (完全免費免 API Key，解決浮水印問題)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        // 💡 換上您截圖中的 Google Maps「等高線地形圖 (Terrain)」圖層
+        L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps Terrain',
             maxZoom: 19
         }).addTo(map);
 
@@ -147,6 +152,14 @@
                         const govColor = getColorByStatus(station.govStatus);
                         const refColor = getColorByStatus(station.refStatus);
                         
+                        // 💡 判斷是否要顯示數字 1 或 2
+                        let govText = '';
+                        if (station.govStatus && station.govStatus.includes('一二聯')) {
+                            govText = '2';
+                        } else if (station.govStatus && station.govStatus.includes('一聯')) {
+                            govText = '1';
+                        }
+
                         // 💡 計算微小偏移量 (黃金角放射排列)，避免同一間學校的票所疊在一起
                         const locKey = `${station.lat},${station.lng}`;
                         if (!locationTracker[locKey]) locationTracker[locKey] = 0;
@@ -163,11 +176,11 @@
                         }
                         locationTracker[locKey]++;
 
-                        // 建立專屬的雙色水滴 HTML
+                        // 建立專屬的雙色水滴 HTML (加入 govText 變數)
                         const iconHtml = `
                             <div class="custom-pin-container">
                                 <div class="pin-circle">
-                                    <div class="pin-half" style="background-color: ${govColor};" title="公職: ${station.govStatus || '未處理'}"></div>
+                                    <div class="pin-half" style="background-color: ${govColor};" title="公職: ${station.govStatus || '未處理'}">${govText}</div>
                                     <div class="pin-half" style="background-color: ${refColor};" title="公投: ${station.refStatus || '未處理'}"></div>
                                 </div>
                                 <div class="pin-arrow"></div>

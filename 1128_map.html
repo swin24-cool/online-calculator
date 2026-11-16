@@ -125,19 +125,19 @@
         // 初始化 Leaflet 地圖 (預設中心點設為萬華區)
         const map = L.map('map').setView([25.033, 121.499], 14);
 
-        // 💡 定義 3 種簡單、低干擾的圖層
+        // 💡 定義 3 種簡單、低干擾的圖層 (已全部解鎖放大極限至 20 級)
         const mapLayers = {
-            // 1. 淺色簡約圖 (Esri Gray - 最適合疊加彩色燈號數據，沒有雜訊)
+            // 1. 淺色簡約圖 (Esri Gray) - 原生只到16，利用 maxNativeZoom 硬體拉伸至20
             light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 16, attribution: 'Esri'
+                maxNativeZoom: 16, maxZoom: 20, attribution: 'Esri'
             }),
-            // 2. 等高線地形圖 (Esri Topo - 帶有明顯綠地、等高線與地貌，專業指揮中心質感)
+            // 2. 等高線地形圖 (Esri Topo) - 原生到19，拉伸至20
             terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19, attribution: 'Esri'
+                maxNativeZoom: 19, maxZoom: 20, attribution: 'Esri'
             }),
-            // 3. 標準街道圖 (OSM - 傳統彩色地圖)
+            // 3. 標準街道圖 (OSM) - 原生到19，拉伸至20
             osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19, attribution: 'OSM'
+                maxNativeZoom: 19, maxZoom: 20, attribution: 'OSM'
             })
         };
 

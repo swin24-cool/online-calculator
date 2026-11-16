@@ -754,6 +754,12 @@
             sessionStorage.setItem('userRole', e.target.value);
         });
 
+        // 💡 核心修復：防呆檢查，確保不會讀到字串 "undefined" 或 "null"
+        if (sessionToken === 'undefined' || sessionToken === 'null') {
+            sessionToken = null;
+            sessionStorage.removeItem('sessionToken');
+        }
+
         // 如果已有通行證，代表是 F5 刷新，直接跳過密碼驗證畫面！
         if (sessionToken) {
             document.getElementById('login-overlay').style.display = 'none';

@@ -110,9 +110,9 @@
         // 初始化 Leaflet 地圖 (預設中心點設為萬華區)
         const map = L.map('map').setView([25.033, 121.499], 14);
 
-        // 掛載 OpenStreetMap 圖層 (可依需求換成 Google Maps 或其他圖層)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors & CARTO',
+        // 💡 修正：掛載標準 OpenStreetMap 圖層 (完全免費免 API Key，解決浮水印問題)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
         }).addTo(map);
 

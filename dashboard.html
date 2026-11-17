@@ -66,6 +66,10 @@
         .check-ok { background-color: #16a34a !important; color: #ffffff !important; }
         .err-cell { background-color: #dc2626 !important; color: #ffffff !important; }
 
+        /* 🗑️ 新增：作廢資料列樣式 */
+        .void-row { background-color: #fef08a !important; text-decoration: line-through; text-decoration-color: #dc2626; text-decoration-thickness: 2px; }
+        .void-row .font-mono { text-decoration: line-through; text-decoration-color: #dc2626; text-decoration-thickness: 2px; }
+
         /* 列印專用隱藏區塊 */
         @media print {
             body * { visibility: hidden; }
@@ -146,6 +150,7 @@
                             <option value="待補正(黃)">待補正(黃)</option>
                             <option value="一聯報表ok(綠)">一聯報表ok(綠)</option>
                             <option value="一二聯報表ok(綠)">一二聯報表ok(綠)</option>
+                            <option value="作廢">🗑️ 作廢 (結案)</option>
                         </select>
                         <button type="button" onclick="updateStatus()" class="bg-blue-600 text-white font-bold px-4 py-1 rounded hover:bg-blue-700 shadow-sm">更新燈號</button>
                         <!-- 強制解鎖按鈕 -->
@@ -354,10 +359,13 @@
             row.className = 'grid grid-cols-[1fr_1fr_60px] gap-2 items-center px-3 py-2 border-b border-gray-200 cursor-pointer text-sm transition-colors hover:bg-slate-50';
             
             let isClosed = item.status === '一二聯報表ok(綠)';
-            let isLocked = item.lockedBy && item.lockedBy !== '' && !isClosed;
+            let isVoid = item.status === '作廢';
+            let isLocked = item.lockedBy && item.lockedBy !== '' && !isClosed && !isVoid;
             
             if(isClosed) {
                 row.classList.add('bg-slate-200', 'text-slate-500', 'line-through');
+            } else if (isVoid) {
+                row.classList.add('void-row', 'text-slate-700');
             } else if(isLocked) {
                 row.classList.add('bg-yellow-100');
             }
@@ -367,6 +375,7 @@
             else if (item.status === '待補正(黃)') badgeHtml += '<span class="badge badge-warn">1</span>';
             else if (item.status === '一聯報表ok(綠)') badgeHtml += '<span class="badge badge-ok1">1</span>';
             else if (isClosed) badgeHtml += '<span class="badge badge-ok2">1.2</span>';
+            else if (isVoid) badgeHtml += `<span class="badge badge-warn text-sm px-1.5 py-0" title="已作廢">🗑️${item.lockedBy ? item.lockedBy.slice(-1) : ''}</span>`;
 
             if (isLocked) {
                 badgeHtml += `<span class="badge badge-warn text-[10px]" title="鎖定中" style="margin-left:4px;">🔒${item.lockedBy}</span>`;
@@ -436,14 +445,15 @@
         if (!role) { showToast("⚠️ 請先於右上角選擇帳號身分，才能調閱資料！"); return; }
         
         let isClosed = item.status === '一二聯報表ok(綠)';
+        let isVoid = item.status === '作廢';
         let isAdmin = role.startsWith('Admin') || role.startsWith('管理員'); // 💡 寬鬆判定管理員
 
-        if (isClosed && !isAdmin) {
-            showToast(`⚠️ 此筆資料已結案，僅限系統管理者操作與解鎖！`);
+        if ((isClosed || isVoid) && !isAdmin) {
+            showToast(`⚠️ 此筆資料已結案或作廢，僅限系統管理者操作與解鎖！`);
             return;
         }
 
-        if (item.lockedBy && item.lockedBy !== role && !isClosed && !isAdmin) {
+        if (item.lockedBy && item.lockedBy !== role && !isClosed && !isVoid && !isAdmin) {
             showToast(`⚠️ 此筆資料正由【${item.lockedBy}】檢核中！`);
             return;
         }
@@ -550,20 +560,29 @@
 
         let isAdmin = role.startsWith('Admin') || role.startsWith('管理員');
         
-        // 💡 阻擋管理員修改狀態燈號
+        // 💡 權限管控：管理員只能「作廢」，一般人員不能「作廢」
         if (isAdmin) {
-            showToast("⚠️ 系統管理員僅具備【純調閱】與【強制解鎖】權限，不可判定燈號。");
-            document.getElementById('status-select').value = currentRecord.status || '';
-            return;
+            if (newStatus !== '作廢' && newStatus !== '') {
+                showToast("⚠️ 系統管理員僅具備【純調閱】、【作廢】與【強制解鎖】權限，不可判定一般燈號。");
+                document.getElementById('status-select').value = currentRecord.status || '';
+                return;
+            }
+        } else {
+            if (newStatus === '作廢') {
+                showToast("⚠️ 【作廢】為系統管理員專屬權限，一般人員無法操作！");
+                document.getElementById('status-select').value = currentRecord.status || '';
+                return;
+            }
         }
 
-        if (currentRecord && currentRecord.status === '一二聯報表ok(綠)' && !isAdmin) {
-            showToast("⚠️ 此筆資料已結案，僅限系統管理者解鎖！");
+        if (currentRecord && (currentRecord.status === '一二聯報表ok(綠)' || currentRecord.status === '作廢') && !isAdmin) {
+            showToast("⚠️ 此筆資料已結案或作廢，僅限系統管理者解鎖！");
             return;
         }
 
         let lockedBy = role;
         if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; 
+        if (newStatus === '作廢') lockedBy = role; // 記錄是哪位管理員作廢的
 
         try {
             // 💡 掛上 Token 請求授權

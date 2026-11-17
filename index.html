@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>115年地方公職暨公投選舉 - 投開票所報告表</title>
+    
+    <!-- 💡 PWA 相關設定 -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="apple-touch-icon" href="./PWA_icon(192x192).png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -159,6 +165,9 @@
         /* 新增：大鍵盤專屬樣式 */
         .large-btn { height: 60px !important; font-size: 26px !important; }
         .large-action-btn { font-size: 22px !important; }
+
+        /* 💡 新增：大鍵盤模式下的反向排列 (把控制頭部移到下方) */
+        .keyboard-body.large-mode { flex-direction: column-reverse !important; padding-top: 8px; }
 
         .mode-toggle { display: flex; align-items: center; gap: 8px; background-color: white; border: 2px solid black; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #333; transition: background-color 0.2s; user-select: none; }
         .mode-toggle.active { background-color: #bbf7d0; }
@@ -416,6 +425,12 @@
         
         <!-- 右側：將內縮拿掉，讓按鈕完全靠右切齊 -->
         <div style="display: flex; gap: 30px; align-items: flex-end;">
+            <!-- 💡 新增：傳送成功跳動字體與查看結果按鈕 (預設隱藏) -->
+            <div id="success-indicator" class="hidden items-center gap-4 mr-4">
+                <span class="text-red-600 font-black text-2xl animate-bounce">傳送成功！</span>
+                <button id="btn-view-result" type="button" onclick="window.open('./dashboard.html', '_blank')" class="action-btn bg-purple-600 text-white border-purple-800 shadow-md text-lg px-4 py-2 hover:bg-purple-700">🔍 查看結果</button>
+            </div>
+            
             <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
             
             <!-- 圖片上傳區塊 -->
@@ -1008,9 +1023,11 @@
     if (btnToggleKeyboard) {
         btnToggleKeyboard.addEventListener('click', () => {
             isLargeKeyboard = !isLargeKeyboard;
+            const kbBody = document.querySelector('.keyboard-body');
             if (isLargeKeyboard) {
                 layout6x2.classList.add('hidden');
                 layout4x3.classList.remove('hidden');
+                kbBody.classList.add('large-mode'); // 💡 大鍵盤反轉排列，讓控制列置底
                 btnToggleKeyboard.innerHTML = '⌨️ 切換小鍵盤';
                 btnToggleKeyboard.style.backgroundColor = '#bbf7d0';
                 btnToggleKeyboard.style.color = '#166534';
@@ -1018,6 +1035,7 @@
             } else {
                 layout6x2.classList.remove('hidden');
                 layout4x3.classList.add('hidden');
+                kbBody.classList.remove('large-mode'); // 💡 小鍵盤恢復正常順序
                 btnToggleKeyboard.innerHTML = '⌨️ 切換大鍵盤';
                 btnToggleKeyboard.style.backgroundColor = '#fef08a';
                 btnToggleKeyboard.style.color = '#854d0e';
@@ -1343,6 +1361,13 @@
                     if (data.status === 'success') {
                         if (data.message.includes('⚠️')) showCustomAlert(data.message);
                         else showToast(data.message, 4000);
+                        
+                        // 💡 顯示傳送成功跳動文字與查看結果按鈕
+                        const successInd = document.getElementById('success-indicator');
+                        if(successInd) {
+                            successInd.classList.remove('hidden');
+                            successInd.classList.add('flex');
+                        }
                     } else {
                         showCustomAlert("❌ 傳送失敗：\n" + data.message);
                     }
@@ -1377,6 +1402,13 @@
             ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => { calculateTotals(type); });
             showToast('🗑️ 已清除所有輸入資料。');
             
+            // 💡 清除資料時，隱藏傳送成功指示器
+            const successInd = document.getElementById('success-indicator');
+            if(successInd) {
+                successInd.classList.add('hidden');
+                successInd.classList.remove('flex');
+            }
+            
             clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');
             clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref');
         });
@@ -1392,6 +1424,15 @@
     const toast = document.getElementById('toast');
     function showToast(msg, duration = 3000) { toast.textContent = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), duration); }
     
+    // === 💡 PWA Service Worker 註冊 ===
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('✅ ServiceWorker 註冊成功'))
+                .catch(err => console.log('❌ ServiceWorker 註冊失敗: ', err));
+        });
+    }
+
 </script>
 </body>
 </html>

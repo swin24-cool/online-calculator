@@ -156,6 +156,10 @@
         .vk-action-btn { font-size: 18px; }
         .vk-btn:active, .vk-action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #a16207; }
 
+        /* 新增：大鍵盤專屬樣式 */
+        .large-btn { height: 60px !important; font-size: 26px !important; }
+        .large-action-btn { font-size: 22px !important; }
+
         .mode-toggle { display: flex; align-items: center; gap: 8px; background-color: white; border: 2px solid black; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #333; transition: background-color 0.2s; user-select: none; }
         .mode-toggle.active { background-color: #bbf7d0; }
         .voice-btn-small { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background-color: #ef4444; border: 2px solid black; border-radius: 50%; font-size: 20px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
@@ -405,8 +409,9 @@
     <!-- 按鈕區 -->
     <div class="action-buttons-container">
         <!-- 左側 -->
-        <div>
+        <div style="display: flex; gap: 10px;">
             <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
+            <button id="btn-toggle-keyboard" class="action-btn" style="background-color: #fef08a; color: #854d0e;">⌨️ 切換大鍵盤</button>
         </div>
         
         <!-- 右側：將內縮拿掉，讓按鈕完全靠右切齊 -->
@@ -463,22 +468,47 @@
             </label>
             <button class="voice-btn-small" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
         </div>
-        <div class="vk-grid">
-            <div class="vk-row">
-                <button class="vk-btn num-btn">1</button>
-                <button class="vk-btn num-btn">2</button>
-                <button class="vk-btn num-btn">3</button>
-                <button class="vk-btn num-btn">4</button>
-                <button class="vk-btn num-btn">5</button>
-                <button id="vk-tab" class="vk-action-btn" style="font-size: 18px;">tab</button>
+        <div class="vk-layouts w-full">
+            <!-- 6x2 小鍵盤 (預設) -->
+            <div class="vk-grid" id="layout-6x2">
+                <div class="vk-row">
+                    <button class="vk-btn num-btn">1</button>
+                    <button class="vk-btn num-btn">2</button>
+                    <button class="vk-btn num-btn">3</button>
+                    <button class="vk-btn num-btn">4</button>
+                    <button class="vk-btn num-btn">5</button>
+                    <button class="vk-action-btn vk-tab-btn" style="font-size: 18px;">tab</button>
+                </div>
+                <div class="vk-row">
+                    <button class="vk-btn num-btn">6</button>
+                    <button class="vk-btn num-btn">7</button>
+                    <button class="vk-btn num-btn">8</button>
+                    <button class="vk-btn num-btn">9</button>
+                    <button class="vk-btn num-btn">0</button>
+                    <button class="vk-action-btn vk-clear-btn" style="font-size: 16px;">清空</button>
+                </div>
             </div>
-            <div class="vk-row">
-                <button class="vk-btn num-btn">6</button>
-                <button class="vk-btn num-btn">7</button>
-                <button class="vk-btn num-btn">8</button>
-                <button class="vk-btn num-btn">9</button>
-                <button class="vk-btn num-btn">0</button>
-                <button id="vk-clear" class="vk-action-btn" style="font-size: 16px;">清空</button>
+
+            <!-- 4x3 大鍵盤 (預設隱藏) -->
+            <div class="vk-grid hidden" id="layout-4x3">
+                <div class="vk-row">
+                    <button class="vk-btn num-btn large-btn">1</button>
+                    <button class="vk-btn num-btn large-btn">2</button>
+                    <button class="vk-btn num-btn large-btn">3</button>
+                    <button class="vk-action-btn vk-tab-btn large-btn large-action-btn">tab</button>
+                </div>
+                <div class="vk-row">
+                    <button class="vk-btn num-btn large-btn">4</button>
+                    <button class="vk-btn num-btn large-btn">5</button>
+                    <button class="vk-btn num-btn large-btn">6</button>
+                    <button class="vk-btn num-btn large-btn">0</button>
+                </div>
+                <div class="vk-row">
+                    <button class="vk-btn num-btn large-btn">7</button>
+                    <button class="vk-btn num-btn large-btn">8</button>
+                    <button class="vk-btn num-btn large-btn">9</button>
+                    <button class="vk-action-btn vk-clear-btn large-btn large-action-btn">清空</button>
+                </div>
             </div>
         </div>
     </div>
@@ -951,24 +981,52 @@
         });
     });
 
-    if(document.getElementById('vk-clear')) {
-        document.getElementById('vk-clear').addEventListener('click', (e) => {
+    document.querySelectorAll('.vk-clear-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
             e.preventDefault();
             if (currentFocusedInput) {
                 currentFocusedInput.value = "";
                 currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
         });
-    }
+    });
 
-    if(document.getElementById('vk-tab')) {
-        document.getElementById('vk-tab').addEventListener('click', (e) => {
+    document.querySelectorAll('.vk-tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
             e.preventDefault();
             if (!currentFocusedInput) return;
             autoTabToNextCell(currentFocusedInput);
         });
+    });
+    
+    // === 鍵盤大小切換邏輯 ===
+    const btnToggleKeyboard = document.getElementById('btn-toggle-keyboard');
+    const layout6x2 = document.getElementById('layout-6x2');
+    const layout4x3 = document.getElementById('layout-4x3');
+    let isLargeKeyboard = false;
+
+    if (btnToggleKeyboard) {
+        btnToggleKeyboard.addEventListener('click', () => {
+            isLargeKeyboard = !isLargeKeyboard;
+            if (isLargeKeyboard) {
+                layout6x2.classList.add('hidden');
+                layout4x3.classList.remove('hidden');
+                btnToggleKeyboard.innerHTML = '⌨️ 切換小鍵盤';
+                btnToggleKeyboard.style.backgroundColor = '#bbf7d0';
+                btnToggleKeyboard.style.color = '#166534';
+                showToast('已切換至「4x3 大鍵盤」');
+            } else {
+                layout6x2.classList.remove('hidden');
+                layout4x3.classList.add('hidden');
+                btnToggleKeyboard.innerHTML = '⌨️ 切換大鍵盤';
+                btnToggleKeyboard.style.backgroundColor = '#fef08a';
+                btnToggleKeyboard.style.color = '#854d0e';
+                showToast('已切換至「6x2 小鍵盤」');
+            }
+        });
     }
 
+    // === 新增：放大視窗 (Focus Modal) 核心邏輯 ===
     let activeModalType = null;
 
     window.openFocusModal = function(type) {

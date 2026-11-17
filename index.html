@@ -445,9 +445,9 @@
 
             <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
             
-            <!-- 💡 修改：傳送成功跳動字體與查看結果按鈕移至最右側，改為上下排列，調亮顏色並移除 icon -->
-            <div id="success-indicator" class="hidden flex-col items-center gap-2 mb-0.5">
-                <span class="text-red-600 font-black text-xl animate-bounce">傳送成功！</span>
+            <!-- 查看結果與成功提示 -->
+            <div class="flex flex-col items-center justify-end gap-1 mb-0.5">
+                <span id="success-text" class="text-red-600 font-black text-xl animate-bounce opacity-0 transition-opacity duration-300 pointer-events-none">傳送成功！</span>
                 <button id="btn-view-result" type="button" onclick="window.open('./dashboard.html', '_blank')" class="action-btn bg-purple-500 text-white border-purple-600 shadow-md text-lg px-6 py-1 hover:bg-purple-600 transition-colors">查看結果</button>
             </div>
         </div>
@@ -1362,11 +1362,11 @@
                         if (data.message.includes('⚠️')) showCustomAlert(data.message);
                         else showToast(data.message, 4000);
                         
-                        // 💡 顯示傳送成功跳動文字與查看結果按鈕
-                        const successInd = document.getElementById('success-indicator');
-                        if(successInd) {
-                            successInd.classList.remove('hidden');
-                            successInd.classList.add('flex');
+                        // 💡 顯示傳送成功跳動文字
+                        const successText = document.getElementById('success-text');
+                        if(successText) {
+                            successText.classList.remove('opacity-0');
+                            successText.classList.add('opacity-100');
                         }
                     } else {
                         showCustomAlert("❌ 傳送失敗：\n" + data.message);
@@ -1403,10 +1403,10 @@
             showToast('🗑️ 已清除所有輸入資料。');
             
             // 💡 清除資料時，隱藏傳送成功指示器
-            const successInd = document.getElementById('success-indicator');
-            if(successInd) {
-                successInd.classList.add('hidden');
-                successInd.classList.remove('flex');
+            const successText = document.getElementById('success-text');
+            if(successText) {
+                successText.classList.add('opacity-0');
+                successText.classList.remove('opacity-100');
             }
             
             clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');

@@ -32,6 +32,7 @@
         
         .station-input-area {
             display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+            min-width: 1400px; /* 💡 強制與表格同寬，讓右側標題貼齊最右邊 */
         }
         .station-input {
             border: 2px solid #94a3b8; border-radius: 4px; padding: 4px 8px; font-size: 16px; width: 100px;
@@ -87,7 +88,7 @@
 
         .empty-cell { background-color: #fdfdfd; }
         
-        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; }
+        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; min-width: 1400px; /* 💡 強制與表格同寬，讓按鈕完美分散至兩側 */ }
         .action-btn { padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
         .action-btn:active { transform: scale(0.95); }
         .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }

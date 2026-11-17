@@ -4,12 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>115年地方公職暨公投選舉 - 投開票所報告表</title>
-    
-    <!-- PWA 必備標籤 -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3b82f6">
-    <link rel="apple-touch-icon" href="PWA_icon(192x192).png">
-
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -87,22 +81,32 @@
 
         .empty-cell { background-color: #fdfdfd; }
         
-        /* 確保全螢幕平鋪展現，不換行 */
-        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; min-width: 1400px; }
-        
+        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; }
         .action-btn { padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
         .action-btn:active { transform: scale(0.95); }
         .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
         .btn-green { background-color: #bbf7d0; color: #166534; }
 
         /* === 放大視窗 (Focus Modal) 樣式 === */
-        .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: flex-start; justify-content: center; backdrop-filter: blur(3px); padding-top: 5vh; padding-bottom: 20vh; overflow-y: auto; }
-        .focus-modal-content { background: white; width: 96vw; max-width: 900px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 4px solid #3b82f6; display: flex; flex-direction: column; margin: auto; }
+        /* 💡 修正：明確允許雙指縮放 (pinch-zoom) */
+        .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: flex-start; justify-content: center; backdrop-filter: blur(3px); padding-top: 5vh; padding-bottom: 20vh; overflow-y: auto; touch-action: pan-x pan-y pinch-zoom; }
+        .focus-modal-content { background: white; width: 96vw; max-width: 900px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 4px solid #3b82f6; display: flex; flex-direction: column; margin: auto; touch-action: pan-x pan-y pinch-zoom; }
         .focus-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #eff6ff; border-bottom: 2px solid #bfdbfe; border-radius: 8px 8px 0 0; }
         .focus-modal-title { font-size: 24px; font-weight: 900; color: #1e3a8a; display: flex; align-items: center; gap: 10px; }
         .focus-modal-close { font-size: 32px; font-weight: bold; color: #64748b; cursor: pointer; line-height: 1; padding: 0 10px; border-radius: 8px; transition: background 0.2s; }
         .focus-modal-close:active { background: #e2e8f0; color: #ef4444; }
         .focus-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+        /* 💡 新增：專屬手機橫屏 (Landscape) 優化 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .focus-modal-overlay { padding-top: 2vh; padding-bottom: 10vh; }
+            .focus-modal-header { padding: 8px 15px; }
+            .focus-modal-title { font-size: 20px; }
+            .focus-modal-body { padding: 12px; gap: 12px; }
+            .focus-cand-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important; gap: 10px !important; }
+            .focus-input { padding: 6px 0 !important; font-size: 28px !important; }
+            .focus-box-title { font-size: 14px !important; padding: 6px 4px !important; }
+        }
         
         .focus-cand-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
         .focus-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; border-top: 3px dashed #cbd5e1; padding-top: 20px; }
@@ -116,45 +120,45 @@
         .focus-box.readonly .focus-box-title { background: #f1f5f9; color: #64748b; border-bottom-color: #cbd5e1; }
         .focus-box.readonly .focus-input { color: #1e3a8a; cursor: not-allowed; }
 
-        /* === 全新 3x4 優化虛擬鍵盤佈局 === */
+        /* === 全新優化虛擬鍵盤佈局 === */
         .control-panel {
-            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: clamp(320px, 90vw, 400px); 
+            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: clamp(320px, 33vw, 450px); 
             z-index: 9999; display: flex; flex-direction: column; align-items: center; touch-action: none;
             filter: drop-shadow(0 8px 25px rgba(0,0,0,0.3));
         }
         /* 獨立的拖曳把手區域 (梯形突出設計) */
         .drag-handle-tab {
-            width: 140px; height: 35px; background-color: #7dd3fc; border: 2px solid #38bdf8; border-bottom: none;
+            width: 120px; height: 30px; background-color: #7dd3fc; border: 2px solid #38bdf8; border-bottom: none;
             border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; cursor: grab;
         }
         .drag-handle-tab:active { cursor: grabbing; }
         .drag-indicator {
-            width: 50px; height: 6px; background-color: #0284c7; border-radius: 3px; opacity: 0.6; pointer-events: none;
+            width: 40px; height: 6px; background-color: #0284c7; border-radius: 3px; opacity: 0.6; pointer-events: none;
         }
         /* 鍵盤主體 */
         .keyboard-body {
-            width: 100%; background-color: #7dd3fc; padding: 16px; border-radius: 12px; border: 2px solid #38bdf8;
-            border-top-left-radius: 4px; border-top-right-radius: 4px; display: flex; flex-direction: column; gap: 14px;
+            width: 100%; background-color: #7dd3fc; padding: 12px; border-radius: 12px; border: 2px solid #38bdf8;
+            border-top-left-radius: 4px; border-top-right-radius: 4px; display: flex; flex-direction: column; gap: 12px;
         }
         
-        .cp-bottom { display: flex; justify-content: center; align-items: center; gap: 30px; width: 100%; margin-top: 5px; }
+        .cp-header { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; }
         
-        /* 3x4 大按鍵網格 */
-        .vk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; }
+        .vk-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .vk-row { display: flex; gap: 6px; width: 100%; }
         
-        /* 按鈕樣式微調：加高、字體加大 */
+        /* 按鈕樣式微調：讓按鈕在缺少刪除鍵後顯得更寬裕 */
         .vk-btn, .vk-action-btn { 
-            background-color: #fef08a; color: #dc2626; font-weight: 900; font-size: 26px; 
-            border: 2px solid #ca8a04; border-radius: 10px; height: 60px; cursor: pointer; 
+            flex: 1; background-color: #fef08a; color: #dc2626; font-weight: 900; font-size: 20px; 
+            border: 2px solid #ca8a04; border-radius: 8px; height: 42px; cursor: pointer; 
             display: flex; align-items: center; justify-content: center; user-select: none; 
-            box-shadow: 0 5px 0 #a16207; -webkit-tap-highlight-color: transparent; transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 4px 0 #a16207; -webkit-tap-highlight-color: transparent; transition: transform 0.1s, box-shadow 0.1s;
         }
-        .vk-action-btn { font-size: 20px; color: #b91c1c;}
-        .vk-btn:active, .vk-action-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #a16207; }
+        .vk-action-btn { font-size: 18px; }
+        .vk-btn:active, .vk-action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #a16207; }
 
-        .mode-toggle { display: flex; align-items: center; gap: 8px; background-color: white; border: 2px solid black; padding: 6px 16px; border-radius: 10px; cursor: pointer; font-weight: bold; color: #333; transition: background-color 0.2s; user-select: none; }
+        .mode-toggle { display: flex; align-items: center; gap: 8px; background-color: white; border: 2px solid black; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #333; transition: background-color 0.2s; user-select: none; }
         .mode-toggle.active { background-color: #bbf7d0; }
-        .voice-btn-small { display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; background-color: #ef4444; border: 2px solid black; border-radius: 50%; font-size: 24px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
+        .voice-btn-small { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background-color: #ef4444; border: 2px solid black; border-radius: 50%; font-size: 20px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
         .voice-btn-small:active { transform: translateY(2px); }
         .voice-btn-small.recording { background-color: #22c55e; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
@@ -177,7 +181,7 @@
         <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
         <span class="warning-text">輸入票所編號(1282-1419)後才可試算！</span>
         
-        <!-- 標題列 -->
+        <!-- 合併後的標題列，優化手機端靠右切齊 -->
         <div class="w-full sm:w-auto sm:ml-auto text-right font-bold text-gray-800 text-[16px] tracking-wide mt-2 sm:mt-0 whitespace-nowrap">
             115年地方公職暨公投選舉(萬華區)&nbsp;&nbsp;&nbsp;&nbsp;<span id="display-date">115.11.28</span>
         </div>
@@ -398,7 +402,7 @@
         </table>
     </div>
 
-    <!-- 💡 完美修復的按鈕區 (包含查看結果與成功提示) -->
+    <!-- 按鈕區 -->
     <div class="action-buttons-container">
         <!-- 左側 -->
         <div>
@@ -425,21 +429,12 @@
                 </div>
             </div>
 
-            <!-- 💡 傳送與查看結果按鈕區 -->
-            <div style="display: flex; gap: 30px; align-items: flex-end;">
-                <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
-                
-                <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
-                    <!-- 永久停駐的成功提示文字 -->
-                    <span id="submit-success-text" class="text-red-600 font-black text-xl hidden absolute" style="top: -35px; white-space: nowrap; text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; letter-spacing: 2px;">傳送成功！</span>
-                    <button type="button" onclick="window.open('https://news.google.com', '_blank')" class="action-btn" style="height: 40px; margin-bottom: 2px; background-color: #f1f5f9; border: 2px solid #0f172a; color: #0f172a;">查看結果</button>
-                </div>
-            </div>
+            <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
         </div>
     </div>
 </div>
 
-<!-- 新增：放大動態視窗 (Focus Modal) -->
+<!-- 放大動態視窗 (Focus Modal) -->
 <div class="focus-modal-overlay" id="focus-modal-overlay">
     <div class="focus-modal-content">
         <div class="focus-modal-header">
@@ -447,9 +442,7 @@
             <div class="focus-modal-close" onclick="closeFocusModal()">✖</div>
         </div>
         <div class="focus-modal-body">
-            <!-- 候選人動態生成區 -->
             <div class="focus-cand-grid" id="fm-cand-container"></div>
-            <!-- 統計數據固定生成區 (去除發出、投票數) -->
             <div class="focus-stat-grid" id="fm-stat-container"></div>
         </div>
     </div>
@@ -457,38 +450,36 @@
 
 <!-- 懸浮控制鍵盤 -->
 <div class="control-panel" id="draggable-panel">
-    <!-- 獨立拖曳提把 -->
     <div class="drag-handle-tab" id="drag-handle">
         <div class="drag-indicator"></div>
     </div>
     
     <div class="keyboard-body">
-        <!-- 💡 3x4 大按鍵排列 -->
-        <div class="vk-grid">
-            <button class="vk-btn num-btn">1</button>
-            <button class="vk-btn num-btn">2</button>
-            <button class="vk-btn num-btn">3</button>
-            <button id="vk-tab" class="vk-action-btn font-bold">tab</button>
-
-            <button class="vk-btn num-btn">4</button>
-            <button class="vk-btn num-btn">5</button>
-            <button class="vk-btn num-btn">6</button>
-            <button class="vk-btn num-btn">0</button>
-
-            <button class="vk-btn num-btn">7</button>
-            <button class="vk-btn num-btn">8</button>
-            <button class="vk-btn num-btn">9</button>
-            <button id="vk-clear" class="vk-action-btn text-[18px]">清空</button>
-        </div>
-        
-        <!-- 下方連續模式與語音控制 -->
-        <div class="cp-bottom">
+        <div class="cp-header">
             <label class="mode-toggle" id="mode-toggle-label">
                 <input type="checkbox" id="continuous-mode" class="hidden">
                 <span class="text-2xl">⚡</span> 
                 <span>連續模式</span>
             </label>
             <button class="voice-btn-small" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
+        </div>
+        <div class="vk-grid">
+            <div class="vk-row">
+                <button class="vk-btn num-btn">1</button>
+                <button class="vk-btn num-btn">2</button>
+                <button class="vk-btn num-btn">3</button>
+                <button class="vk-btn num-btn">4</button>
+                <button class="vk-btn num-btn">5</button>
+                <button id="vk-tab" class="vk-action-btn" style="font-size: 18px;">tab</button>
+            </div>
+            <div class="vk-row">
+                <button class="vk-btn num-btn">6</button>
+                <button class="vk-btn num-btn">7</button>
+                <button class="vk-btn num-btn">8</button>
+                <button class="vk-btn num-btn">9</button>
+                <button class="vk-btn num-btn">0</button>
+                <button id="vk-clear" class="vk-action-btn" style="font-size: 16px;">清空</button>
+            </div>
         </div>
     </div>
 </div>
@@ -502,7 +493,6 @@
     let globalStationCache = null; 
     let currentStationId = null;   
 
-    // === 所有選舉的候選人名單固定字典 (確保放大視窗絕不出錯) ===
     const candidateNamesMap = {
         'mayor': ['郭璽', '林志成', '沈伯洋', '蕭文乾', '蔣萬安', '唐新民'],
         'councilor': ['張延廷', '吳志剛', '陳力新', '吳怡萱', '徐立信', '馬郁雯', '鍾小平', '郭昭巖', '譚傳紹', '張銘祐', '王振庭', '洪婉臻', '劉耀仁', '應佳妤'],
@@ -511,15 +501,7 @@
         'referendum': ['同意', '不同意']
     };
 
-    // 💡 隱藏成功訊息的共用函數
-    function hideSuccessMessage() {
-        const successText = document.getElementById('submit-success-text');
-        if (successText) successText.classList.add('hidden');
-    }
-
-    // === 初始化與預先載入 (Bulk Caching) ===
     window.addEventListener('DOMContentLoaded', () => {
-        
         document.querySelectorAll('input.data-cell').forEach((input, idx) => {
             if(!input.id) input.id = 'cand_input_' + idx;
         });
@@ -542,7 +524,6 @@
             });
     });
 
-    // === 輸入票所事件 ===
     const stationIdInput = document.getElementById('station-id-input');
     const btnLoadStation = document.getElementById('btn-load-station');
 
@@ -557,7 +538,6 @@
     }
 
     function triggerLoadStation() {
-        hideSuccessMessage(); // 載入新票所時隱藏成功訊息
         const inputId = stationIdInput.value.trim();
         if (inputId.length >= 4) {
             loadStationById(inputId);
@@ -579,20 +559,8 @@
             document.getElementById('table-wrapper').classList.remove('locked');
             showToast(`⚡ 已成功載入第 ${inputId} 票所資料`);
         } else {
-            // 如果雲端找不到這筆資料，強制解鎖讓使用者可以自由填寫
-            currentStationId = inputId;
-            applyStationData({
-                checkValues: { mayor: 1, councilor: 1, flatland: 1, mountain: 1, village: 1, referendum: 1 },
-                villageCandidates: ["候選人1", "候選人2"]
-            });
-            ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
-                const checkEl = document.getElementById(`${type}_check`);
-                if(checkEl) {
-                    checkEl.value = ""; checkEl.classList.remove('match-true', 'match-false');
-                }
-            });
-            document.getElementById('table-wrapper').classList.remove('locked');
-            showToast(`⚠️ 雲端無此票所 (${inputId})，已為您強制解鎖空白表！`, 4000);
+            showToast('❌ 找不到該票所編號！');
+            lockTableStructure();
         }
     }
 
@@ -626,7 +594,7 @@
         
         types.forEach(type => {
             const checkEl = document.getElementById(`${type}_check`);
-            const val = data.checkValues ? data.checkValues[type] : 0;
+            const val = data.checkValues[type];
             
             if (!val || Number(val) === 0) {
                 if (checkEl) { checkEl.value = ""; checkEl.classList.add('locked-empty'); }
@@ -648,7 +616,6 @@
         types.forEach(type => calculateTotals(type));
     }
 
-    // === 表格計算、防呆黃底色與輸入連動 ===
     function calculateTotals(prefix) {
         let validVotes = 0;
         const candInputs = document.querySelectorAll(`.${prefix}-cand:not(.locked-empty)`);
@@ -749,177 +716,12 @@
         });
     });
 
-    // === 動態放大填寫網頁 (Modal) 核心功能 ===
-    let activeModalType = null;
-
-    window.openFocusModal = function(type) {
-        activeModalType = type;
-        const overlay = document.getElementById('focus-modal-overlay');
-        const candContainer = document.getElementById('fm-cand-container');
-        const statContainer = document.getElementById('fm-stat-container');
-        
-        const typeNames = { mayor: '直轄市長', councilor: '區域議員', flatland: '平地原住民', mountain: '山地原住民', village: '里長', referendum: '公投' };
-        document.getElementById('fm-title').innerHTML = `🔍 放大填寫：${typeNames[type]}`;
-        
-        candContainer.innerHTML = '';
-        statContainer.innerHTML = '';
-        
-        const isContinuous = document.getElementById('continuous-mode')?.checked;
-        const mainCandInputs = document.querySelectorAll(`.${type}-cand:not(.locked-empty)`);
-        
-        let names = [];
-        if (type === 'village') {
-            names = (globalStationCache && currentStationId && globalStationCache[currentStationId]) ? globalStationCache[currentStationId].villageCandidates : [];
-        } else {
-            names = candidateNamesMap[type] || [];
-        }
-
-        mainCandInputs.forEach((mainInput, idx) => {
-            let candName = names[idx] ? names[idx] : `候選人 ${idx+1}`;
-            let displayName = type === 'referendum' ? candName : `${idx+1} ${candName}`;
-            
-            const box = document.createElement('div');
-            box.className = 'flex flex-col bg-gray-50 border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm focus-box';
-            box.id = `fm_box_${mainInput.id}`;
-            
-            let inputProps = isContinuous ? 'inputmode="none" readonly' : 'inputmode="numeric"';
-            
-            box.innerHTML = `
-                <div class="focus-box-title">${displayName}</div>
-                <input type="text" ${inputProps} class="focus-input fm-input modal-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
-            `;
-            candContainer.appendChild(box);
-        });
-        
-        const stats = [
-            { id: `${type}_valid`, label: '有效票', readonly: true },
-            { id: `${type}_invalid`, label: '無效票', readonly: false },
-            { id: `${type}_issued_not_voted`, label: '已領未投', readonly: false },
-            { id: `${type}_remaining`, label: '用餘票', readonly: false },
-            { id: `${type}_electors`, label: '選舉人數', readonly: true },
-            { id: `${type}_check`, label: '檢查值', readonly: true }
-        ];
-        
-        stats.forEach(stat => {
-            const mainInput = document.getElementById(stat.id);
-            if (!mainInput) return;
-            const box = document.createElement('div');
-            box.className = 'focus-box' + (stat.readonly ? ' readonly' : '');
-            box.id = `fm_box_${stat.id}`;
-            
-            let inputClass = 'focus-input fm-input modal-input w-full text-center text-2xl font-bold py-3 outline-none cursor-pointer';
-            let inputProps = 'inputmode="numeric"';
-            
-            if (stat.readonly) {
-                inputClass += ' bg-gray-200 text-blue-800 cursor-not-allowed modal-readonly';
-                inputProps = 'inputmode="none" readonly tabindex="-1"';
-            } else {
-                inputClass += ' focus:bg-red-50 focus:border-red-500';
-                if (isContinuous) inputProps = 'inputmode="none" readonly';
-            }
-            
-            box.innerHTML = `
-                <div class="focus-box-title">${stat.label}</div>
-                <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" id="fm_${stat.id}" value="${mainInput.value}">
-            `;
-            statContainer.appendChild(box);
-        });
-        
-        overlay.style.display = 'flex';
-        syncMainToModal(type); 
-        
-        setTimeout(() => {
-            const firstInput = document.querySelector('#focus-modal-overlay .fm-input:not(.modal-readonly)');
-            if(firstInput) {
-                firstInput.click();
-                if(!isContinuous) firstInput.focus();
-            }
-        }, 100);
-    };
-
-    window.closeFocusModal = function() {
-        document.getElementById('focus-modal-overlay').style.display = 'none';
-        activeModalType = null;
-        if(currentFocusedInput && currentFocusedInput.classList.contains('fm-input')) {
-            currentFocusedInput.classList.remove('focused-cell');
-            currentFocusedInput = null;
-        }
-    };
-
-    document.getElementById('focus-modal-overlay').addEventListener('click', function(e) {
-        if (e.target.tagName.toLowerCase() === 'input' && !e.target.classList.contains('modal-readonly')) {
-            document.querySelectorAll('input').forEach(el => el.classList.remove('focused-cell'));
-            e.target.classList.add('focused-cell');
-            currentFocusedInput = e.target;
-            
-            const isContinuous = document.getElementById('continuous-mode')?.checked;
-            if(isContinuous) e.target.blur();
-        }
-    });
-
-    document.getElementById('focus-modal-overlay').addEventListener('input', function(e) {
-        if (e.target.classList.contains('fm-input')) {
-            const targetId = e.target.getAttribute('data-target');
-            const mainInput = document.getElementById(targetId);
-            if (mainInput) {
-                mainInput.value = e.target.value;
-                if (activeModalType) calculateTotals(activeModalType); 
-            }
-        }
-    });
-
-    window.syncMainToModal = function(type) {
-        if (activeModalType !== type) return;
-        
-        document.querySelectorAll(`.${type}-cand:not(.locked-empty)`).forEach(mainInput => {
-            const fmInput = document.getElementById(`fm_${mainInput.id}`);
-            const fmBox = document.getElementById(`fm_box_${mainInput.id}`);
-            if (fmInput && fmBox) {
-                if (fmInput.classList.contains('modal-readonly')) fmInput.value = mainInput.value;
-                if (mainInput.classList.contains('warn-bg')) {
-                    fmBox.style.backgroundColor = '#fef08a'; fmBox.style.borderColor = '#ca8a04';
-                } else {
-                    fmBox.style.backgroundColor = ''; fmBox.style.borderColor = '';
-                }
-            }
-        });
-        
-        const statFields = ['valid', 'invalid', 'issued_not_voted', 'remaining', 'electors', 'check'];
-        statFields.forEach(field => {
-            const mainInput = document.getElementById(`${type}_${field}`);
-            const fmInput = document.getElementById(`fm_${type}_${field}`);
-            const fmBox = document.getElementById(`fm_box_${type}_${field}`);
-            
-            if (mainInput && fmInput && fmBox) {
-                if (fmInput.classList.contains('modal-readonly')) {
-                    fmInput.value = mainInput.value;
-                }
-                
-                fmBox.style.backgroundColor = ''; fmBox.style.borderColor = '';
-                fmInput.style.backgroundColor = 'transparent'; fmInput.style.color = '';
-                
-                if (mainInput.classList.contains('warn-bg')) {
-                    fmBox.style.backgroundColor = '#fef08a'; fmBox.style.borderColor = '#ca8a04';
-                }
-                
-                if (field === 'check') {
-                    if (mainInput.classList.contains('match-true')) {
-                        fmInput.style.backgroundColor = 'rgb(37, 249, 44)'; fmInput.style.color = '#000';
-                    } else if (mainInput.classList.contains('match-false')) {
-                        fmInput.style.backgroundColor = 'rgb(247, 123, 138)'; fmInput.style.color = '#000';
-                    }
-                }
-            }
-        });
-    };
-
-    // === 自動跳下一格邏輯 ===
     function autoTabToNextCell(currentInput) {
         if (!currentInput) return;
         const isContinuous = document.getElementById('continuous-mode')?.checked;
 
-        if (currentInput.classList.contains('modal-input')) {
-            const validModalInputs = Array.from(document.querySelectorAll('#focus-modal-overlay .modal-input:not(.modal-readonly)'));
+        if (currentInput.classList.contains('fm-input')) {
+            const validModalInputs = Array.from(document.querySelectorAll('#focus-modal-overlay .fm-input:not(.modal-readonly)'));
             const currentIndex = validModalInputs.indexOf(currentInput);
             
             if (currentIndex >= 0 && currentIndex < validModalInputs.length - 1) {
@@ -977,8 +779,6 @@
         }
     }
 
-
-    // === 虛擬鍵盤拖曳修復 ===
     let isDraggingPanel = false;
     let pStartX, pStartY, initialLeft, initialTop;
     const draggablePanel = document.getElementById('draggable-panel');
@@ -990,7 +790,7 @@
             if(e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input' || e.target.closest('label')) return;
             
             isDraggingPanel = true;
-            try { handle.setPointerCapture(e.pointerId); } catch(err) {}
+            draggablePanel.setPointerCapture(e.pointerId);
 
             if (!draggablePanel.style.left || draggablePanel.style.left === '') {
                 const rect = draggablePanel.getBoundingClientRect();
@@ -1009,7 +809,7 @@
     });
 
     if(draggablePanel) {
-        window.addEventListener('pointermove', (e) => {
+        draggablePanel.addEventListener('pointermove', (e) => {
             if (!isDraggingPanel) return;
             const dx = e.clientX - pStartX;
             const dy = e.clientY - pStartY;
@@ -1017,15 +817,14 @@
             draggablePanel.style.top = (initialTop + dy) + 'px';
         });
 
-        window.addEventListener('pointerup', (e) => {
+        draggablePanel.addEventListener('pointerup', (e) => {
             if(isDraggingPanel) {
                 isDraggingPanel = false;
-                try { dragHandles[0].releasePointerCapture(e.pointerId); } catch(err) {}
+                draggablePanel.releasePointerCapture(e.pointerId);
             }
         });
     }
 
-    // === 連續模式與語音核心 ===
     const continuousModeCheckbox = document.getElementById('continuous-mode');
     const modeToggleLabel = document.getElementById('mode-toggle-label');
     
@@ -1034,14 +833,14 @@
             if (this.checked) {
                 modeToggleLabel.classList.add('active');
                 showToast('已開啟連續模式，點擊欄位直接語音或按鍵輸入。', 4000);
-                document.querySelectorAll('input.data-cell, input.editable-stat, input.modal-input:not(.modal-readonly)').forEach(el => {
+                document.querySelectorAll('input.data-cell, input.editable-stat, input.fm-input:not(.modal-readonly)').forEach(el => {
                     el.setAttribute('inputmode', 'none'); 
                     el.setAttribute('readonly', 'true'); 
                 });
             } else {
                 modeToggleLabel.classList.remove('active');
                 showToast('已關閉連續模式。');
-                document.querySelectorAll('input.data-cell, input.editable-stat, input.modal-input:not(.modal-readonly)').forEach(el => {
+                document.querySelectorAll('input.data-cell, input.editable-stat, input.fm-input:not(.modal-readonly)').forEach(el => {
                     el.setAttribute('inputmode', 'numeric');
                     el.removeAttribute('readonly'); 
                 });
@@ -1138,7 +937,6 @@
         };
     }
 
-    // === 鍵盤與刪除功能 ===
     document.querySelectorAll('.num-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1171,7 +969,164 @@
         });
     }
 
-    // === 自訂強制警告對話框 ===
+    let activeModalType = null;
+
+    window.openFocusModal = function(type) {
+        activeModalType = type;
+        const overlay = document.getElementById('focus-modal-overlay');
+        const candContainer = document.getElementById('fm-cand-container');
+        const statContainer = document.getElementById('fm-stat-container');
+        
+        const typeNames = { mayor: '直轄市長', councilor: '區域議員', flatland: '平地原住民', mountain: '山地原住民', village: '里長', referendum: '公投' };
+        document.getElementById('fm-title').innerHTML = `🔍 放大填寫：${typeNames[type]}`;
+        
+        candContainer.innerHTML = '';
+        statContainer.innerHTML = '';
+        
+        const isContinuous = document.getElementById('continuous-mode')?.checked;
+        const mainCandInputs = document.querySelectorAll(`.${type}-cand:not(.locked-empty)`);
+        
+        let names = [];
+        if (type === 'village') {
+            names = (globalStationCache && currentStationId && globalStationCache[currentStationId]) ? globalStationCache[currentStationId].villageCandidates : [];
+        } else {
+            names = candidateNamesMap[type] || [];
+        }
+
+        mainCandInputs.forEach((mainInput, idx) => {
+            let candName = names[idx] ? names[idx] : `候選人 ${idx+1}`;
+            let displayName = type === 'referendum' ? candName : `${idx+1} ${candName}`;
+            
+            let inputProps = isContinuous ? 'inputmode="none" readonly' : 'inputmode="numeric"';
+            
+            candContainer.innerHTML += `
+                <div class="focus-box" id="fm_box_${mainInput.id}">
+                    <div class="focus-box-title">${displayName}</div>
+                    <input type="text" ${inputProps} class="focus-input fm-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
+                </div>
+            `;
+        });
+        
+        const stats = [
+            { id: `${type}_valid`, label: '有效票', readonly: true },
+            { id: `${type}_invalid`, label: '無效票', readonly: false },
+            { id: `${type}_issued_not_voted`, label: '已領未投', readonly: false },
+            { id: `${type}_remaining`, label: '用餘票', readonly: false },
+            { id: `${type}_electors`, label: '選舉人數', readonly: true },
+            { id: `${type}_check`, label: '檢查值', readonly: true }
+        ];
+        
+        stats.forEach(stat => {
+            const mainInput = document.getElementById(stat.id);
+            if (!mainInput) return;
+            
+            let inputClass = 'focus-input fm-input w-full text-center text-2xl font-bold py-3 outline-none cursor-pointer';
+            let inputProps = 'inputmode="numeric"';
+            
+            if (stat.readonly) {
+                inputClass += ' bg-gray-200 text-blue-800 cursor-not-allowed modal-readonly';
+                inputProps = 'inputmode="none" readonly tabindex="-1"';
+            } else {
+                inputClass += ' focus:bg-red-50 focus:border-red-500';
+                if (isContinuous) inputProps = 'inputmode="none" readonly';
+            }
+            
+            statContainer.innerHTML += `
+                <div class="focus-box ${stat.readonly ? 'readonly' : ''}" id="fm_box_${stat.id}">
+                    <div class="focus-box-title">${stat.label}</div>
+                    <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" id="fm_${stat.id}" value="${mainInput.value}">
+                </div>
+            `;
+        });
+        
+        overlay.style.display = 'flex';
+        syncMainToModal(type); 
+        
+        setTimeout(() => {
+            const firstInput = document.querySelector('#focus-modal-overlay .fm-input:not(.modal-readonly)');
+            if(firstInput) {
+                firstInput.click();
+                if(!isContinuous) firstInput.focus();
+            }
+        }, 100);
+    };
+
+    window.closeFocusModal = function() {
+        document.getElementById('focus-modal-overlay').style.display = 'none';
+        activeModalType = null;
+        if(currentFocusedInput && currentFocusedInput.classList.contains('fm-input')) {
+            currentFocusedInput.classList.remove('focused-cell');
+            currentFocusedInput = null;
+        }
+    };
+
+    document.getElementById('focus-modal-overlay').addEventListener('click', function(e) {
+        if (e.target.tagName.toLowerCase() === 'input' && !e.target.classList.contains('modal-readonly')) {
+            document.querySelectorAll('input').forEach(el => el.classList.remove('focused-cell'));
+            e.target.classList.add('focused-cell');
+            currentFocusedInput = e.target;
+            
+            const isContinuous = document.getElementById('continuous-mode')?.checked;
+            if(isContinuous) e.target.blur();
+        }
+    });
+
+    document.getElementById('focus-modal-overlay').addEventListener('input', function(e) {
+        if (e.target.classList.contains('fm-input')) {
+            const targetId = e.target.getAttribute('data-target');
+            const mainInput = document.getElementById(targetId);
+            if (mainInput) {
+                mainInput.value = e.target.value;
+                if (activeModalType) calculateTotals(activeModalType); 
+            }
+        }
+    });
+
+    window.syncMainToModal = function(type) {
+        if (activeModalType !== type) return;
+        
+        document.querySelectorAll(`.${type}-cand:not(.locked-empty)`).forEach(mainInput => {
+            const fmInput = document.getElementById(`fm_${mainInput.id}`);
+            const fmBox = document.getElementById(`fm_box_${mainInput.id}`);
+            if (fmInput && fmBox) {
+                if (fmInput.classList.contains('modal-readonly')) fmInput.value = mainInput.value;
+                if (mainInput.classList.contains('warn-bg')) {
+                    fmBox.style.backgroundColor = '#fef08a'; fmBox.style.borderColor = '#ca8a04';
+                } else {
+                    fmBox.style.backgroundColor = ''; fmBox.style.borderColor = '';
+                }
+            }
+        });
+        
+        const statFields = ['valid', 'invalid', 'issued_not_voted', 'remaining', 'electors', 'check'];
+        statFields.forEach(field => {
+            const mainInput = document.getElementById(`${type}_${field}`);
+            const fmInput = document.getElementById(`fm_${type}_${field}`);
+            const fmBox = document.getElementById(`fm_box_${type}_${field}`);
+            
+            if (mainInput && fmInput && fmBox) {
+                if (fmInput.classList.contains('modal-readonly')) {
+                    fmInput.value = mainInput.value;
+                }
+                
+                fmBox.style.backgroundColor = ''; fmBox.style.borderColor = '';
+                fmInput.style.backgroundColor = 'transparent'; fmInput.style.color = '';
+                
+                if (mainInput.classList.contains('warn-bg')) {
+                    fmBox.style.backgroundColor = '#fef08a'; fmBox.style.borderColor = '#ca8a04';
+                }
+                
+                if (field === 'check') {
+                    if (mainInput.classList.contains('match-true')) {
+                        fmInput.style.backgroundColor = 'rgb(37, 249, 44)'; fmInput.style.color = '#000';
+                    } else if (mainInput.classList.contains('match-false')) {
+                        fmInput.style.backgroundColor = 'rgb(247, 123, 138)'; fmInput.style.color = '#000';
+                    }
+                }
+            }
+        });
+    };
+
     function showCustomAlert(msg) {
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed'; overlay.style.top = '0'; overlay.style.left = '0';
@@ -1203,7 +1158,6 @@
         document.body.appendChild(overlay);
     }
 
-    // === 上傳檔案處理 ===
     function handleFileSelect(input, textId, clearBtnId) {
         const textSpan = document.getElementById(textId);
         const clearBtn = document.getElementById(clearBtnId);
@@ -1218,13 +1172,13 @@
 
     function clearFileInput(inputId, textId, clearBtnId) {
         const input = document.getElementById(inputId);
-        if (input) input.value = '';
-        document.getElementById(textId).textContent = '未選擇檔案';
-        document.getElementById(clearBtnId).style.display = 'none';
+        if(input) input.value = '';
+        const textSpan = document.getElementById(textId);
+        if(textSpan) textSpan.textContent = '未選擇檔案';
+        const clearBtn = document.getElementById(clearBtnId);
+        if(clearBtn) clearBtn.style.display = 'none';
     }
 
-
-    // === 傳送與送出按鈕 ===
     if(document.getElementById('btn-submit')) {
         document.getElementById('btn-submit').addEventListener('click', async () => {
             if (!currentStationId) { showToast('⚠️ 請先輸入並載入票所編號！'); return; }
@@ -1307,7 +1261,6 @@
 
             const submitBtn = document.getElementById('btn-submit');
             submitBtn.textContent = "傳送中(含圖檔)..."; submitBtn.disabled = true;
-            hideSuccessMessage(); // 傳送前先隱藏成功提示
 
             (async () => {
                 try {
@@ -1330,13 +1283,8 @@
                     const data = await res.json();
                     
                     if (data.status === 'success') {
-                        if (data.message.includes('⚠️')) {
-                            showCustomAlert(data.message);
-                        } else {
-                            showToast(data.message, 4000);
-                            // 💡 成功送出後，強制顯示右下角的「傳送成功！」文字
-                            document.getElementById('submit-success-text').classList.remove('hidden');
-                        }
+                        if (data.message.includes('⚠️')) showCustomAlert(data.message);
+                        else showToast(data.message, 4000);
                     } else {
                         showCustomAlert("❌ 傳送失敗：\n" + data.message);
                     }
@@ -1350,7 +1298,6 @@
         });
     }
 
-    // === 按鈕功能：鎖定與清除 ===
     if(document.getElementById('btn-lock')) {
         document.getElementById('btn-lock').addEventListener('click', () => {
             const tableWrapper = document.getElementById('table-wrapper');
@@ -1374,8 +1321,6 @@
             
             clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');
             clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref');
-            
-            hideSuccessMessage(); // 清除全部資料時同步隱藏成功提示
         });
     }
 

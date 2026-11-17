@@ -425,12 +425,6 @@
         
         <!-- 右側：將內縮拿掉，讓按鈕完全靠右切齊 -->
         <div style="display: flex; gap: 30px; align-items: flex-end;">
-            <!-- 💡 新增：傳送成功跳動字體與查看結果按鈕 (預設隱藏) -->
-            <div id="success-indicator" class="hidden items-center gap-4 mr-4">
-                <span class="text-red-600 font-black text-2xl animate-bounce">傳送成功！</span>
-                <button id="btn-view-result" type="button" onclick="window.open('./dashboard.html', '_blank')" class="action-btn bg-purple-600 text-white border-purple-800 shadow-md text-lg px-4 py-2 hover:bg-purple-700">🔍 查看結果</button>
-            </div>
-            
             <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
             
             <!-- 圖片上傳區塊 -->
@@ -450,6 +444,12 @@
             </div>
 
             <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
+            
+            <!-- 💡 修改：傳送成功跳動字體與查看結果按鈕移至最右側，改為上下排列，調亮顏色並移除 icon -->
+            <div id="success-indicator" class="hidden flex-col items-center gap-2 mb-0.5">
+                <span class="text-red-600 font-black text-xl animate-bounce">傳送成功！</span>
+                <button id="btn-view-result" type="button" onclick="window.open('./dashboard.html', '_blank')" class="action-btn bg-purple-500 text-white border-purple-600 shadow-md text-lg px-6 py-1 hover:bg-purple-600 transition-colors">查看結果</button>
+            </div>
         </div>
     </div>
 </div>

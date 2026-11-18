@@ -13,14 +13,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
+        /* 💡 終極防護第一層：擴大禁用範圍並加上最高權限 !important */
+        html, body {
+            overscroll-behavior-y: none !important;
+            overscroll-behavior-x: none !important;
+        }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
             background-color: #f3f4f6;
             padding: 10px;
             padding-bottom: 120px;
             transition: background-color 0.3s;
-            /* 💡 終極防護：徹底禁用手機瀏覽器的下拉重新整理 (Pull-to-refresh) */
-            overscroll-behavior-y: none;
         }
         .report-container {
             background-color: white;
@@ -517,6 +520,37 @@
 
 <script>
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
+
+    // 💡 終極防護第二層：JS 強制攔截下拉重新整理行為 (相容 iOS Safari 與 LINE 內建瀏覽器)
+    let _lastTouchY = 0;
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 0) _lastTouchY = e.touches[0].clientY;
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 0) return;
+        const currentY = e.touches[0].clientY;
+        const diffY = currentY - _lastTouchY;
+
+        // 當網頁捲軸在最頂端，且手勢是往下拉 (diffY > 0) 時
+        if (window.scrollY <= 0 && diffY > 0) {
+            let el = e.target;
+            let canScrollInternal = false;
+            
+            // 智慧判斷：如果手指是放在「表格區塊內」而且表格還能往上滾，就不阻擋
+            while (el && el !== document.body && el !== document.documentElement) {
+                if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) {
+                    canScrollInternal = true;
+                    break;
+                }
+                el = el.parentNode;
+            }
+            
+            if (!canScrollInternal) {
+                e.preventDefault(); // 強制封印下拉重整機制！
+            }
+        }
+    }, { passive: false });
 
     let globalStationCache = null; 
     let currentStationId = null;   

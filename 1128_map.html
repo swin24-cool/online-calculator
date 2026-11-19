@@ -13,40 +13,193 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; overflow: hidden; background-color: #f8fafc;}
-        #map { width: 100vw; height: 100vh; z-index: 1; --marker-scale: 1; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft JhengHei", "Inter", sans-serif;
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+
+        /* 使用 CSS 變數控制所有標記的即時縮放倍率 */
+        #map {
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            --marker-scale: 1;
+        }
 
         /* 頂部控制面板 */
-/* ... existing code ... -->
-        /* 💡 專屬客製化：剖半水滴 Marker (Leaflet DivIcon) */
+        .top-panel {
+            position: absolute;
+            top: 15px;
+            left: 50px;
+            right: 15px;
+            z-index: 1000;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .panel-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            pointer-events: auto;
+            border: 2px solid #e2e8f0;
+        }
+
+        /* 專屬客製化：剖半水滴 Marker (Leaflet DivIcon) */
         .custom-pin-container {
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
             width: 60px;
-            /* 💡 以水滴箭頭尖端 (30px, 40px) 為縮放中心，確保放大時緊貼座標與放射線端點不偏移 */
+            /* 以水滴箭頭尖端 (30px, 40px) 為縮放中心，放大時緊貼座標與放射線端點不偏移 */
             transform-origin: 30px 40px;
             transform: scale(var(--marker-scale, 1));
             transition: transform 0.2s ease-out;
             will-change: transform;
         }
 
-        /* 💡 滑鼠移到標記上時自動浮到最上層，避免相鄰票所互相遮擋 */
+        /* 滑鼠移到標記上時自動浮到最上層，避免相鄰票所互相遮擋 */
         .leaflet-marker-icon:hover {
             z-index: 9999 !important;
         }
-        
+
         .pin-circle {
-/* ... existing code ... -->
-            <!-- 💡 新增：圖層切換選單 -->
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+
+        /* 文字置中與陰影效果，讓白色數字更清楚 */
+        .pin-half {
+            flex: 1;
+            height: 100%;
+            transition: background-color 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 900;
+            font-size: 14px;
+            text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* 水滴底下的三角形箭頭 */
+        .pin-arrow {
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid white;
+            margin-top: -2px;
+            z-index: 1;
+            filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.3));
+        }
+
+        /* 票所編號徽章 */
+        .pin-label {
+            margin-top: 3px;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 900;
+            color: #1e293b;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* 彈出視窗 (Popup) 樣式 */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            padding: 0;
+            overflow: hidden;
+        }
+        .leaflet-popup-content {
+            margin: 0;
+        }
+        .popup-header {
+            background: #1e293b;
+            color: white;
+            font-weight: bold;
+            padding: 8px 12px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .popup-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .popup-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            gap: 10px;
+        }
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+        }
+
+        /* 圖例顏色定義 */
+        .c-red { background-color: #ef4444; }
+        .c-yellow { background-color: #eab308; }
+        .c-green1 { background-color: #22c55e; }
+        .c-green2 { background-color: #16a34a; }
+        .c-gray { background-color: #cbd5e1; }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部浮動面板 -->
+    <div class="top-panel">
+        <div class="panel-box flex flex-col gap-2">
+            <h1 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                🗺️ 選務指揮中心 - 燈號圖台
+            </h1>
+            <div class="text-sm font-bold text-slate-500 flex items-center gap-2">
+                最後更新：<span id="last-update" class="text-blue-600">載入中...</span>
+                <button onclick="fetchMapData()" class="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">🔄 立即刷新</button>
+            </div>
+            
+            <!-- 圖層切換選單 -->
             <div class="mt-1 border-t border-slate-200 pt-2">
                 <div class="text-xs font-bold text-slate-500 mb-1">切換地圖圖層：</div>
                 <div class="flex gap-3 text-sm font-bold text-slate-700">
-                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600"><input type="radio" name="mapLayer" value="light" checked> 淺色簡約</label>
-                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600"><input type="radio" name="mapLayer" value="terrain"> 等高地形</label>
-                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600"><input type="radio" name="mapLayer" value="osm"> 標準街道</label>
+                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600">
+                        <input type="radio" name="mapLayer" value="light" checked> 淺色簡約
+                    </label>
+                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600">
+                        <input type="radio" name="mapLayer" value="terrain"> 等高地形
+                    </label>
+                    <label class="cursor-pointer flex items-center gap-1 hover:text-blue-600">
+                        <input type="radio" name="mapLayer" value="osm"> 標準街道
+                    </label>
                 </div>
             </div>
 
-            <!-- 💡 新增：標記隨地圖自動縮放控制 -->
+            <!-- 標記隨地圖自動縮放控制 -->
             <div class="mt-1 border-t border-slate-200 pt-2 flex items-center justify-between text-xs font-bold text-slate-700">
                 <label class="cursor-pointer flex items-center gap-1.5 hover:text-blue-600 select-none">
                     <input type="checkbox" id="auto-scale-toggle" checked class="w-4 h-4 accent-blue-600">
@@ -72,25 +225,31 @@
     <div id="map"></div>
 
     <script>
-        // ⚠️ 記得替換為您專屬的 GAS 網址 (與試算表同一個 API)
-        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
+        // GAS 後端 API 網址 (與試算表同一個 API)
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
 
         // 初始化 Leaflet 地圖 (預設中心點設為萬華區)
         const map = L.map('map').setView([25.033, 121.499], 14);
 
-        // 💡 定義 3 種簡單、低干擾的圖層 (已全部解鎖放大極限至 20 級)
+        // 定義 3 種圖層 (皆已解鎖最大放大層級至 20)
         const mapLayers = {
-            // 1. 淺色簡約圖 (Esri Gray) - 原生只到16，利用 maxNativeZoom 硬體拉伸至20
+            // 1. 淺色簡約圖 (Esri Gray) - 原生只到 16，利用 maxNativeZoom 延伸拉伸至 20
             light: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-                maxNativeZoom: 16, maxZoom: 20, attribution: 'Esri'
+                maxNativeZoom: 16,
+                maxZoom: 20,
+                attribution: 'Esri'
             }),
-            // 2. 等高線地形圖 (Esri Topo) - 原生到19，拉伸至20
+            // 2. 等高線地形圖 (Esri Topo) - 原生到 19，延伸至 20
             terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-                maxNativeZoom: 19, maxZoom: 20, attribution: 'Esri'
+                maxNativeZoom: 19,
+                maxZoom: 20,
+                attribution: 'Esri'
             }),
-            // 3. 標準街道圖 (OSM) - 原生到19，拉伸至20
+            // 3. 標準街道圖 (OSM) - 原生到 19，延伸至 20
             osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxNativeZoom: 19, maxZoom: 20, attribution: 'OSM'
+                maxNativeZoom: 19,
+                maxZoom: 20,
+                attribution: 'OSM'
             })
         };
 
@@ -107,11 +266,14 @@
             });
         });
 
-        // 建立一個群組，用來統整所有的 Marker (方便後續清除或自動縮放)
+        // 建立標記群組，用來統整所有的 Marker 與連線
         let markersGroup = L.featureGroup().addTo(map);
-        let isFirstLoad = true; // 💡 僅首次載入時自動縮放全區，避免 60 秒刷新時打斷目前放大檢視的街道視角
+        let isFirstLoad = true; // 僅首次載入時自動縮放全區，避免每 60 秒刷新打斷目前放大檢視的街道視角
 
-        // 💡 依據地圖 Zoom 層級動態調整 Marker 縮放倍率
+        /**
+         * 依據地圖目前 Zoom 層級，動態計算並套用 Marker 縮放倍率
+         * Zoom 14 為基準 1.0x；放大看街道時最高可放大至 2.35x，縮小時最低 0.75x
+         */
         function updateMarkerScale() {
             const mapEl = document.getElementById('map');
             const autoScaleToggle = document.getElementById('auto-scale-toggle');
@@ -120,7 +282,6 @@
             let scale = 1;
             if (autoScaleToggle && autoScaleToggle.checked) {
                 const zoom = map.getZoom();
-                // Zoom 14 為基準 1.0x；每放大一級增加 0.22 倍，上限 2.35x、下限 0.75x
                 scale = Math.max(0.75, Math.min(2.35, 1 + (zoom - 14) * 0.22));
             }
 
@@ -130,27 +291,141 @@
             }
         }
 
-        // 監聽地圖縮放事件與自動放大開關
+        // 監聽地圖縮放與自動放大開關
         map.on('zoomend', updateMarkerScale);
         document.getElementById('auto-scale-toggle').addEventListener('change', updateMarkerScale);
         updateMarkerScale();
 
-        // 狀態文字對應顏色解析
-// ... existing code ... -->
-                    // 僅於首次載入時自動將地圖縮放至包含所有地標的最佳視野
+        /**
+         * 狀態文字對應顏色解析
+         */
+        function getColorByStatus(statusText) {
+            if (!statusText) return '#cbd5e1'; // 預設灰色
+            if (statusText.includes('紅')) return '#ef4444';
+            if (statusText.includes('黃')) return '#eab308';
+            if (statusText.includes('一二聯')) return '#16a34a';
+            if (statusText.includes('一聯')) return '#22c55e';
+            return '#cbd5e1';
+        }
+
+        /**
+         * 從 GAS API 取得票所狀態與 GPS 座標並繪製於地圖上
+         */
+        async function fetchMapData() {
+            try {
+                document.getElementById('last-update').textContent = "資料撈取中...";
+
+                const res = await fetch(`${GAS_API_URL}?action=getMapData`);
+                const json = await res.json();
+
+                if (json.status === 'success') {
+                    // 清除舊的標記與放射線
+                    markersGroup.clearLayers();
+
+                    // 步驟 1：將 GPS 完全相同的票所進行群組化 (Grouping)
+                    const locationGroups = {};
+                    json.data.forEach(station => {
+                        const locKey = `${station.lat},${station.lng}`;
+                        if (!locationGroups[locKey]) locationGroups[locKey] = [];
+                        locationGroups[locKey].push(station);
+                    });
+
+                    // 步驟 2：針對每一個座標點處理「蜘蛛網放射 (Spiderfying)」
+                    Object.keys(locationGroups).forEach(locKey => {
+                        const stations = locationGroups[locKey];
+                        const [centerLat, centerLng] = locKey.split(',').map(Number);
+
+                        if (stations.length === 1) {
+                            // 單一票所直接放在原始座標
+                            createStationMarker(stations[0], centerLat, centerLng);
+                        } else {
+                            // 同一 GPS 地點有多個票所：
+                            // 1. 在正中心畫一個深色外框白底的中心錨點 (Hub)
+                            L.circleMarker([centerLat, centerLng], {
+                                radius: 5,
+                                color: '#1e293b',
+                                fillColor: '#ffffff',
+                                fillOpacity: 1,
+                                weight: 3
+                            }).addTo(markersGroup);
+
+                            // 2. 計算環狀散開半徑 (票所越多半徑越大)
+                            const radius = 0.0005 + (stations.length * 0.00004);
+
+                            // 3. 將所有同點票所 360 度均勻展開並畫上虛線連接
+                            stations.forEach((station, index) => {
+                                const angle = (index / stations.length) * Math.PI * 2;
+                                const displayLat = centerLat + Math.sin(angle) * radius;
+                                const displayLng = centerLng + Math.cos(angle) * radius;
+
+                                // 繪製放射狀連結虛線
+                                L.polyline([[centerLat, centerLng], [displayLat, displayLng]], {
+                                    color: '#64748b',
+                                    weight: 2,
+                                    opacity: 0.7,
+                                    dashArray: '4,4'
+                                }).addTo(markersGroup);
+
+                                // 放置票所水滴標記
+                                createStationMarker(station, displayLat, displayLng);
+                            });
+                        }
+                    });
+
+                    // 僅於初次載入時自動將地圖縮放至包含所有票所的最佳視野
                     if (isFirstLoad && json.data.length > 0) {
                         map.fitBounds(markersGroup.getBounds(), { padding: [50, 50] });
                         isFirstLoad = false;
                     }
 
-                    // 更新時間顯示
-// ... existing code ... -->
+                    // 確保標記縮放倍率與目前地圖層級同步
+                    updateMarkerScale();
+
+                    // 更新最後刷新時間
+                    const now = new Date();
+                    document.getElementById('last-update').textContent =
+                        `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                } else {
+                    document.getElementById('last-update').textContent = "讀取失敗";
+                }
+            } catch (err) {
+                console.error("地圖資料讀取失敗:", err);
+                document.getElementById('last-update').textContent = "網路錯誤";
+            }
+        }
+
+        /**
+         * 建立單一票所的剖半水滴標記與點擊彈窗
+         */
+        function createStationMarker(station, lat, lng) {
+            const govColor = getColorByStatus(station.govStatus);
+            const refColor = getColorByStatus(station.refStatus);
+
+            let govText = '';
+            if (station.govStatus && station.govStatus.includes('一二聯')) govText = '2';
+            else if (station.govStatus && station.govStatus.includes('一聯')) govText = '1';
+
+            let refText = '';
+            if (station.refStatus && station.refStatus.includes('一二聯')) refText = '2';
+            else if (station.refStatus && station.refStatus.includes('一聯')) refText = '1';
+
+            const iconHtml = `
+                <div class="custom-pin-container">
+                    <div class="pin-circle">
+                        <div class="pin-half" style="background-color: ${govColor};" title="公職: ${station.govStatus || '未處理'}">${govText}</div>
+                        <div class="pin-half" style="background-color: ${refColor};" title="公投: ${station.refStatus || '未處理'}">${refText}</div>
+                    </div>
+                    <div class="pin-arrow"></div>
+                    <div class="pin-label">${station.id}</div>
+                </div>
+            `;
+
             const customIcon = L.divIcon({
                 html: iconHtml,
-                className: 'dummy-class', 
-                iconSize: [60, 66],
-                iconAnchor: [30, 40],  // 💡 精準對齊水滴箭頭尖端，配合 transform-origin 放大不偏移
-                popupAnchor: [0, -38]  // 💡 讓點擊彈窗從水滴上方優雅展開
+                className: 'dummy-class',
+                iconSize: [60, 68],
+                iconAnchor: [30, 40],  // 精準對齊水滴箭頭尖端，配合 transform-origin 放大不偏移
+                popupAnchor: [0, -38]  // 讓點擊彈窗從水滴上方展開
             });
 
             const popupHtml = `
@@ -172,12 +447,11 @@
                 .addTo(markersGroup);
         }
 
-        // 初次載入
+        // 初次載入地圖資料
         fetchMapData();
 
         // 設定每 60 秒自動刷新一次
         setInterval(fetchMapData, 60000);
-
     </script>
 </body>
 </html>

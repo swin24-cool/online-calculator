@@ -128,6 +128,21 @@
         .focus-box.readonly .focus-box-title { background: #f1f5f9; color: #64748b; border-bottom-color: #cbd5e1; }
         .focus-box.readonly .focus-input { color: #1e3a8a; cursor: not-allowed; }
 
+        /* === 💡 新增：本票所雲端回傳結果查詢彈窗 === */
+        .result-modal-overlay {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78);
+            z-index: 10001; display: none; justify-content: center; align-items: center;
+            padding: 12px; backdrop-filter: blur(4px);
+        }
+        .result-modal-box {
+            background: #f8fafc; width: 100%; max-width: 1120px; max-height: 92vh;
+            border-radius: 14px; border: 3px solid #9333ea; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.45);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .result-table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+        .result-table th, .result-table td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: center; }
+        .result-table th { background: #f1f5f9; color: #334155; font-weight: 700; white-space: nowrap; }
+
         /* === 虛擬鍵盤佈局 === */
         .control-panel {
             position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: clamp(320px, 33vw, 450px); 
@@ -434,10 +449,10 @@
 
             <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
             
-            <!-- 查看結果與成功提示 (💡 已更新目標網址) -->
+            <!-- 查看結果與成功提示 (💡 方案 A：改為開啟本票所雲端查詢視窗) -->
             <div class="flex flex-col items-center justify-end gap-1 mb-0.5">
                 <span id="success-text" class="text-red-600 font-black text-xl animate-bounce opacity-0 transition-opacity duration-300 pointer-events-none">傳送成功！</span>
-                <button id="btn-view-result" type="button" onclick="window.open('https://docs.google.com/spreadsheets/d/1z0rjJ1kMWtbdkGvcMUlhCnPLFxTnUOc-R5aQX8ZIX8Y/htmlview?gid=1136958718#gid=1136958718', '_blank')" class="action-btn bg-purple-500 text-white border-purple-600 shadow-md text-lg px-6 py-1 hover:bg-purple-600 transition-colors">查看結果</button>
+                <button id="btn-view-result" type="button" onclick="openResultModal()" class="action-btn bg-purple-500 text-white border-purple-600 shadow-md text-lg px-6 py-1 hover:bg-purple-600 transition-colors">查看結果</button>
             </div>
         </div>
     </div>
@@ -453,6 +468,32 @@
         <div class="focus-modal-body">
             <div class="focus-cand-grid" id="fm-cand-container"></div>
             <div class="focus-stat-grid" id="fm-stat-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 💡 新增：本票所雲端回傳結果查詢彈窗 (方案 A 隔離檢視) -->
+<div class="result-modal-overlay" id="result-modal-overlay" onclick="if(event.target === this) closeResultModal()">
+    <div class="result-modal-box">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 bg-purple-700 text-white">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-black" id="rm-title">📋 本票所雲端回傳結果</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="refreshStationResult()" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-bold transition">🔄 重新抓取雲端</button>
+                <button type="button" onclick="closeResultModal()" class="px-3 py-1 bg-white/10 hover:bg-red-500 rounded-lg text-xl font-bold leading-none transition">✖</button>
+            </div>
+        </div>
+        <div class="px-5 py-2 bg-purple-50 border-b border-purple-200 flex flex-wrap justify-between items-center gap-2 text-xs sm:text-sm font-bold text-purple-900">
+            <span id="rm-summary">正在連線至 Google Sheet 資料庫查詢...</span>
+            <span id="rm-query-time" class="text-purple-600 font-mono"></span>
+        </div>
+        <div id="rm-body" class="flex-1 overflow-y-auto p-4 space-y-5">
+            <!-- 動態渲染查詢結果卡片 -->
+        </div>
+        <div class="px-5 py-2.5 bg-white border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
+            <span>💡 此畫面為即時向雲端資料庫查詢之結果，僅顯示本票所之有效紀錄（已自動排除作廢）。</span>
+            <button type="button" onclick="closeResultModal()" class="px-5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-lg text-sm transition">關閉視窗</button>
         </div>
     </div>
 </div>
@@ -537,7 +578,7 @@
             let el = e.target;
             let canScrollInternal = false;
             
-            // 智慧判斷：如果手指是放在「表格區塊內」而且表格還能往上滾，就不阻擋
+            // 智慧判斷：如果手指是放在「表格或彈窗捲動區塊內」而且還能往上滾，就不阻擋
             while (el && el !== document.body && el !== document.documentElement) {
                 if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) {
                     canScrollInternal = true;
@@ -554,6 +595,7 @@
 
     let globalStationCache = null; 
     let currentStationId = null;   
+    let currentResultStationId = null;
 
     const candidateNamesMap = {
         'mayor': ['郭璽', '林志成', '沈伯洋', '蕭文乾', '蔣萬安', '唐新民'],
@@ -1212,6 +1254,261 @@
             }
         });
     };
+
+    // === 💡 新增：方案 A「本票所雲端回傳結果查詢」核心邏輯 ===
+    window.openResultModal = function() {
+        const targetId = currentStationId || (stationIdInput ? stationIdInput.value.trim() : '');
+        if (!targetId || !/^\d{4}$/.test(targetId)) {
+            showToast('⚠️ 請先在左上角輸入正確的 4 碼票所編號，再查看結果！', 3500);
+            return;
+        }
+        currentResultStationId = targetId;
+        document.getElementById('rm-title').textContent = `📋 票所 ${targetId} 雲端回傳結果`;
+        document.getElementById('result-modal-overlay').style.display = 'flex';
+        fetchStationResult(targetId);
+    };
+
+    window.closeResultModal = function() {
+        document.getElementById('result-modal-overlay').style.display = 'none';
+    };
+
+    window.refreshStationResult = function() {
+        if (currentResultStationId) fetchStationResult(currentResultStationId);
+    };
+
+    function renderStatusBadge(status) {
+        if (!status) {
+            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-300">尚未判定</span>`;
+        }
+        if (status.includes('紅')) {
+            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white shadow-sm">🔴 ${status}</span>`;
+        }
+        if (status.includes('黃')) {
+            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white shadow-sm">🟡 ${status}</span>`;
+        }
+        if (status.includes('一二聯')) {
+            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-700 text-white shadow-sm">🟢 ${status}</span>`;
+        }
+        if (status.includes('一聯')) {
+            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white shadow-sm">🟢 ${status}</span>`;
+        }
+        return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white shadow-sm">${status}</span>`;
+    }
+
+    function getVersionNumber(stId) {
+        const m = String(stId || '').match(/-(\d+)$/);
+        return m ? parseInt(m[1], 10) : 0;
+    }
+
+    function getCandLabel(typeName, idx, baseStationId) {
+        if (typeName === '公投') return idx === 0 ? '同意' : '不同意';
+        if (typeName === '市長') return `${idx + 1}.${candidateNamesMap.mayor[idx] || ''}`;
+        if (typeName === '區域議員') return `${idx + 1}.${candidateNamesMap.councilor[idx] || ''}`;
+        if (typeName === '平地原住民議員') return `${idx + 1}.${candidateNamesMap.flatland[idx] || ''}`;
+        if (typeName === '山地原住民議員') return `${idx + 1}.${candidateNamesMap.mountain[idx] || ''}`;
+        if (typeName === '里長') {
+            const vCands = (globalStationCache && globalStationCache[baseStationId]) ? globalStationCache[baseStationId].villageCandidates : [];
+            return vCands[idx] ? `${idx + 1}.${vCands[idx]}` : `${idx + 1}號`;
+        }
+        return `${idx + 1}號`;
+    }
+
+    async function fetchStationResult(stationId) {
+        const bodyEl = document.getElementById('rm-body');
+        const summaryEl = document.getElementById('rm-summary');
+        const timeEl = document.getElementById('rm-query-time');
+
+        summaryEl.textContent = `正在從雲端資料庫查詢票所 ${stationId} 的回傳紀錄...`;
+        bodyEl.innerHTML = `
+            <div class="py-12 flex flex-col items-center justify-center text-slate-500 gap-3">
+                <div class="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                <div class="font-bold text-base">連線 Google Sheet 資料庫中，請稍候...</div>
+            </div>
+        `;
+
+        try {
+            const res = await fetch(`${GAS_API_URL}?action=getStationResult&stationId=${encodeURIComponent(stationId)}`);
+            const json = await res.json();
+
+            const now = new Date();
+            timeEl.textContent = `查詢時間：${now.toLocaleTimeString('zh-TW', { hour12: false })}`;
+
+            if (json.status !== 'success') {
+                throw new Error(json.message || '查詢失敗');
+            }
+
+            const govList = json.data.govList || [];
+            const refList = json.data.refList || [];
+
+            // 依版本編號 (例如 1282、1282-1) 將同一次上傳的公職與公投整合在同一張卡片中
+            const versionMap = {};
+            const ensureBucket = (item) => {
+                const key = item.stationId;
+                if (!versionMap[key]) {
+                    versionMap[key] = {
+                        versionId: key,
+                        versionNum: getVersionNumber(key),
+                        timestamp: item.timestamp || '',
+                        gov: null,
+                        ref: null
+                    };
+                }
+                if (!versionMap[key].timestamp && item.timestamp) {
+                    versionMap[key].timestamp = item.timestamp;
+                }
+                return versionMap[key];
+            };
+
+            govList.forEach(item => { ensureBucket(item).gov = item; });
+            refList.forEach(item => { ensureBucket(item).ref = item; });
+
+            const versionGroups = Object.values(versionMap).sort((a, b) => {
+                if (b.versionNum !== a.versionNum) return b.versionNum - a.versionNum;
+                return (b.timestamp || '').localeCompare(a.timestamp || '');
+            });
+
+            if (versionGroups.length === 0) {
+                summaryEl.textContent = `票所 ${stationId} 目前查無有效回傳紀錄`;
+                bodyEl.innerHTML = `
+                    <div class="py-14 text-center bg-white rounded-xl border-2 border-dashed border-slate-300">
+                        <div class="text-4xl mb-3">📭</div>
+                        <div class="text-lg font-bold text-slate-700">雲端資料庫目前尚無票所 ${stationId} 的有效回傳資料</div>
+                        <div class="text-sm text-slate-500 mt-1">請確認是否已按下「傳送資料」，或點擊上方「🔄 重新抓取雲端」。</div>
+                    </div>
+                `;
+                return;
+            }
+
+            summaryEl.innerHTML = `✅ 已從雲端查獲 <span class="text-purple-700 text-base">${versionGroups.length}</span> 筆有效回傳紀錄（最新在最上方，已自動排除作廢）`;
+
+            const govOrder = ['市長', '區域議員', '平地原住民議員', '山地原住民議員', '里長'];
+            let html = '';
+
+            versionGroups.forEach((group, groupIdx) => {
+                const isLatest = groupIdx === 0;
+                const uploadOrderLabel = group.versionNum === 0 ? '第 1 次上傳' : `第 ${group.versionNum + 1} 次上傳`;
+
+                // 組合該版本的列資料（公職 + 公投）
+                let rowsHtml = '';
+
+                if (group.gov && group.gov.records) {
+                    const govStatusHtml = group.gov.status
+                        ? renderStatusBadge(group.gov.status)
+                        : `<span class="text-xs text-slate-400 font-bold">—</span>`;
+
+                    govOrder.forEach(typeName => {
+                        const rec = group.gov.records[typeName];
+                        if (!rec) return;
+                        rowsHtml += buildResultRowHtml(typeName, rec, govStatusHtml, stationId);
+                    });
+                }
+
+                if (group.ref && group.ref.records && group.ref.records['公投']) {
+                    const refStatusHtml = group.ref.status
+                        ? renderStatusBadge(group.ref.status)
+                        : `<span class="text-xs text-slate-400 font-bold">—</span>`;
+
+                    rowsHtml += buildResultRowHtml('公投', group.ref.records['公投'], refStatusHtml, stationId);
+                }
+
+                // 頂部燈號摘要（尚未判定前不顯示燈號，僅註記已上傳）
+                const govHeaderBadge = group.gov
+                    ? (group.gov.status ? renderStatusBadge(group.gov.status) : `<span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-300">已上傳（尚未判定燈號）</span>`)
+                    : `<span class="text-xs text-slate-400">無有效公職紀錄</span>`;
+
+                const refHeaderBadge = group.ref
+                    ? (group.ref.status ? renderStatusBadge(group.ref.status) : `<span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-300">已上傳（尚未判定燈號）</span>`)
+                    : `<span class="text-xs text-slate-400">無有效公投紀錄</span>`;
+
+                html += `
+                    <div class="bg-white rounded-xl border-2 ${isLatest ? 'border-purple-400 shadow-md' : 'border-slate-300 shadow-sm'} overflow-hidden">
+                        <div class="px-4 py-3 ${isLatest ? 'bg-purple-50' : 'bg-slate-100'} border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-md font-black text-sm ${isLatest ? 'bg-purple-600 text-white' : 'bg-slate-600 text-white'}">${group.versionId}</span>
+                                <span class="font-bold text-slate-700 text-sm">${uploadOrderLabel}</span>
+                                ${isLatest ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">最新</span>' : ''}
+                                <span class="text-xs sm:text-sm font-mono text-slate-600 ml-1">🕒 ${group.timestamp || '無時間紀錄'}</span>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3 text-xs font-bold">
+                                <div class="flex items-center gap-1"><span class="text-slate-600">公職檢核：</span>${govHeaderBadge}</div>
+                                <div class="flex items-center gap-1"><span class="text-slate-600">公投檢核：</span>${refHeaderBadge}</div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="result-table">
+                                <thead>
+                                    <tr>
+                                        <th>選舉種類</th>
+                                        <th style="min-width: 240px;">各候選人得票數</th>
+                                        <th>有效票</th>
+                                        <th>無效票</th>
+                                        <th>投票數</th>
+                                        <th>已領未投</th>
+                                        <th>發出票數</th>
+                                        <th>用餘票數</th>
+                                        <th>選舉人數</th>
+                                        <th>檢查值</th>
+                                        <th>檢核結果</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml || '<tr><td colspan="11" class="py-4 text-slate-400">無明細資料</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            bodyEl.innerHTML = html;
+
+        } catch (err) {
+            console.error('查詢失敗:', err);
+            summaryEl.textContent = `❌ 查詢票所 ${stationId} 失敗`;
+            bodyEl.innerHTML = `
+                <div class="py-10 text-center bg-red-50 rounded-xl border border-red-200 text-red-700 font-bold">
+                    <div class="text-3xl mb-2">⚠️</div>
+                    <div>無法讀取雲端資料：${err.message}</div>
+                    <div class="text-xs text-red-500 mt-2">請確認網路連線正常，且後端 GAS 已部署最新版本。</div>
+                </div>
+            `;
+        }
+    }
+
+    function buildResultRowHtml(typeName, rec, statusCellHtml, baseStationId) {
+        const cands = rec.candidates || [];
+        const s = rec.stats || {};
+
+        let candChips = '';
+        cands.forEach((val, idx) => {
+            if (val !== undefined && val !== null && String(val).trim() !== '') {
+                const label = getCandLabel(typeName, idx, baseStationId);
+                candChips += `<span class="inline-block bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono m-0.5"><span class="text-slate-500 font-sans">${label}</span> <strong class="text-slate-900">${val}</strong></span>`;
+            }
+        });
+
+        const electorsNum = Number(s.electors);
+        const checkNum = Number(s.check);
+        const checkClass = (!isNaN(electorsNum) && !isNaN(checkNum) && checkNum > 0)
+            ? (electorsNum === checkNum ? 'bg-green-100 text-green-900 font-black' : 'bg-red-100 text-red-800 font-black')
+            : 'font-bold';
+
+        return `
+            <tr class="hover:bg-slate-50">
+                <td class="font-bold text-slate-800 bg-slate-50 whitespace-nowrap">${typeName}</td>
+                <td class="text-left leading-relaxed">${candChips || '<span class="text-slate-400">—</span>'}</td>
+                <td class="font-mono font-bold text-blue-800">${s.valid ?? ''}</td>
+                <td class="font-mono">${s.invalid ?? ''}</td>
+                <td class="font-mono font-bold text-blue-800">${s.total ?? ''}</td>
+                <td class="font-mono">${s.issuedNotVoted ?? ''}</td>
+                <td class="font-mono font-bold text-blue-800">${s.issued ?? ''}</td>
+                <td class="font-mono">${s.remaining ?? ''}</td>
+                <td class="font-mono font-bold text-blue-800">${s.electors ?? ''}</td>
+                <td class="font-mono ${checkClass}">${s.check ?? ''}</td>
+                <td class="whitespace-nowrap">${statusCellHtml}</td>
+            </tr>
+        `;
+    }
 
     function showCustomAlert(msg) {
         const overlay = document.createElement('div');

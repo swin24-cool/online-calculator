@@ -199,6 +199,7 @@
         <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
         <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
         <span class="warning-text">輸入票所編號(1282-1419)後才可試算！</span>
+        <span id="autosave-status" class="hidden text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 whitespace-nowrap"></span>
         
         <div class="w-full sm:w-auto sm:ml-auto text-right font-bold text-gray-800 text-[16px] tracking-wide mt-2 sm:mt-0 whitespace-nowrap">
             115年地方公職暨公投選舉(萬華區)&nbsp;&nbsp;&nbsp;&nbsp;<span id="display-date">115.11.28</span>
@@ -425,7 +426,7 @@
         <!-- 左側 -->
         <div style="display: flex; gap: 10px;">
             <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
-            <button id="btn-toggle-keyboard" class="action-btn" style="background-color: #fef08a; color: #854d0e;">⌨️ 切換大鍵盤</button>
+            <button id="btn-toggle-keyboard" class="action-btn" style="background-color: #fef08a; color: #854d0e;" title="點擊循環切換：小鍵盤 → 大鍵盤 → 關閉浮動鍵盤">⌨️ 切換大鍵盤</button>
         </div>
         
         <!-- 右側 -->
@@ -597,6 +598,14 @@
     let currentStationId = null;   
     let currentResultStationId = null;
 
+    // === 💡 精簡極速版：本機 localStorage 自動暫存設定 (專防 iOS PWA 重啟清空) ===
+    const STORAGE_DRAFT_KEY = 'election_calc_draft_v1';
+    const STORAGE_KB_MODE_KEY = 'election_calc_kb_mode_v1';
+    const ELECTION_TYPES = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
+    let autoSaveTimer = null;
+    let isRestoringDraft = false;
+    let hasSubmittedCurrentDraft = false;
+
     const candidateNamesMap = {
         'mayor': ['郭璽', '林志成', '沈伯洋', '蕭文乾', '蔣萬安', '唐新民'],
         'councilor': ['張延廷', '吳志剛', '陳力新', '吳怡萱', '徐立信', '馬郁雯', '鍾小平', '郭昭巖', '譚傳紹', '張銘祐', '王振庭', '洪婉臻', '劉耀仁', '應佳妤'],
@@ -605,7 +614,182 @@
         'referendum': ['同意', '不同意']
     };
 
+    // 主動申請瀏覽器永久儲存權限，避免系統空間不足時清理暫存
+    async function requestPersistentStorage() {
+        try {
+            if (navigator.storage && navigator.storage.persist) {
+                const isPersisted = await navigator.storage.persisted();
+                if (!isPersisted) await navigator.storage.persist();
+            }
+        } catch (err) {
+            console.warn('無法申請永久儲存權限:', err);
+        }
+    }
+
+    function updateAutoSaveBadge(text, isSubmitted = false) {
+        const badge = document.getElementById('autosave-status');
+        if (!badge) return;
+        if (!text) {
+            badge.classList.add('hidden');
+            return;
+        }
+        badge.textContent = text;
+        badge.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'bg-blue-50', 'text-blue-700', 'border-blue-300');
+        if (isSubmitted) {
+            badge.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-300');
+        } else {
+            badge.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+        }
+    }
+
+    // 擷取目前畫面上的票所與所有已輸入數值
+    function collectCurrentDraft() {
+        if (!currentStationId) return null;
+        const formValues = {};
+        ELECTION_TYPES.forEach(type => {
+            const cands = [];
+            document.querySelectorAll(`.${type}-cand`).forEach(input => {
+                cands.push(input.classList.contains('locked-empty') ? '' : input.value);
+            });
+            formValues[type] = {
+                cands: cands,
+                invalid: document.getElementById(`${type}_invalid`)?.value || '',
+                issued_not_voted: document.getElementById(`${type}_issued_not_voted`)?.value || '',
+                remaining: document.getElementById(`${type}_remaining`)?.value || ''
+            };
+        });
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
+        return {
+            stationId: currentStationId,
+            isLocked: document.getElementById('table-wrapper')?.classList.contains('locked') || false,
+            submitted: hasSubmittedCurrentDraft,
+            savedAt: timeStr,
+            savedTs: now.getTime(),
+            values: formValues
+        };
+    }
+
+    // 立即寫入 localStorage
+    function saveDraftNow() {
+        if (isRestoringDraft || !currentStationId) return;
+        try {
+            const draft = collectCurrentDraft();
+            if (!draft) return;
+            localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(draft));
+            updateAutoSaveBadge(
+                draft.submitted ? `✅ 已送出並暫存 (${draft.savedAt})` : `💾 已自動暫存 (${draft.savedAt})`,
+                draft.submitted
+            );
+        } catch (err) {
+            console.warn('localStorage 暫存失敗:', err);
+        }
+    }
+
+    // 防抖動自動存檔 (停手 0.5 秒後寫入，不拖慢輸入流暢度)
+    function scheduleAutoSave() {
+        if (isRestoringDraft || !currentStationId) return;
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+            saveDraftNow();
+        }, 500);
+    }
+
+    function clearDraftFromLocalStorage() {
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        hasSubmittedCurrentDraft = false;
+        try {
+            localStorage.removeItem(STORAGE_DRAFT_KEY);
+        } catch (err) {
+            console.warn('清除 localStorage 暫存失敗:', err);
+        }
+        updateAutoSaveBadge('');
+    }
+
+    // 啟動時自動還原上次暫存草稿
+    function restoreDraftFromLocalStorage() {
+        try {
+            const raw = localStorage.getItem(STORAGE_DRAFT_KEY);
+            if (!raw) return false;
+            const draft = JSON.parse(raw);
+            if (!draft || !draft.stationId || !globalStationCache || !globalStationCache[draft.stationId]) {
+                return false;
+            }
+
+            isRestoringDraft = true;
+            if (stationIdInput) stationIdInput.value = draft.stationId;
+            loadStationById(draft.stationId, true);
+
+            if (draft.values) {
+                ELECTION_TYPES.forEach(type => {
+                    const typeData = draft.values[type];
+                    if (!typeData) return;
+
+                    const candInputs = document.querySelectorAll(`.${type}-cand`);
+                    if (Array.isArray(typeData.cands)) {
+                        candInputs.forEach((input, idx) => {
+                            if (!input.classList.contains('locked-empty') && typeData.cands[idx] !== undefined) {
+                                input.value = typeData.cands[idx];
+                            }
+                        });
+                    }
+
+                    ['invalid', 'issued_not_voted', 'remaining'].forEach(field => {
+                        const el = document.getElementById(`${type}_${field}`);
+                        if (el && !el.classList.contains('locked-empty') && typeData[field] !== undefined) {
+                            el.value = typeData[field];
+                        }
+                    });
+
+                    calculateTotals(type);
+                });
+            }
+
+            if (draft.isLocked) {
+                document.getElementById('table-wrapper').classList.add('locked');
+            }
+
+            hasSubmittedCurrentDraft = !!draft.submitted;
+            const successText = document.getElementById('success-text');
+            if (successText && hasSubmittedCurrentDraft) {
+                successText.classList.remove('opacity-0');
+                successText.classList.add('opacity-100');
+            }
+
+            updateAutoSaveBadge(
+                hasSubmittedCurrentDraft ? `✅ 已還原送出紀錄 (${draft.savedAt || ''})` : `💾 已還原暫存 (${draft.savedAt || ''})`,
+                hasSubmittedCurrentDraft
+            );
+            showToast(`♻️ 已自動還原第 ${draft.stationId} 票所上次暫存資料${draft.savedAt ? '（' + draft.savedAt + '）' : ''}`, 4000);
+            isRestoringDraft = false;
+            return true;
+        } catch (err) {
+            isRestoringDraft = false;
+            console.warn('還原暫存草稿失敗:', err);
+            return false;
+        }
+    }
+
+    // 💡 iOS 關鍵搶存機制：切去拍照、回 LINE 或 App 進入背景的瞬間立刻存檔
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') saveDraftNow();
+    });
+    window.addEventListener('pagehide', () => {
+        saveDraftNow();
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
+        requestPersistentStorage();
+
+        // 啟動時立即套用上次記憶的浮動鍵盤模式（小鍵盤 / 大鍵盤 / 關閉）
+        try {
+            const savedKbMode = localStorage.getItem(STORAGE_KB_MODE_KEY);
+            if (savedKbMode && ['small', 'large', 'hidden'].includes(savedKbMode)) {
+                applyKeyboardMode(savedKbMode, false);
+            }
+        } catch (err) {}
+
         document.querySelectorAll('input.data-cell').forEach((input, idx) => {
             if(!input.id) input.id = 'cand_input_' + idx;
         });
@@ -616,15 +800,19 @@
             .then(json => {
                 if (json.status === 'success') {
                     globalStationCache = json.data;
-                    showToast("⚡ 資料庫已全數快取，輸入票所可瞬間載入！", 3000);
+                    if (!restoreDraftFromLocalStorage()) {
+                        showToast("⚡ 資料庫已全數快取，輸入票所可瞬間載入！", 3000);
+                    }
                 } else {
                     throw new Error(json.message);
                 }
             })
             .catch(err => {
                 console.error("快取失敗:", err);
-                showToast("⚠️ 網路連線失敗，已載入本機備用測試資料。", 4000);
                 globalStationCache = getFallbackData();
+                if (!restoreDraftFromLocalStorage()) {
+                    showToast("⚠️ 網路連線失敗，已載入本機備用測試資料。", 4000);
+                }
             });
     });
 
@@ -646,17 +834,29 @@
         }
     }
 
-    function loadStationById(inputId) {
+    function loadStationById(inputId, fromRestore = false) {
         if (!globalStationCache) {
             showToast('資料庫尚未就緒，已載入備用測試資料');
             globalStationCache = getFallbackData();
         }
 
         if (globalStationCache[inputId]) {
+            const isSwitchingStation = currentStationId && currentStationId !== inputId;
             currentStationId = inputId;
             applyStationData(globalStationCache[inputId]);
             document.getElementById('table-wrapper').classList.remove('locked');
-            showToast(`⚡ 已成功載入第 ${inputId} 票所資料`);
+            if (!fromRestore) {
+                if (isSwitchingStation) {
+                    hasSubmittedCurrentDraft = false;
+                    const successText = document.getElementById('success-text');
+                    if (successText) {
+                        successText.classList.add('opacity-0');
+                        successText.classList.remove('opacity-100');
+                    }
+                }
+                showToast(`⚡ 已成功載入第 ${inputId} 票所資料`);
+                saveDraftNow();
+            }
         } else {
             showToast('❌ 找不到該票所編號！');
             lockTableStructure();
@@ -795,6 +995,8 @@
         if (e.target.tagName.toLowerCase() === 'input') {
             let prefix = e.target.className.match(/(mayor|councilor|flatland|mountain|village|referendum)-input/);
             if (prefix) calculateTotals(prefix[1]);
+            hasSubmittedCurrentDraft = false;
+            scheduleAutoSave();
         }
     });
 
@@ -1071,29 +1273,58 @@
     const btnToggleKeyboard = document.getElementById('btn-toggle-keyboard');
     const layout6x2 = document.getElementById('layout-6x2');
     const layout4x3 = document.getElementById('layout-4x3');
-    let isLargeKeyboard = false;
+    const KEYBOARD_MODES = ['small', 'large', 'hidden']; // 循環順序：小鍵盤 → 大鍵盤 → 關閉鍵盤
+    let currentKeyboardMode = 'small';
+
+    function applyKeyboardMode(mode, showFeedback = true) {
+        currentKeyboardMode = mode;
+        const kbBody = document.querySelector('.keyboard-body');
+        if (!draggablePanel || !kbBody || !btnToggleKeyboard) return;
+
+        if (mode === 'small') {
+            draggablePanel.style.display = 'flex';
+            layout6x2.classList.remove('hidden');
+            layout4x3.classList.add('hidden');
+            kbBody.classList.remove('large-mode');
+            btnToggleKeyboard.innerHTML = '⌨️ 切換大鍵盤';
+            btnToggleKeyboard.style.backgroundColor = '#fef08a';
+            btnToggleKeyboard.style.color = '#854d0e';
+            if (showFeedback) showToast('已切換至「6x2 小鍵盤」');
+        } else if (mode === 'large') {
+            draggablePanel.style.display = 'flex';
+            layout6x2.classList.add('hidden');
+            layout4x3.classList.remove('hidden');
+            kbBody.classList.add('large-mode');
+            btnToggleKeyboard.innerHTML = '⌨️ 關閉浮動鍵盤';
+            btnToggleKeyboard.style.backgroundColor = '#bbf7d0';
+            btnToggleKeyboard.style.color = '#166534';
+            if (showFeedback) showToast('已切換至「4x3 大鍵盤」');
+        } else {
+            draggablePanel.style.display = 'none';
+            // 若原本有開連續模式(會鎖住手機內建鍵盤)，關閉浮動鍵盤時自動解除，讓使用者可直接呼叫原生鍵盤
+            if (continuousModeCheckbox && continuousModeCheckbox.checked) {
+                continuousModeCheckbox.checked = false;
+                modeToggleLabel.classList.remove('active');
+                document.querySelectorAll('input.data-cell, input.editable-stat, input.fm-input:not(.modal-readonly)').forEach(el => {
+                    el.setAttribute('inputmode', 'numeric');
+                    el.removeAttribute('readonly');
+                });
+            }
+            btnToggleKeyboard.innerHTML = '⌨️ 開啟小鍵盤';
+            btnToggleKeyboard.style.backgroundColor = '#e2e8f0';
+            btnToggleKeyboard.style.color = '#334155';
+            if (showFeedback) showToast('已關閉浮動鍵盤，可直接點擊欄位使用手機鍵盤輸入', 3500);
+        }
+
+        try {
+            localStorage.setItem(STORAGE_KB_MODE_KEY, mode);
+        } catch (err) {}
+    }
 
     if (btnToggleKeyboard) {
         btnToggleKeyboard.addEventListener('click', () => {
-            isLargeKeyboard = !isLargeKeyboard;
-            const kbBody = document.querySelector('.keyboard-body');
-            if (isLargeKeyboard) {
-                layout6x2.classList.add('hidden');
-                layout4x3.classList.remove('hidden');
-                kbBody.classList.add('large-mode');
-                btnToggleKeyboard.innerHTML = '⌨️ 切換小鍵盤';
-                btnToggleKeyboard.style.backgroundColor = '#bbf7d0';
-                btnToggleKeyboard.style.color = '#166534';
-                showToast('已切換至「4x3 大鍵盤」');
-            } else {
-                layout6x2.classList.remove('hidden');
-                layout4x3.classList.add('hidden');
-                kbBody.classList.remove('large-mode');
-                btnToggleKeyboard.innerHTML = '⌨️ 切換大鍵盤';
-                btnToggleKeyboard.style.backgroundColor = '#fef08a';
-                btnToggleKeyboard.style.color = '#854d0e';
-                showToast('已切換至「6x2 小鍵盤」');
-            }
+            const nextIdx = (KEYBOARD_MODES.indexOf(currentKeyboardMode) + 1) % KEYBOARD_MODES.length;
+            applyKeyboardMode(KEYBOARD_MODES[nextIdx], true);
         });
     }
 
@@ -1205,7 +1436,9 @@
             const mainInput = document.getElementById(targetId);
             if (mainInput) {
                 mainInput.value = e.target.value;
-                if (activeModalType) calculateTotals(activeModalType); 
+                if (activeModalType) calculateTotals(activeModalType);
+                hasSubmittedCurrentDraft = false;
+                scheduleAutoSave();
             }
         }
     });
@@ -1674,6 +1907,8 @@
                             successText.classList.remove('opacity-0');
                             successText.classList.add('opacity-100');
                         }
+                        hasSubmittedCurrentDraft = true;
+                        saveDraftNow();
                     } else {
                         showCustomAlert("❌ 傳送失敗：\n" + data.message);
                     }
@@ -1693,6 +1928,7 @@
             tableWrapper.classList.toggle('locked');
             if (tableWrapper.classList.contains('locked')) { showToast('🔒 表格已鎖定，避免誤觸修改。'); } 
             else { showToast('🔓 表格已解鎖，開放編輯。'); }
+            scheduleAutoSave();
         });
     }
 
@@ -1706,7 +1942,8 @@
 
             document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => { input.value = ""; });
             ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => { calculateTotals(type); });
-            showToast('🗑️ 已清除所有輸入資料。');
+            clearDraftFromLocalStorage();
+            showToast('🗑️ 已清除所有輸入資料與本機暫存。');
             
             const successText = document.getElementById('success-text');
             if(successText) {

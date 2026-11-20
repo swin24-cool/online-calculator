@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選務計票系統 - 快速簡易欄位驗算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", "Microsoft JhengHei", "PingFang TC", sans-serif;
+            background-color: #f1f5f9;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 頂部控制列 */
+        .top-bar {
+            background-color: white;
+            padding: 0.85rem 1.5rem;
+            border-bottom: 1px solid #cbd5e1;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem 1.25rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .input-station {
+            padding: 0.45rem 0.75rem;
+            border: 2px solid #94a3b8;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            width: 135px;
+            font-weight: bold;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-station:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            font-weight: bold;
+            color: #1e293b;
+            background: #f8fafc;
+            padding: 0.45rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* 表格樣式 (完整沿用 OCR 系統配置) */
+        table.election-table {
+            width: 100%;
+            min-width: 1180px;
+            border-collapse: collapse;
+            text-align: center;
+            background-color: white;
+        }
+        table.election-table th,
+        table.election-table td {
+            border: 1px solid #cbd5e1;
+            padding: 0.4rem;
+            vertical-align: middle;
+        }
+        table.election-table th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            color: #334155;
+            font-size: 0.85rem;
+        }
+
+        .col-title {
+            min-width: 90px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .col-cand { min-width: 66px; }
+        .col-sum { min-width: 72px; }
+        .col-narrow { min-width: 62px; }
+
+        .cand-name {
+            display: block;
+            font-size: 0.78rem;
+            color: #475569;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+            padding-left: 2px;
+        }
+
+        /* 數字輸入框樣式 */
+        table.election-table input[type="number"] {
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            border: 1px solid #94a3b8;
+            border-radius: 0.375rem;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #0f172a;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            transition: all 0.15s;
+        }
+        table.election-table input[type="number"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+        }
+        table.election-table input[type="number"]:disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            border-color: #cbd5e1;
+        }
+
+        /* 隱藏數字框上下微調箭頭，讓版面更乾淨 */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .cell-locked { background-color: #f1f5f9; }
+        .check-val-col {
+            background-color: #f8fafc;
+            font-weight: bold;
+            color: #475569;
+            font-size: 1.05rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            transition: background-color 0.25s, color 0.25s;
+        }
+
+        /* === 原有 OCR 精準檢核顯色邏輯 === */
+        input.check-match, .check-match {
+            background-color: #22c55e !important;
+            color: white !important;
+            border-color: #16a34a !important;
+            font-size: 1.1rem !important;
+        }
+        input.check-mismatch, .check-mismatch {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+            font-size: 1.1rem !important;
+        }
+        .error-source {
+            background-color: #fecaca !important;
+            border-color: #ef4444 !important;
+            color: #991b1b !important;
+        }
+        .error-tainted {
+            background-color: #ffedd5 !important;
+            border-color: #f97316 !important;
+            color: #c2410c !important;
+        }
+        .error-isolated {
+            background-color: #fca5a5 !important;
+            border: 2px solid #dc2626 !important;
+            color: #991b1b !important;
+        }
+        .warning-yellow {
+            background-color: #fef08a !important;
+            border-color: #eab308 !important;
+            color: #854d0e !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 浮動提示訊息 (取代原生 alert) -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full shadow-xl z-50 font-bold text-sm transition-all duration-300 opacity-0 pointer-events-none bg-slate-800 text-white">
+        訊息
+    </div>
+
+    <!-- 頂部控制列 (抽離自 OCR 左上方區塊) -->
+    <header class="top-bar">
+        <div class="flex items-center gap-2">
+            <label for="stationInput" class="font-bold text-slate-700 text-sm whitespace-nowrap">票所編號：</label>
+            <input type="number" id="stationInput" class="input-station" placeholder="1282-1419" min="1282" max="1419">
+        </div>
+
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="electionType" value="public" checked class="w-4 h-4 accent-blue-600">
+                公職
+            </label>
+            <label>
+                <input type="radio" name="electionType" value="referendum" class="w-4 h-4 accent-blue-600">
+                公投
+            </label>
+        </div>
+
+        <button id="btnLoad" onclick="loadStationData()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-lg shadow-sm transition text-sm">
+            載入設定
+        </button>
+
+        <!-- 載入狀態徽章 -->
+        <div id="stationInfoMsg" class="hidden px-3.5 py-1.5 rounded-lg font-bold text-sm border"></div>
+
+        <!-- 右側輔助工具按鈕 -->
+        <div class="flex items-center gap-2 ml-auto">
+            <button id="btnClear" onclick="clearFormValues()" class="hidden px-4 py-2 bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 border border-rose-300 font-bold rounded-lg transition text-sm">
+                🧹 清空數值
+            </button>
+            <span id="dbStatusBadge" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
+                ⏳ 準備連線資料庫...
+            </span>
+        </div>
+    </header>
+
+    <!-- 主工作區：動態 HTML 試算表格與驗算警報 -->
+    <main class="flex-1 p-4 md:p-6 max-w-[1680px] w-full mx-auto flex flex-col gap-4">
+
+        <!-- 標題與快速操作提示 -->
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <h1 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                    🧮 選務快速簡易欄位驗算系統
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                    取代傳統計算機：手動輸入報表上各欄數字，系統自動比對 <b>候選人加總 (A)</b>、<b>投票數 (C)</b>、<b>發出票數 (E)</b> 與 <b>檢查值 (G)</b>，並精準抓出誤差源頭。
+                </p>
+            </div>
+            <div class="text-xs text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                💡 小技巧：輸入完數字按 <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">Enter</kbd> 或 <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">Tab</kbd> 可快速跳下一格
+            </div>
+        </div>
+
+        <!-- 動態試算表格容器 -->
+        <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div id="formContainer" class="overflow-x-auto p-3 md:p-4">
+                <div class="py-16 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <span class="text-4xl">📋</span>
+                    <span class="font-bold text-base">請於左上方輸入票所編號（1282～1419），選擇「公職」或「公投」後點擊「載入設定」</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 即時驗算異常警報區 (沿用 OCR 系統邏輯) -->
+        <section id="validationAlerts" class="hidden bg-slate-800 text-white p-4 rounded-xl shadow-lg text-sm font-bold flex flex-col gap-1.5 border-l-4 border-red-500"></section>
+
+        <!-- 檢核全部通過的安心提示 -->
+        <section id="validationSuccess" class="hidden bg-emerald-50 text-emerald-800 p-3.5 rounded-xl border border-emerald-300 font-bold text-sm flex items-center gap-2 shadow-sm">
+            <span>✅</span>
+            <span>目前所有已填寫欄位之驗算關係與檢查值皆完全相符！</span>
+        </section>
+
+        <!-- 燈號圖例說明 -->
+        <footer class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-sm flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-bold text-slate-600">
+            <span class="text-slate-800">🎨 顯色說明：</span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded bg-green-500 inline-block border border-green-600"></span> 驗算相符 (A / C / E / 檢查值)
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded bg-red-500 inline-block border border-red-600"></span> 驗算不符 (加總錯誤或與檢查值不同)
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded bg-orange-100 inline-block border border-orange-500"></span> 受上游誤差污染 (連鎖影響)
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded bg-yellow-200 inline-block border border-yellow-500"></span> 異常預警 (無效票&gt;8%、已領未投&gt;2、差約百票)
+            </span>
+        </footer>
+    </main>
+
+    <script>
+        // === 1. API 與候選人名單設定 ===
+        // 若以獨立網頁開啟，會自動連線您現有的 GAS API 抓取「主檔DB(試算器)」；
+        // 若部署於 OCR 的 GAS 專案中，則自動優先呼叫 google.script.run.getInitialData()
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
+
+        const CANDIDATES = {
+            mayor: ["郭璽", "林志成", "沈伯洋", "蕭文乾", "蔣萬安", "唐新民"],
+            councilor: ["張延廷", "吳志剛", "陳力新", "吳怡萱", "徐立信", "馬郁雯", "鍾小平", "郭昭巖", "譚傳紹", "張銘祐", "王振庭", "洪婉臻", "劉耀仁", "應佳妤"],
+            flatIndig: ["李芳儒", "林筱薇"],
+            mountIndig: ["林家豪", "李傅鈺婷", "孔垂崢"]
+        };
+
+        const GROUP_LABELS = {
+            val1: '直轄市長',
+            val2: '區域議員',
+            val3: '平地原住民',
+            val4: '山地原住民',
+            val5: '里長',
+            val6: '全國公投'
+        };
+
+        // 系統狀態變數
+        let currentElectionType = 'public';
+        let currentStation = null;
+        let globalStationCache = null; // 獨立網頁模式下快取全部票所設定，切換票所秒開
+        let isRunningInGAS = (typeof google !== 'undefined' && google.script && google.script.run);
+
+        // === 2. Toast 訊息提示 ===
+        let toastTimeout = null;
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            const colorClass = type === 'error'
+                ? 'bg-red-600 text-white'
+                : (type === 'success' ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-white');
+            toast.className = `fixed top-5 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full shadow-xl z-50 font-bold text-sm transition-all duration-300 pointer-events-none ${colorClass}`;
+            toast.style.opacity = '1';
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
+
+        // === 3. 頁面初始化：預先連線並快取 Google Sheet 設定值 ===
+        window.addEventListener('DOMContentLoaded', () => {
+            const dbBadge = document.getElementById('dbStatusBadge');
+
+            if (isRunningInGAS) {
+                dbBadge.textContent = '🟢 已連結 GAS 主檔DB';
+                dbBadge.className = 'text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap';
+            } else {
+                preloadStationsFromAPI();
+            }
+
+            // 票所輸入框按下 Enter 直接載入
+            const stationInput = document.getElementById('stationInput');
+            stationInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loadStationData();
+                }
+            });
+
+            // 切換「公職 / 公投」單選鈕時，若已載入票所，自動立即切換動態表格
+            document.querySelectorAll('input[name="electionType"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    currentElectionType = e.target.value;
+                    if (currentStation) {
+                        if (isRunningInGAS) {
+                            loadStationData();
+                        } else {
+                            renderForm();
+                            updateStatusMessage();
+                            showToast(`已切換至【${currentElectionType === 'public' ? '公職' : '公投'}】驗算表格`);
+                        }
+                    }
+                });
+            });
+        });
+
+        async function preloadStationsFromAPI() {
+            const dbBadge = document.getElementById('dbStatusBadge');
+            try {
+                const res = await fetch(`${GAS_API_URL}?action=getAll`);
+                const json = await res.json();
+                if (json.status === 'success' && json.data) {
+                    globalStationCache = json.data;
+                    dbBadge.textContent = `🟢 雲端設定已就緒 (${Object.keys(json.data).length} 票所)`;
+                    dbBadge.className = 'text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap';
+                } else {
+                    throw new Error(json.message || '讀取失敗');
+                }
+            } catch (err) {
+                console.warn('讀取雲端主檔失敗，改用內建備用測試資料:', err);
+                globalStationCache = getFallbackStations();
+                dbBadge.textContent = '⚠️ 離線備用模式';
+                dbBadge.className = 'text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-300 whitespace-nowrap';
+                showToast('⚠️ 無法連線 Google Sheet，已載入備用測試票所(1282、1285)', 'error');
+            }
+        }
+
+        function getFallbackStations() {
+            return {
+                "1282": { checkValues: { mayor: 1000, councilor: 1000, flatland: 0, mountain: 0, village: 100, referendum: 1000 }, villageCandidates: ["李珮忻", "徐庭崇"] },
+                "1285": { checkValues: { mayor: 970, councilor: 922, flatland: 31, mountain: 14, village: 965, referendum: 1020 }, villageCandidates: ["李珮忻", "徐庭崇"] }
+            };
+        }
+
+        // === 4. 載入票所設定值 (自動相容 GAS 與 獨立網頁 API) ===
+        async function loadStationData() {
+            const inputVal = document.getElementById('stationInput').value.trim();
+            const stId = parseInt(inputVal, 10);
+
+            if (isNaN(stId) || stId < 1282 || stId > 1419) {
+                showToast('⚠️ 請輸入有效的票所編號（限定範圍：1282 ~ 1419）', 'error');
+                document.getElementById('stationInput').focus();
+                return;
+            }
+
+            currentElectionType = document.querySelector('input[name="electionType"]:checked').value;
+
+            const btn = document.getElementById('btnLoad');
+            const msgBox = document.getElementById('stationInfoMsg');
+            btn.innerText = '⏳ 載入中...';
+            btn.disabled = true;
+
+            msgBox.classList.remove('hidden');
+            msgBox.innerText = '正在連接 Google Sheet...';
+            msgBox.className = 'px-3.5 py-1.5 rounded-lg font-bold text-sm border text-blue-700 bg-blue-50 border-blue-200';
+
+            // 模式 A：若置於 OCR 的 GAS 專案中，直接呼叫原後端函式 getInitialData
+            if (isRunningInGAS) {
+                google.script.run
+                    .withSuccessHandler(function(res) {
+                        btn.innerText = '載入設定';
+                        btn.disabled = false;
+                        if (res && res.status === 'success') {
+                            currentStation = {
+                                stationId: String(res.stationId),
+                                village: res.village || '',
+                                checkValues: normalizeCheckValues(res.checkValues),
+                                villageChiefs: res.villageChiefs || []
+                            };
+                            onStationLoaded();
+                        } else {
+                            onStationLoadFailed(res ? res.message : '未知錯誤');
+                        }
+                    })
+                    .withFailureHandler(function(err) {
+                        btn.innerText = '載入設定';
+                        btn.disabled = false;
+                        onStationLoadFailed('伺服器連線錯誤：' + err.message);
+                    })
+                    .getInitialData(stId, currentElectionType);
+                return;
+            }
+
+            // 模式 B：獨立網頁模式，從快取或即時向 GAS API 抓取
+            try {
+                if (!globalStationCache) {
+                    await preloadStationsFromAPI();
+                }
+                const record = globalStationCache ? globalStationCache[String(stId)] : null;
+                if (!record) {
+                    throw new Error(`資料庫中找不到票所編號 ${stId}`);
+                }
+
+                currentStation = {
+                    stationId: String(stId),
+                    village: record.village || '',
+                    checkValues: normalizeCheckValues(record.checkValues),
+                    villageChiefs: record.villageCandidates || record.villageChiefs || []
+                };
+                onStationLoaded();
+            } catch (err) {
+                onStationLoadFailed(err.message);
+            } finally {
+                btn.innerText = '載入設定';
+                btn.disabled = false;
+            }
+        }
+
+        function normalizeCheckValues(cv = {}) {
+            return {
+                mayor: Number(cv.mayor) || 0,
+                councilor: Number(cv.councilor) || 0,
+                flatland: Number(cv.flatland) || 0,
+                mountain: Number(cv.mountain) || 0,
+                village: Number(cv.village) || 0,
+                referendum: Number(cv.referendum) || 0
+            };
+        }
+
+        function onStationLoaded() {
+            updateStatusMessage();
+            document.getElementById('btnClear').classList.remove('hidden');
+            renderForm();
+            showToast(`✅ 已載入票所 ${currentStation.stationId} 設定`, 'success');
+
+            // 自動聚焦到第一個可輸入的數字框，方便直接開打
+            const firstInput = document.querySelector('#formContainer input[type="number"]:not(:disabled)');
+            if (firstInput) firstInput.focus();
+        }
+
+        function onStationLoadFailed(errMsg) {
+            const msgBox = document.getElementById('stationInfoMsg');
+            msgBox.classList.remove('hidden');
+            msgBox.innerText = '❌ 載入失敗：' + errMsg;
+            msgBox.className = 'px-3.5 py-1.5 rounded-lg font-bold text-sm border text-red-700 bg-red-50 border-red-200';
+            showToast('❌ ' + errMsg, 'error');
+        }
+
+        function updateStatusMessage() {
+            if (!currentStation) return;
+            const msgBox = document.getElementById('stationInfoMsg');
+            const typeText = currentElectionType === 'public' ? '公職報表' : '公投報表';
+            const villageText = currentStation.village ? ` (${currentStation.village})` : '';
+            msgBox.classList.remove('hidden');
+            msgBox.innerText = `✅ 載入成功：${currentStation.stationId}${villageText}｜${typeText}`;
+            msgBox.className = 'px-3.5 py-1.5 rounded-lg font-bold text-sm border text-emerald-700 bg-emerald-50 border-emerald-300';
+        }
+
+        // === 5. 動態產生 HTML 試算表格 (完整承襲 OCR 系統版面) ===
+        function renderForm() {
+            const container = document.getElementById('formContainer');
+            container.innerHTML = currentElectionType === 'public'
+                ? generatePublicForm()
+                : generateReferendumForm();
+
+            const inputs = Array.from(container.querySelectorAll('input[type="number"]:not(:disabled)'));
+
+            inputs.forEach((input, idx) => {
+                // 阻擋輸入負值並即時驗算
+                input.addEventListener('input', function() {
+                    if (this.value !== "" && parseInt(this.value, 10) < 0) {
+                        this.value = Math.abs(parseInt(this.value, 10));
+                    }
+                    runValidation();
+                });
+
+                // 聚焦時自動反白全選，方便覆蓋重打
+                input.addEventListener('focus', function() {
+                    this.select();
+                });
+
+                // 按下 Enter 自動跳下一格 (模擬實體計算機/會計輸入流暢度)
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const nextInput = inputs[idx + 1];
+                        if (nextInput) {
+                            nextInput.focus();
+                        }
+                    }
+                });
+            });
+
+            runValidation();
+        }
+
+        function generatePublicForm() {
+            let html = `<table class="election-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="col-title">選舉種類</th>
+                        <th colspan="10">各候選人得票數</th>
+                        <th rowspan="2" class="col-sum">有效票<br>A</th>
+                        <th rowspan="2" class="col-sum">無效票<br>B</th>
+                        <th rowspan="2" class="col-sum">投票數<br>C</th>
+                        <th rowspan="2" class="col-narrow">已領<br>未投D</th>
+                        <th rowspan="2" class="col-sum">發出票數<br>E</th>
+                        <th rowspan="2" class="col-sum">用餘票數<br>F</th>
+                        <th rowspan="2" class="col-sum">選舉人數<br>G</th>
+                        <th rowspan="2" class="col-sum check-val-col">檢查值</th>
+                    </tr>
+                    <tr>`;
+            for (let i = 1; i <= 10; i++) html += `<th class="col-cand">${i}</th>`;
+            html += `</tr></thead><tbody>`;
+
+            const cv = currentStation.checkValues;
+            html += generateRowGroup('直轄市長', CANDIDATES.mayor, 'cand1', 'val1', cv.mayor, 10, cv.mayor > 0);
+            html += generateRowGroup('區域議員', CANDIDATES.councilor, 'cand2', 'val2', cv.councilor, 10, cv.councilor > 0);
+            html += generateRowGroup('平地原住民', CANDIDATES.flatIndig, 'cand3', 'val3', cv.flatland, 10, cv.flatland > 0);
+            html += generateRowGroup('山地原住民', CANDIDATES.mountIndig, 'cand4', 'val4', cv.mountain, 10, cv.mountain > 0);
+
+            const chiefs = currentStation.villageChiefs || [];
+            html += generateRowGroup('里長', chiefs, 'cand5', 'val5', cv.village, 10, chiefs.length > 0 && cv.village > 0);
+            return html + `</tbody></table>`;
+        }
+
+        function generateRowGroup(title, candidates, candPrefix, valPrefix, checkValue, colsPerRow, isEnabled) {
+            let html = '';
+            const rowsNeeded = Math.ceil(candidates.length / colsPerRow) || 1;
+            const trClass = isEnabled ? '' : 'cell-locked';
+
+            for (let r = 0; r < rowsNeeded; r++) {
+                html += `<tr class="${trClass}">`;
+                if (r === 0) {
+                    html += `<td rowspan="${rowsNeeded}" class="col-title ${trClass}">${title}</td>`;
+                }
+
+                for (let c = 0; c < colsPerRow; c++) {
+                    const idx = r * colsPerRow + c;
+                    if (idx < candidates.length) {
+                        const name = isEnabled ? String(candidates[idx]).trim() : '無';
+                        const disabled = isEnabled ? '' : 'disabled';
+                        html += `<td class="col-cand ${trClass}">
+                            <span class="cand-name"><span class="font-bold text-slate-700">${idx + 1}</span> ${name}</span>
+                            <input type="number" id="${candPrefix}_${idx + 1}" class="cand-input" data-group="${valPrefix}" min="0" inputmode="numeric" ${disabled}>
+                        </td>`;
+                    } else {
+                        html += `<td class="col-cand cell-locked"></td>`;
+                    }
+                }
+
+                if (r === 0) {
+                    const disabled = isEnabled ? '' : 'disabled';
+                    const cVal = isEnabled ? checkValue : '-';
+                    html += `
+                        <td rowspan="${rowsNeeded}" class="${trClass}"><input type="number" id="${valPrefix}_A" min="0" inputmode="numeric" ${disabled}></td>
+                        <td rowspan="${rowsNeeded}" class="${trClass}"><input type="number" id="${valPrefix}_B" min="0" inputmode="numeric" ${disabled}></td>
+                        <td rowspan="${rowsNeeded}" class="${trClass}"><input type="number" id="${valPrefix}_C" min="0" inputmode="numeric" ${disabled}></td>
+                        <td rowspan="${rowsNeeded}" class="${trClass}"><input type="number" id="${valPrefix}_D" min="0" inputmode="numeric" ${disabled}></td>
+                        <td rowspan="${rowsNeeded}" class="${trClass}"><input type="number" id="${valPrefix}_E" min="0" inputmode="numeric" ${disabled}></td>
+                        <td rowspan="${rowsNeeded}" class="${trClass}"><input type="number" id="${valPrefix}_F" min="0" inputmode="numeric" ${disabled}></td>
+                        <td rowspan="${rowsNeeded}" class="${trClass}"><input type="number" id="${valPrefix}_G" min="0" inputmode="numeric" ${disabled}></td>
+                        <td rowspan="${rowsNeeded}" class="check-val-col ${trClass}" id="${valPrefix}_check">${cVal}</td>`;
+                }
+                html += `</tr>`;
+            }
+            return html;
+        }
+
+        function generateReferendumForm() {
+            const checkVal = currentStation.checkValues.referendum;
+            const isEnabled = checkVal > 0;
+            const disabled = isEnabled ? '' : 'disabled';
+            const trClass = isEnabled ? '' : 'cell-locked';
+
+            return `<table class="election-table">
+                <thead>
+                    <tr>
+                        <th class="col-title">公投種類</th>
+                        <th class="col-sum">同意票數 A1</th>
+                        <th class="col-sum">不同意票數 A2</th>
+                        <th class="col-sum">有效票 A</th>
+                        <th class="col-sum">無效票 B</th>
+                        <th class="col-sum">投票數 C</th>
+                        <th class="col-narrow">已領未投 D</th>
+                        <th class="col-sum">發出票數 E</th>
+                        <th class="col-sum">用餘票數 F</th>
+                        <th class="col-sum">投票權人數 G</th>
+                        <th class="col-sum check-val-col">檢查值</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="${trClass}">
+                        <td class="col-title ${trClass}">全國公投</td>
+                        <td class="col-sum"><input type="number" id="cand6_1" class="cand-input" data-group="val6" min="0" inputmode="numeric" ${disabled}></td>
+                        <td class="col-sum"><input type="number" id="cand6_2" class="cand-input" data-group="val6" min="0" inputmode="numeric" ${disabled}></td>
+                        <td><input type="number" id="val6_A" min="0" inputmode="numeric" ${disabled}></td>
+                        <td><input type="number" id="val6_B" min="0" inputmode="numeric" ${disabled}></td>
+                        <td><input type="number" id="val6_C" min="0" inputmode="numeric" ${disabled}></td>
+                        <td><input type="number" id="val6_D" min="0" inputmode="numeric" ${disabled}></td>
+                        <td><input type="number" id="val6_E" min="0" inputmode="numeric" ${disabled}></td>
+                        <td><input type="number" id="val6_F" min="0" inputmode="numeric" ${disabled}></td>
+                        <td><input type="number" id="val6_G" min="0" inputmode="numeric" ${disabled}></td>
+                        <td class="check-val-col ${trClass}" id="val6_check">${isEnabled ? checkVal : '-'}</td>
+                    </tr>
+                </tbody>
+            </table>`;
+        }
+
+        // === 6. 核心驗算邏輯 (100% 沿用 OCR 系統驗算引擎) ===
+        function runValidation() {
+            if (!currentStation) return;
+
+            const alerts = [];
+            const alertBox = document.getElementById('validationAlerts');
+            const successBox = document.getElementById('validationSuccess');
+
+            // 清除既有樣式
+            document.querySelectorAll('#formContainer input').forEach(el => {
+                el.classList.remove('error-source', 'error-tainted', 'error-isolated', 'warning-yellow', 'check-match', 'check-mismatch');
+            });
+
+            const groups = currentElectionType === 'public'
+                ? ['val1', 'val2', 'val3', 'val4', 'val5']
+                : ['val6'];
+
+            const cv = currentStation.checkValues;
+            const cvMap = {
+                val1: cv.mayor,
+                val2: cv.councilor,
+                val3: cv.flatland,
+                val4: cv.mountain,
+                val5: cv.village,
+                val6: cv.referendum
+            };
+
+            let allActiveGroupsMatched = true;
+            let activeGroupCount = 0;
+
+            groups.forEach(prefix => {
+                const el = (suffix) => document.getElementById(`${prefix}_${suffix}`);
+                if (!el('A') || el('A').disabled) return;
+
+                activeGroupCount++;
+                const label = GROUP_LABELS[prefix] || prefix;
+                const getVal = (suffix) => parseInt(el(suffix)?.value, 10) || 0;
+
+                let candSum = 0;
+                document.querySelectorAll(`input.cand-input[data-group="${prefix}"]`).forEach(inp => {
+                    candSum += parseInt(inp.value, 10) || 0;
+                });
+
+                const A = getVal('A'), B = getVal('B'), C = getVal('C'), D = getVal('D');
+                const E = getVal('E'), F = getVal('F'), G = getVal('G');
+                const checkValue = cvMap[prefix];
+
+                // 1. 四大核心顯色邏輯 (A, C, E, Check)
+                if (checkValue > 0) {
+                    if (candSum === A) el('A').classList.add('check-match');
+                    else el('A').classList.add('check-mismatch');
+
+                    if (A + B === C) el('C').classList.add('check-match');
+                    else el('C').classList.add('check-mismatch');
+
+                    if (C + D === E) el('E').classList.add('check-match');
+                    else el('E').classList.add('check-mismatch');
+
+                    const checkCell = document.getElementById(`${prefix}_check`);
+                    if (checkCell) {
+                        checkCell.classList.remove('check-match', 'check-mismatch');
+                        if (G === checkValue) checkCell.classList.add('check-match');
+                        else checkCell.classList.add('check-mismatch');
+                    }
+
+                    if (!(candSum === A && A + B === C && C + D === E && E + F === G && G === checkValue)) {
+                        allActiveGroupsMatched = false;
+                    }
+                }
+
+                // 2. 連鎖誤差追蹤與異常預警
+                const isA_Wrong = candSum !== A && (A !== 0 || candSum > 0);
+                const isC_Wrong = A + B !== C && (C !== 0 || A + B > 0);
+                const isE_Wrong = C + D !== E && (E !== 0 || C + D > 0);
+                const isG_Wrong = E + F !== G && (G !== 0 || E + F > 0);
+
+                if (isA_Wrong) {
+                    alerts.push(`🚨 【${label}】候選人加總 (${candSum}) ≠ 有效票 A (${A})！`);
+                    if (!isC_Wrong && C !== 0) {
+                        el('C').classList.add('error-tainted');
+                        alerts.push(`⚠️ 【${label}】因有效票 A 錯誤，導致投票數 C (${C}) 被連動污染`);
+                    }
+                    if (!isE_Wrong && E !== 0) el('E').classList.add('error-tainted');
+                    if (!isG_Wrong && G !== 0) el('G').classList.add('error-tainted');
+                }
+
+                if (!isA_Wrong && isC_Wrong) {
+                    alerts.push(`🚨 【${label}】A (${A}) + B (${B}) ≠ 投票數 C (${C})！`);
+                    if (!isE_Wrong && E !== 0) el('E').classList.add('error-tainted');
+                    if (!isG_Wrong && G !== 0) el('G').classList.add('error-tainted');
+                }
+
+                if (!isA_Wrong && !isC_Wrong && isE_Wrong) {
+                    alerts.push(`🚨 【${label}】C (${C}) + D (${D}) ≠ 發出票 E (${E})！`);
+                    if (!isG_Wrong && G !== 0) el('G').classList.add('error-tainted');
+                }
+
+                if (!isA_Wrong && !isC_Wrong && !isE_Wrong && isG_Wrong) {
+                    el('G').classList.add('error-source');
+                    alerts.push(`🚨 【${label}】E (${E}) + F (${F}) ≠ 選舉人數 G (${G})！`);
+                }
+
+                if (!isA_Wrong && isC_Wrong && el('B').value !== "") {
+                    el('B').classList.add('error-isolated');
+                }
+
+                if (C > 0 && B > C * 0.08) {
+                    el('B').classList.add('warning-yellow');
+                    alerts.push(`🟡 【${label}】無效票 (${B}) 比例偏高 (>8%)，請確認。`);
+                }
+                if (D > 2) {
+                    el('D').classList.add('warning-yellow');
+                    alerts.push(`🟡 【${label}】已領未投 (${D}) 異常過高，請確認。`);
+                }
+                if (G !== 0 && checkValue > 0 && G !== checkValue) {
+                    const diff = Math.abs(G - checkValue);
+                    if (diff >= 98 && (diff % 100 <= 2 || diff % 100 >= 98)) {
+                        el('G').classList.add('warning-yellow');
+                        alerts.push(`🟡 【${label}】選舉人數 G (${G}) 與檢查值 (${checkValue}) 誤差約為 ${Math.round(diff / 100) * 100} 票，疑似漏算！`);
+                    }
+                }
+            });
+
+            if (alerts.length > 0) {
+                alertBox.innerHTML = alerts.map(msg => `<div>${msg}</div>`).join('');
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            if (activeGroupCount > 0 && allActiveGroupsMatched && alerts.length === 0) {
+                successBox.classList.remove('hidden');
+            } else {
+                successBox.classList.add('hidden');
+            }
+        }
+
+        // === 7. 清空目前畫面輸入數值 ===
+        function clearFormValues() {
+            if (!currentStation) return;
+            document.querySelectorAll('#formContainer input[type="number"]:not(:disabled)').forEach(inp => {
+                inp.value = '';
+            });
+            runValidation();
+            showToast('🧹 已清空所有輸入數值');
+
+            const firstInput = document.querySelector('#formContainer input[type="number"]:not(:disabled)');
+            if (firstInput) firstInput.focus();
+        }
+    </script>
+</body>
+</html>

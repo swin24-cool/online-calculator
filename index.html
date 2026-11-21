@@ -1712,29 +1712,67 @@
         const cands = rec.candidates || [];
         const s = rec.stats || {};
 
+        // 安全轉換數字（自動移除千分位逗號，避免破千票數比對異常）
+        const toNum = (v) => {
+            if (v === undefined || v === null) return 0;
+            const cleaned = String(v).replace(/,/g, '').trim();
+            if (cleaned === '') return 0;
+            const n = Number(cleaned);
+            return isNaN(n) ? 0 : n;
+        };
+
         let candChips = '';
+        let candSum = 0;
         cands.forEach((val, idx) => {
             if (val !== undefined && val !== null && String(val).trim() !== '') {
+                candSum += toNum(val);
                 const label = getCandLabel(typeName, idx, baseStationId);
                 candChips += `<span class="inline-block bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono m-0.5"><span class="text-slate-500 font-sans">${label}</span> <strong class="text-slate-900">${val}</strong></span>`;
             }
         });
 
-        const electorsNum = Number(s.electors);
-        const checkNum = Number(s.check);
-        const checkClass = (!isNaN(electorsNum) && !isNaN(checkNum) && checkNum > 0)
-            ? (electorsNum === checkNum ? 'bg-green-100 text-green-900 font-black' : 'bg-red-100 text-red-800 font-black')
-            : 'font-bold';
+        const validNum = toNum(s.valid);
+        const invalidNum = toNum(s.invalid);
+        const totalNum = toNum(s.total);
+        const issuedNotVotedNum = toNum(s.issuedNotVoted);
+        const issuedNum = toNum(s.issued);
+        const remainingNum = toNum(s.remaining);
+        const electorsNum = toNum(s.electors);
+        const checkNum = toNum(s.check);
+
+        const okClass = 'bg-green-100 text-green-900 font-black';
+        const errClass = 'bg-red-100 text-red-800 font-black';
+        const hasNumericRow = (checkNum > 0 || validNum > 0 || totalNum > 0 || issuedNum > 0 || electorsNum > 0 || candSum > 0);
+
+        // 1. 候選人得票數加總 vs 有效票
+        const validClass = hasNumericRow
+            ? (candSum === validNum ? okClass : errClass)
+            : 'font-bold text-blue-800';
+
+        // 2. 有效票 + 無效票 vs 投票數
+        const totalClass = hasNumericRow
+            ? ((validNum + invalidNum === totalNum) ? okClass : errClass)
+            : 'font-bold text-blue-800';
+
+        // 3. 投票數 + 已領未投 vs 發出票數
+        const issuedClass = hasNumericRow
+            ? ((totalNum + issuedNotVotedNum === issuedNum) ? okClass : errClass)
+            : 'font-bold text-blue-800';
+
+        // 4. 發出票數 + 用餘票數 = 選舉人數，且 選舉人數 = 檢查值
+        const checkClass = (checkNum > 0)
+            ? ((issuedNum + remainingNum === electorsNum && electorsNum === checkNum) ? okClass : errClass)
+            : (hasNumericRow ? errClass : 'font-bold');
 
         return `
             <tr class="hover:bg-slate-50">
                 <td class="font-bold text-slate-800 bg-slate-50 whitespace-nowrap">${typeName}</td>
                 <td class="text-left leading-relaxed">${candChips || '<span class="text-slate-400">—</span>'}</td>
-                <td class="font-mono font-bold text-blue-800">${s.valid ?? ''}</td>
+                <td class="font-mono ${validClass}">${s.valid ?? ''}</td>
                 <td class="font-mono">${s.invalid ?? ''}</td>
-                <td class="font-mono font-bold text-blue-800">${s.total ?? ''}</td>
+                <td class="font-mono ${totalClass}">${s.total ?? ''}</td>
                 <td class="font-mono">${s.issuedNotVoted ?? ''}</td>
-                <td class="font-mono font-bold text-blue-800">${s.issued ?? ''}</td>
+                <td class="font-mono ${issuedClass}">${s.issued ?? ''}</td>
                 <td class="font-mono">${s.remaining ?? ''}</td>
                 <td class="font-mono font-bold text-blue-800">${s.electors ?? ''}</td>
                 <td class="font-mono ${checkClass}">${s.check ?? ''}</td>

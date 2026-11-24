@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
     <title>115年選舉_萬華區計票中心</title>
 
     <!-- 💡 PWA 設定 -->
@@ -16,9 +16,23 @@
         html, body {
             overscroll-behavior-y: none !important;
             overscroll-behavior-x: none !important;
+            width: 100%;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
             background-color: #eef2f7;
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
             -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* 頂部安全區域留白（支援全螢幕瀏海／動態島手機） */
+        .safe-top-header {
+            padding-top: max(1.1rem, env(safe-area-inset-top));
+        }
+        .safe-bottom-footer {
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
         }
 
         /* 呼吸綠燈動畫 */
@@ -120,60 +134,60 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-4 px-3">
+<body class="min-h-[100dvh] w-full flex flex-col items-center lg:justify-center lg:py-6 lg:px-4">
 
-    <!-- 主手機版容器 -->
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
+    <!-- 主容器：手機與平板 (<1024px) 100% 滿版撐滿螢幕；電腦大螢幕 (>=1024px) 自動置中呈現卡片感 -->
+    <div class="w-full min-h-[100dvh] lg:min-h-0 lg:max-w-xl bg-white lg:rounded-2xl lg:shadow-xl lg:border lg:border-slate-200 overflow-hidden flex flex-col">
 
         <!-- 1. 頂部標題與動態台灣時間 -->
-        <header class="bg-gradient-to-r from-slate-800 to-blue-900 text-white px-5 py-4 text-center relative">
-            <h1 class="text-xl sm:text-2xl font-black tracking-wide">
+        <header class="safe-top-header bg-gradient-to-r from-slate-800 to-blue-900 text-white px-5 pb-4 text-center relative shrink-0">
+            <h1 class="text-2xl sm:text-3xl font-black tracking-wide leading-snug">
                 115年選舉_萬華區計票中心
             </h1>
-            <div class="mt-2 flex items-center justify-center gap-2 text-blue-100 font-mono text-base sm:text-lg font-bold">
+            <div class="mt-2 flex items-center justify-center gap-2.5 text-blue-100 font-mono text-lg sm:text-xl font-bold">
                 <span id="live-date">----/--/--</span>
                 <span id="live-clock" class="text-yellow-300 tracking-wider">--:--:--</span>
             </div>
             <button type="button" onclick="fetchPortalConfig(true)" id="btn-refresh"
-                class="mt-2.5 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 text-xs font-bold text-white border border-white/25 transition">
+                class="mt-3 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 text-sm font-bold text-white border border-white/30 transition">
                 🔄 同步最新時段設定
             </button>
         </header>
 
-        <!-- 主內容區 -->
-        <main class="p-4 flex flex-col gap-4">
+        <!-- 主內容區（flex-1 撐滿中間剩餘空間，讓整支手機螢幕配置均衡不留大空白） -->
+        <main class="flex-1 p-4 sm:p-5 flex flex-col gap-4">
 
             <!-- 2. 核心大按鈕（自動偵測當下開放中的回報項目） -->
-            <section id="hero-action-section">
-                <div class="w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-5 text-center text-slate-500 font-bold">
+            <section id="hero-action-section" class="shrink-0">
+                <div class="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-5 text-center text-slate-500 font-bold text-base">
                     ⏳ 正在同步雲端時段設定...
                 </div>
             </section>
 
             <!-- 3. 5 大定時回報時段清單（場佈 + 4 次投票率） -->
-            <section class="bg-slate-50 rounded-xl border border-slate-200 p-3.5">
-                <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-slate-200">
-                    <h2 class="text-sm font-black text-slate-700 flex items-center gap-1.5">
+            <section class="flex-1 bg-slate-50 rounded-2xl border border-slate-200 p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-200">
+                    <h2 class="text-base font-black text-slate-700 flex items-center gap-1.5">
                         📋 回報時段狀態總覽
                     </h2>
-                    <span id="open-count-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                    <span id="open-count-badge" class="text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-slate-200 text-slate-600">
                         讀取中
                     </span>
                 </div>
-                <div id="schedule-list" class="flex flex-col gap-2">
+                <div id="schedule-list" class="flex-1 flex flex-col justify-between gap-2.5">
                     <!-- 動態渲染 5 項時段 -->
                 </div>
             </section>
 
             <!-- 4. 底部 3 大功能文字圖示卡片（計算機 / 騎機車 / 圓形百分比） -->
-            <section class="pt-1">
-                <div class="grid grid-cols-3 gap-2.5">
+            <section class="pt-1 shrink-0 mt-auto">
+                <div class="grid grid-cols-3 gap-3">
 
                     <!-- 左：報告表試算 (站內進入 calculator.html) -->
                     <a href="./calculator.html"
-                       class="tool-card flex flex-col items-center justify-between rounded-xl bg-sky-100 hover:bg-sky-200 border-2 border-sky-300 p-2.5 shadow-sm text-center">
-                        <span class="text-sm font-black text-slate-800 leading-tight mb-1.5">報告表試算</span>
-                        <div class="w-16 h-16 flex items-center justify-center">
+                       class="tool-card flex flex-col items-center justify-between rounded-2xl bg-sky-100 hover:bg-sky-200 border-2 border-sky-300 p-3 sm:p-3.5 shadow-sm text-center">
+                        <span class="text-[15px] sm:text-base font-black text-slate-800 leading-tight mb-1.5">報告表試算</span>
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
                             <!-- 計算機＋表格 SVG 圖示 -->
                             <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="6" y="34" width="68" height="36" rx="4" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
@@ -195,14 +209,14 @@
                                 </g>
                             </svg>
                         </div>
-                        <span class="mt-1 text-[11px] font-bold text-sky-800 bg-white/70 px-2 py-0.5 rounded-full">開啟試算</span>
+                        <span class="mt-1.5 text-xs font-bold text-sky-800 bg-white/80 px-2.5 py-0.5 rounded-full">開啟試算</span>
                     </a>
 
                     <!-- 中：速報員出發 (依時段開啟黃底彈窗) -->
                     <button type="button" id="btn-courier-card" onclick="handleCourierClick()"
-                       class="tool-card flex flex-col items-center justify-between rounded-xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 p-2.5 shadow-sm text-center relative">
-                        <span class="text-sm font-black text-slate-800 leading-tight mb-1.5">速報員出發</span>
-                        <div class="w-16 h-16 flex items-center justify-center">
+                       class="tool-card flex flex-col items-center justify-between rounded-2xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 p-3 sm:p-3.5 shadow-sm text-center relative">
+                        <span class="text-[15px] sm:text-base font-black text-slate-800 leading-tight mb-1.5">速報員出發</span>
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
                             <!-- 騎機車人物 SVG 圖示 -->
                             <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <!-- 速度風線 -->
@@ -222,15 +236,15 @@
                                 <circle cx="60" cy="60" r="3" fill="#e2e8f0"/>
                             </svg>
                         </div>
-                        <span id="courier-status-pill" class="mt-1 text-[11px] font-bold text-amber-900 bg-white/75 px-2 py-0.5 rounded-full">讀取中</span>
+                        <span id="courier-status-pill" class="mt-1.5 text-xs font-bold text-amber-900 bg-white/80 px-2.5 py-0.5 rounded-full">讀取中</span>
                     </button>
 
                     <!-- 右：一二聯進度 (外部開啟 1.2聯一覽表) -->
                     <a href="https://docs.google.com/spreadsheets/d/1zt8-UXYpZaMbd8YLBYhM_d0ZABDOn2VVPAETTnVtaVA/edit?pli=1&gid=1093824658#gid=1093824658"
                        target="_blank" rel="noopener noreferrer"
-                       class="tool-card flex flex-col items-center justify-between rounded-xl bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 p-2.5 shadow-sm text-center">
-                        <span class="text-sm font-black text-slate-800 leading-tight mb-1.5">一二聯進度</span>
-                        <div class="w-16 h-16 flex items-center justify-center">
+                       class="tool-card flex flex-col items-center justify-between rounded-2xl bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 p-3 sm:p-3.5 shadow-sm text-center">
+                        <span class="text-[15px] sm:text-base font-black text-slate-800 leading-tight mb-1.5">一二聯進度</span>
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
                             <!-- 圓形百分比儀表 SVG 圖示 -->
                             <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <!-- 外圓環 -->
@@ -245,7 +259,7 @@
                                 <path d="M59 60 L61.2 62.2 L65.5 57.8" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <span class="mt-1 text-[11px] font-bold text-emerald-800 bg-white/75 px-2 py-0.5 rounded-full">外部檢視 ↗</span>
+                        <span class="mt-1.5 text-xs font-bold text-emerald-800 bg-white/80 px-2.5 py-0.5 rounded-full">外部檢視 ↗</span>
                     </a>
 
                 </div>
@@ -253,7 +267,7 @@
 
         </main>
 
-        <footer class="bg-slate-100 border-t border-slate-200 px-4 py-2.5 text-center text-[11px] text-slate-500 font-bold">
+        <footer class="safe-bottom-footer bg-slate-100 border-t border-slate-200 px-4 pt-2.5 text-center text-xs text-slate-500 font-bold shrink-0">
             萬華區選務中心行動入口 PWA｜請於開放時段內完成各項回報
         </footer>
     </div>
@@ -440,18 +454,18 @@
 
                 container.innerHTML = `
                     <button type="button" onclick="openReportModal('${active.key}')"
-                        class="w-full text-left rounded-2xl border-3 border-emerald-500 bg-gradient-to-br from-emerald-50 via-white to-green-50 p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition cursor-pointer">
+                        class="w-full text-left rounded-2xl border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 via-white to-green-50 p-4 sm:p-5 shadow-md hover:shadow-lg active:scale-[0.98] transition cursor-pointer">
                         <div class="flex items-center gap-2.5 mb-2">
                             <span class="live-dot"></span>
-                            <span class="text-sm font-black text-emerald-700 tracking-wide">目前開放回報中</span>
-                            <span class="ml-auto text-xs font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                            <span class="text-base font-black text-emerald-700 tracking-wide">目前開放回報中</span>
+                            <span class="ml-auto text-xs sm:text-sm font-mono font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
                                 截止 ${shortWindowText(active.endTimeStr)}
                             </span>
                         </div>
-                        <div class="text-lg sm:text-xl font-black text-slate-900 pl-1">
+                        <div class="text-xl sm:text-2xl font-black text-slate-900 pl-1">
                             ${prefixTag}${active.label}
                         </div>
-                        <div class="mt-3 w-full py-2.5 rounded-xl bg-emerald-600 text-white font-black text-center text-base shadow-sm flex items-center justify-center gap-2">
+                        <div class="mt-3.5 w-full py-3 rounded-xl bg-emerald-600 text-white font-black text-center text-lg shadow-sm flex items-center justify-center gap-2">
                             <span>👉</span>
                             <span>點此開始填報</span>
                         </div>
@@ -468,31 +482,98 @@
             if (upcomingItems.length > 0) {
                 const next = upcomingItems[0];
                 container.innerHTML = `
-                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 text-center">
-                        <div class="flex items-center justify-center gap-2 text-slate-600 font-black text-base">
+                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 sm:p-5 text-center">
+                        <div class="flex items-center justify-center gap-2 text-slate-700 font-black text-lg">
                             <span>🔒</span>
                             <span>目前非定時回報開放時段</span>
                         </div>
-                        <div class="mt-2 text-sm font-bold text-slate-700">
+                        <div class="mt-2 text-base font-bold text-slate-700">
                             下一階段：<span class="text-blue-700">${next.label}</span>
                         </div>
-                        <div class="mt-1 inline-block text-xs font-mono font-bold text-slate-600 bg-white border border-slate-300 px-3 py-1 rounded-full">
+                        <div class="mt-2 inline-block text-sm font-mono font-bold text-slate-600 bg-white border border-slate-300 px-3.5 py-1 rounded-full">
                             將於 ${shortWindowText(next.startTimeStr)} 開放填報
                         </div>
                     </div>
                 `;
             } else {
                 container.innerHTML = `
-                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 text-center">
-                        <div class="flex items-center justify-center gap-2 text-slate-600 font-black text-base">
+                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 sm:p-5 text-center">
+                        <div class="flex items-center justify-center gap-2 text-slate-700 font-black text-lg">
                             <span>⏹️</span>
                             <span>定時回報時段已全數結束</span>
                         </div>
-                        <div class="mt-1 text-xs font-bold text-slate-500">
+                        <div class="mt-1.5 text-sm font-bold text-slate-500">
                             請使用下方「報告表試算」或「速報員出發」功能
                         </div>
                     </div>
                 `;
+            }
+        }
+
+        function renderScheduleList(nowMs) {
+            const listEl = document.getElementById('schedule-list');
+            const badgeEl = document.getElementById('open-count-badge');
+            const mainItems = MAIN_LIST_KEYS.map(k => findScheduleByKey(k)).filter(Boolean);
+
+            let openCount = 0;
+            let html = '';
+
+            mainItems.forEach(item => {
+                const state = getItemState(item, nowMs);
+                if (state === 'open') openCount++;
+
+                if (state === 'open') {
+                    html += `
+                        <button type="button" onclick="openReportModal('${item.key}')"
+                            class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-400 text-left transition active:scale-[0.98]">
+                            <span class="live-dot"></span>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-black text-slate-900 text-base truncate">${item.label}</div>
+                                <div class="text-xs font-mono font-bold text-emerald-700 mt-0.5">
+                                    開放中（${shortWindowText(item.startTimeStr)} ～ ${shortWindowText(item.endTimeStr)}）
+                                </div>
+                            </div>
+                            <span class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-black whitespace-nowrap">填報 ▸</span>
+                        </button>
+                    `;
+                } else if (state === 'upcoming') {
+                    html += `
+                        <button type="button" onclick="showToast('🔒【${item.label}】尚未開放，將於 ${shortWindowText(item.startTimeStr)} 開放填報！')"
+                            class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white border border-slate-200 text-left opacity-85 hover:opacity-100 transition">
+                            <span class="text-xl leading-none">🔒</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-slate-800 text-base truncate">${item.label}</div>
+                                <div class="text-xs font-mono text-slate-500 mt-0.5">
+                                    ${shortWindowText(item.startTimeStr)} 開放
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-500 text-xs font-bold whitespace-nowrap">未開放</span>
+                        </button>
+                    `;
+                } else {
+                    html += `
+                        <button type="button" onclick="showToast('⏹️【${item.label}】已於 ${shortWindowText(item.endTimeStr)} 截止填報！')"
+                            class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-slate-100 border border-slate-200 text-left opacity-65">
+                            <span class="text-lg leading-none">⏹️</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-slate-500 text-base line-through truncate">${item.label}</div>
+                                <div class="text-xs font-mono text-slate-400 mt-0.5">
+                                    已於 ${shortWindowText(item.endTimeStr)} 截止
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-md bg-slate-200 text-slate-500 text-xs font-bold whitespace-nowrap">已截止</span>
+                        </button>
+                    `;
+                }
+            });
+
+            listEl.innerHTML = html;
+            if (openCount > 0) {
+                badgeEl.textContent = `${openCount} 項開放中`;
+                badgeEl.className = 'text-xs sm:text-sm font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+            } else {
+                badgeEl.textContent = '目前皆未開放';
+                badgeEl.className = 'text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-slate-200 text-slate-600';
             }
         }
 

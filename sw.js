@@ -1,5 +1,4 @@
-const CACHE_NAME = 'election-portal-v3.1';
-// 💡 未來如果有大更新，把這裡改成 v3.0, v4.0 就能強迫所有手機更新
+const CACHE_NAME = 'election-portal-v3.2';
 const urlsToCache = [
   './',
   './index.html',

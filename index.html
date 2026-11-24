@@ -2,2151 +2,792 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>115年地方公職暨公投選舉 - 投開票所報告表</title>
-    
-    <!-- 💡 PWA 相關設定 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <title>115年選舉_萬華區計票中心</title>
+
+    <!-- 💡 PWA 設定 -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#1e3a8a">
     <link rel="apple-touch-icon" href="./PWA_icon(192x192).png">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <style>
-        /* 💡 終極防護第一層：擴大禁用範圍並加上最高權限 !important */
         html, body {
             overscroll-behavior-y: none !important;
             overscroll-behavior-x: none !important;
-        }
-        body {
+            background-color: #eef2f7;
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
-            background-color: #f3f4f6;
-            padding: 10px;
-            padding-bottom: 120px;
-            transition: background-color 0.3s;
+            -webkit-tap-highlight-color: transparent;
         }
-        .report-container {
-            background-color: white;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 1800px;
-            margin: 0 auto;
-            overflow-x: auto;
-            transition: all 0.3s;
-        }
-        
-        .station-input-area {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
-            min-width: 1400px; 
-        }
-        .station-input {
-            border: 2px solid #94a3b8; border-radius: 4px; padding: 4px 8px; font-size: 16px; width: 100px;
-        }
-        .warning-text {
-            background-color: #fef08a; color: #dc2626; font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 14px;
-        }
-        
-        .table-wrapper { min-width: 1400px; max-height: 70vh; overflow: auto; }
-        
-        /* 唯讀鎖定模式設計 */
-        .table-wrapper.locked input, .table-wrapper.locked button.modal-trigger-btn { pointer-events: none; background-color: #f3f4f6 !important; color: #9ca3af !important; border-color: #cbd5e1 !important; box-shadow: none !important; }
-        .table-wrapper.locked .check-val { background-color: #f3f4f6 !important; color: #9ca3af !important; }
 
-        /* 原住民無選票時的徹底鎖定設計 */
-        .locked-empty { background-color: #e2e8f0 !important; pointer-events: none !important; color: transparent !important; border-color: transparent !important; }
-        button.modal-trigger-btn.locked-empty { pointer-events: none !important; background-color: #e2e8f0 !important; color: #9ca3af !important; border-color: transparent !important; box-shadow: none !important; }
-
-        thead th { position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; text-align: center; }
-        th, td { border: 1px solid #333; padding: 4px; font-size: 14px; }
-        th { background-color: #f9fafb; font-weight: bold; }
-        
-        /* ==== 候選人欄位排版優化 ==== */
-        .candidate-cell { min-width: 70px; height: 38px; vertical-align: middle; text-align: center; white-space: nowrap; }
-        .cand-number { display: inline-block; font-size: 13px; font-weight: normal; color: #6b7280; margin-right: 4px; vertical-align: middle; }
-        .cand-name { display: inline-block; font-size: 16px; font-weight: 700; line-height: 1; vertical-align: middle; }
-        
-        /* ==== 填寫欄位視覺升級 ==== */
-        input[type="text"][inputmode="numeric"], input[type="text"][inputmode="none"] {
-            width: 100%; height: 100%; min-height: 36px; box-sizing: border-box; text-align: right;
-            border: 1px solid #94a3b8;
-            background-color: #ffffff;
-            border-radius: 6px;
-            font-size: 18px; font-weight: bold;
-            font-family: monospace; padding-right: 6px; transition: all 0.2s; cursor: pointer;
+        /* 呼吸綠燈動畫 */
+        @keyframes livePulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.65); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
-        input[type="text"][inputmode="numeric"]:focus, input.focused-cell, input[type="text"][inputmode="none"]:focus {
-            outline: none; border: 2px solid #ef4444 !important; background-color: #fef2f2 !important;
+        .live-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            background-color: #22c55e;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 0 2px #16a34a;
+            animation: livePulse 1.8s infinite;
+            flex-shrink: 0;
         }
-        
-        .stats-input { color: #1e3a8a; font-size: 20px; cursor: not-allowed; pointer-events: none !important; }
-        input.stats-input[readonly] { background-color: transparent !important; border: 1px solid transparent !important; }
-        input.stats-input[readonly]:focus { outline: none !important; border: 1px solid transparent !important; background-color: transparent !important; }
 
-        input.stats-input[readonly].match-true, input.check-val.match-true, input.modal-input.match-true { background-color: rgb(37, 249, 44) !important; color: #000000 !important; }
-        input.stats-input[readonly].match-false, input.check-val.match-false, input.modal-input.match-false { background-color: rgb(247, 123, 138) !important; color: #000000 !important; }
-        
-        input.warn-bg, input.stats-input[readonly].warn-bg { background-color: #fef08a !important; color: #b91c1c !important; transition: background-color 0.3s; }
-
-        .empty-cell { background-color: #fdfdfd; }
-        
-        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; min-width: 1400px; }
-        .action-btn { padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
-        .action-btn:active { transform: scale(0.95); }
-        .btn-blue { background-color: #bfdbfe; color: #1e3a8a; }
-        .btn-green { background-color: #bbf7d0; color: #166534; }
-
-        /* === 放大視窗 (Focus Modal) === */
-        .focus-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: none; align-items: flex-start; justify-content: flex-start; backdrop-filter: blur(3px); padding-top: 5vh; padding-bottom: 20vh; overflow: auto; touch-action: pan-x pan-y pinch-zoom; }
-        .focus-modal-content { background: white; width: 96vw; max-width: 900px; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 4px solid #3b82f6; display: flex; flex-direction: column; margin: auto; touch-action: pan-x pan-y pinch-zoom; }
-        .focus-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #eff6ff; border-bottom: 2px solid #bfdbfe; border-radius: 8px 8px 0 0; }
-        .focus-modal-title { font-size: 24px; font-weight: 900; color: #1e3a8a; display: flex; align-items: center; gap: 10px; }
-        .focus-modal-close { font-size: 32px; font-weight: bold; color: #64748b; cursor: pointer; line-height: 1; padding: 0 10px; border-radius: 8px; transition: background 0.2s; }
-        .focus-modal-close:active { background: #e2e8f0; color: #ef4444; }
-        .focus-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-
-        @media (orientation: landscape) and (max-height: 500px) {
-            .focus-modal-overlay { padding-top: 10px; padding-bottom: 12vh; }
-            .focus-modal-content { width: max(96vw, 750px) !important; max-width: none !important; }
-            .focus-modal-header { padding: 8px 15px; }
-            .focus-modal-title { font-size: 20px; }
-            .focus-modal-body { padding: 12px; gap: 12px; }
-            .focus-cand-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important; gap: 10px !important; }
-            .focus-input { padding: 6px 0 !important; font-size: 28px !important; }
-            .focus-box-title { font-size: 14px !important; padding: 6px 4px !important; }
+        /* 黃底動態填報彈窗樣式（還原設計稿） */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
         }
-        
-        .focus-cand-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
-        .focus-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; border-top: 3px dashed #cbd5e1; padding-top: 20px; }
-        @media (min-width: 768px) { .focus-stat-grid { grid-template-columns: repeat(6, 1fr); } }
-        
-        .focus-box { border: 2px solid #94a3b8; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; transition: background-color 0.2s, border-color 0.2s; }
-        .focus-box-title { background: #e2e8f0; text-align: center; padding: 10px 4px; font-size: 18px; font-weight: bold; border-bottom: 2px solid #94a3b8; color: #1e293b; }
-        .focus-input { width: 100%; text-align: center; font-size: 36px; font-weight: 900; padding: 12px 0; border: none; background: transparent; color: #0f172a; outline: none; font-family: monospace; cursor: pointer; }
-        .focus-input:focus, .focus-input.focused-cell { background: #fef2f2 !important; color: #dc2626 !important; outline: 3px solid #ef4444; outline-offset: -3px; }
-        .focus-box.readonly { background: #f1f5f9; border-color: #cbd5e1; }
-        .focus-box.readonly .focus-box-title { background: #f1f5f9; color: #64748b; border-bottom-color: #cbd5e1; }
-        .focus-box.readonly .focus-input { color: #1e3a8a; cursor: not-allowed; }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .yellow-report-card {
+            background: #fef08a;
+            border: 3px solid #eab308;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            position: relative;
+            animation: popIn 0.18s ease-out;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
 
-        /* === 本票所雲端回傳結果查詢彈窗 === */
-        .result-modal-overlay {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78);
-            z-index: 10001; display: none; justify-content: center; align-items: center;
-            padding: 12px; backdrop-filter: blur(4px);
+        .report-input {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 20px;
+            font-weight: 800;
+            text-align: center;
+            color: #0f172a;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .result-modal-box {
-            background: #f8fafc; width: 100%; max-width: 1120px; max-height: 92vh;
-            border-radius: 14px; border: 3px solid #9333ea; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.45);
-            display: flex; flex-direction: column; overflow: hidden;
+        .report-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
         }
-        .result-table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
-        .result-table th, .result-table td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: center; }
-        .result-table th { background: #f1f5f9; color: #334155; font-weight: 700; white-space: nowrap; }
 
-        /* === 虛擬鍵盤佈局 === */
-        .control-panel {
-            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: clamp(320px, 33vw, 450px); 
-            z-index: 9999; display: flex; flex-direction: column; align-items: center; touch-action: none;
-            filter: drop-shadow(0 8px 25px rgba(0,0,0,0.3));
+        /* 底部三張圖示卡片互動感 */
+        .tool-card {
+            transition: transform 0.12s ease, box-shadow 0.15s ease;
         }
-        .drag-handle-tab {
-            width: 120px; height: 30px; background-color: #7dd3fc; border: 2px solid #38bdf8; border-bottom: none;
-            border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: center; cursor: grab;
+        .tool-card:active {
+            transform: scale(0.96);
         }
-        .drag-handle-tab:active { cursor: grabbing; }
-        .drag-indicator { width: 40px; height: 6px; background-color: #0284c7; border-radius: 3px; opacity: 0.6; pointer-events: none; }
-        .keyboard-body {
-            width: 100%; background-color: #7dd3fc; padding: 12px; border-radius: 12px; border: 2px solid #38bdf8;
-            border-top-left-radius: 4px; border-top-right-radius: 4px; display: flex; flex-direction: column; gap: 12px;
-        }
-        
-        .cp-header { display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%; }
-        .vk-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-        .vk-row { display: flex; gap: 6px; width: 100%; }
-        
-        .vk-btn, .vk-action-btn { 
-            flex: 1; background-color: #fef08a; color: #dc2626; font-weight: 900; font-size: 20px; 
-            border: 2px solid #ca8a04; border-radius: 8px; height: 42px; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; user-select: none; 
-            box-shadow: 0 4px 0 #a16207; -webkit-tap-highlight-color: transparent; transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .vk-action-btn { font-size: 18px; }
-        .vk-btn:active, .vk-action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #a16207; }
-        .large-btn { height: 60px !important; font-size: 26px !important; }
-        .large-action-btn { font-size: 22px !important; }
-        .keyboard-body.large-mode { flex-direction: column-reverse !important; padding-top: 8px; }
 
-        .mode-toggle { display: flex; align-items: center; gap: 8px; background-color: white; border: 2px solid black; padding: 4px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #333; transition: background-color 0.2s; user-select: none; }
-        .mode-toggle.active { background-color: #bbf7d0; }
-        .voice-btn-small { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background-color: #ef4444; border: 2px solid black; border-radius: 50%; font-size: 20px; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
-        .voice-btn-small:active { transform: translateY(2px); }
-        .voice-btn-small.recording { background-color: #22c55e; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
-
-        .toast-msg { position: fixed; bottom: 120px; right: 30px; background-color: rgba(30, 41, 59, 0.95); color: white; padding: 12px 20px; border-radius: 8px; font-size: 16px; opacity: 0; transition: opacity 0.3s; z-index: 10002; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .toast-msg.show { opacity: 1; }
-        
-        .remove-file-btn { color: red; font-weight: bold; cursor: pointer; padding: 0 4px; border-radius: 50%; display: none; }
-        .remove-file-btn:hover { background-color: #fee2e2; }
+        /* Toast 提示 */
+        .toast-msg {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(15, 23, 42, 0.95);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 700;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 10005;
+            max-width: 90vw;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+        .toast-msg.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center py-4 px-3">
 
-<div class="report-container" id="main-container">
-    
-    <div class="station-input-area flex-wrap items-center">
-        <label class="font-bold whitespace-nowrap">投開票所編號:</label>
-        <input type="number" id="station-id-input" class="station-input" min="1282" max="1419" placeholder="例如: 1329">
-        <button id="btn-load-station" class="px-4 py-1 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 active:scale-95 transition">輸入</button>
-        <span class="warning-text">輸入票所編號(1282-1419)後才可試算！</span>
-        <span id="autosave-status" class="hidden text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 whitespace-nowrap"></span>
-        
-        <div class="w-full sm:w-auto sm:ml-auto text-right font-bold text-gray-800 text-[16px] tracking-wide mt-2 sm:mt-0 whitespace-nowrap">
-            115年地方公職暨公投選舉(萬華區)&nbsp;&nbsp;&nbsp;&nbsp;<span id="display-date">115.11.28</span>
-        </div>
-    </div>
+    <!-- 主手機版容器 -->
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
 
-    <!-- 表格區塊 -->
-    <div class="table-wrapper locked" id="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th colspan="2" class="w-16">開票結果<br>選舉種類</th>
-                    <th colspan="10">各 候 選 人 得 票 數</th>
-                    <th class="w-20 text-blue-800">有效票數</th>
-                    <th class="w-20">無效票數</th>
-                    <th class="w-20 text-blue-800">投票數</th>
-                    <th class="w-20">已領<br>未投</th>
-                    <th class="w-20 text-blue-800">發出票數</th>
-                    <th class="w-20">用餘票數</th>
-                    <th class="w-20 text-blue-800">選舉人數</th>
-                    <th class="w-20 text-green-700">檢查值</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 直轄市長 -->
-                <tr>
-                    <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" id="btn-modal-mayor" onclick="openFocusModal('mayor')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            直轄市長
-                        </button>
-                    </td>
-                    <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">郭璽</div></td>
-                    <td class="candidate-cell"><div class="cand-number">2</div><div class="cand-name">林志成</div></td>
-                    <td class="candidate-cell"><div class="cand-number">3</div><div class="cand-name">沈伯洋</div></td>
-                    <td class="candidate-cell"><div class="cand-number">4</div><div class="cand-name">蕭文乾</div></td>
-                    <td class="candidate-cell"><div class="cand-number">5</div><div class="cand-name">蔣萬安</div></td>
-                    <td class="candidate-cell"><div class="cand-number">6</div><div class="cand-name">唐新民</div></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                    
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_valid" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_invalid" class="mayor-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_total" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_issued_not_voted" class="mayor-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_issued" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_remaining" class="mayor-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mayor_check" class="stats-input font-bold check-val" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="mayor-input mayor-cand data-cell"></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                </tr>
-
-                <!-- 區域議員 -->
-                <tr>
-                    <td colspan="2" rowspan="4" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" id="btn-modal-councilor" onclick="openFocusModal('councilor')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            區域議員
-                        </button>
-                    </td>
-                    <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">張延廷</div></td>
-                    <td class="candidate-cell"><div class="cand-number">2</div><div class="cand-name">吳志剛</div></td>
-                    <td class="candidate-cell"><div class="cand-number">3</div><div class="cand-name">陳力新</div></td>
-                    <td class="candidate-cell"><div class="cand-number">4</div><div class="cand-name">吳怡萱</div></td>
-                    <td class="candidate-cell"><div class="cand-number">5</div><div class="cand-name">徐立信</div></td>
-                    <td class="candidate-cell"><div class="cand-number">6</div><div class="cand-name">馬郁雯</div></td>
-                    <td class="candidate-cell"><div class="cand-number">7</div><div class="cand-name">鍾小平</div></td>
-                    <td class="candidate-cell"><div class="cand-number">8</div><div class="cand-name">郭昭巖</div></td>
-                    <td class="candidate-cell"><div class="cand-number">9</div><div class="cand-name">譚傳紹</div></td>
-                    <td class="candidate-cell"><div class="cand-number">10</div><div class="cand-name">張銘祐</div></td>
-                    
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_valid" class="stats-input" readonly></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_invalid" class="councilor-input editable-stat"></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_total" class="stats-input" readonly></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_issued_not_voted" class="councilor-input editable-stat"></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_issued" class="stats-input" readonly></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_remaining" class="councilor-input editable-stat"></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_electors" class="stats-input" readonly></td>
-                    <td rowspan="4"><input type="text" inputmode="numeric" id="councilor_check" class="stats-input font-bold check-val" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                </tr>
-                <tr>
-                    <td class="candidate-cell"><div class="cand-number">11</div><div class="cand-name">王振庭</div></td>
-                    <td class="candidate-cell"><div class="cand-number">12</div><div class="cand-name">洪婉臻</div></td>
-                    <td class="candidate-cell"><div class="cand-number">13</div><div class="cand-name">劉耀仁</div></td>
-                    <td class="candidate-cell"><div class="cand-number">14</div><div class="cand-name">應佳妤</div></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                </tr>
-                <tr>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="councilor-input councilor-cand data-cell"></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                </tr>
-
-                <!-- 平地原住民 -->
-                <tr>
-                    <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" id="btn-modal-flatland" onclick="openFocusModal('flatland')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-1 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[14px] whitespace-nowrap">
-                            平地原住民
-                        </button>
-                    </td>
-                    <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">李芳儒</div></td>
-                    <td class="candidate-cell"><div class="cand-number">2</div><div class="cand-name">林筱薇</div></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                    
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_valid" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_invalid" class="flatland-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_total" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_issued_not_voted" class="flatland-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_issued" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_remaining" class="flatland-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="flatland_check" class="stats-input font-bold check-val" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="text" inputmode="numeric" class="flatland-input flatland-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="flatland-input flatland-cand data-cell"></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                </tr>
-
-                <!-- 山地原住民 -->
-                <tr>
-                    <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" id="btn-modal-mountain" onclick="openFocusModal('mountain')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-1 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[14px] whitespace-nowrap">
-                            山地原住民
-                        </button>
-                    </td>
-                    <td class="candidate-cell"><div class="cand-number">1</div><div class="cand-name">林家豪</div></td>
-                    <td class="candidate-cell"><div class="cand-number">2</div><div class="cand-name">李傅鈺婷</div></td>
-                    <td class="candidate-cell"><div class="cand-number">3</div><div class="cand-name">孔垂崢</div></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                    
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_valid" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_invalid" class="mountain-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_total" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_issued_not_voted" class="mountain-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_issued" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_remaining" class="mountain-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="mountain_check" class="stats-input font-bold check-val" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="text" inputmode="numeric" class="mountain-input mountain-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="mountain-input mountain-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="mountain-input mountain-cand data-cell"></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                </tr>
-
-                <!-- 里長 -->
-                <tr id="village-row-header">
-                    <td colspan="2" rowspan="2" class="row-header" style="vertical-align: middle; padding: 4px;">
-                        <button type="button" id="btn-modal-village" onclick="openFocusModal('village')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            里長
-                        </button>
-                    </td>
-                    <td class="candidate-cell village-name-cell"><div class="cand-number">1</div><div class="cand-name text-gray-400">AAA</div></td>
-                    <td class="candidate-cell village-name-cell"><div class="cand-number">2</div><div class="cand-name text-gray-400">BBB</div></td>
-                    <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
-                    
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_valid" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_invalid" class="village-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_total" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_issued_not_voted" class="village-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_issued" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_remaining" class="village-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="village_check" class="stats-input font-bold check-val" readonly></td>
-                </tr>
-                <tr id="village-row-inputs">
-                     <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
-                     <td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell"></td>
-                     <td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td><td class="empty-cell village-empty-cell"></td>
-                </tr>
-
-                <!-- 公投 -->
-                <tr>
-                    <td colspan="2" rowspan="2" class="row-header" style="font-size: 20px; vertical-align: middle; padding: 4px;">
-                        <button type="button" id="btn-modal-referendum" onclick="openFocusModal('referendum')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg px-2 py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold text-[16px] whitespace-nowrap">
-                            公投
-                        </button>
-                    </td>
-                    <td class="candidate-cell"><div class="cand-name text-lg">同意</div></td>
-                    <td class="candidate-cell"><div class="cand-name text-lg">不同意</div></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                    
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_valid" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_invalid" class="referendum-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_total" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_issued_not_voted" class="referendum-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_issued" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_remaining" class="referendum-input editable-stat"></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_electors" class="stats-input" readonly></td>
-                    <td rowspan="2"><input type="text" inputmode="numeric" id="referendum_check" class="stats-input font-bold check-val" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="text" inputmode="numeric" class="referendum-input referendum-cand data-cell"></td>
-                    <td><input type="text" inputmode="numeric" class="referendum-input referendum-cand data-cell"></td>
-                    <td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td><td class="empty-cell"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- 按鈕區 -->
-    <div class="action-buttons-container">
-        <!-- 左側 -->
-        <div style="display: flex; gap: 10px;">
-            <button id="btn-clear-all" class="action-btn" style="background-color: #fca5a5;">清除全部</button>
-            <button id="btn-toggle-keyboard" class="action-btn" style="background-color: #fef08a; color: #854d0e;" title="點擊循環切換：小鍵盤 → 大鍵盤 → 關閉浮動鍵盤">⌨️ 切換大鍵盤</button>
-        </div>
-        
-        <!-- 右側 -->
-        <div style="display: flex; gap: 30px; align-items: flex-end;">
-            <button id="btn-lock" class="action-btn btn-green" style="height: 40px; margin-bottom: 2px;">鎖住 / 解鎖</button>
-            
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                    <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-gov').click()">載入圖檔(公職)</button>
-                    <span id="file-name-gov" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
-                    <span id="clear-file-gov" class="remove-file-btn" onclick="clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov')">x</span>
-                    <input type="file" id="upload-gov" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'file-name-gov', 'clear-file-gov')">
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                    <button class="action-btn" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px;" onclick="document.getElementById('upload-ref').click()">載入圖檔(公投)</button>
-                    <span id="file-name-ref" style="font-size: 14px; color: #333; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">未選擇檔案</span>
-                    <span id="clear-file-ref" class="remove-file-btn" onclick="clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref')">x</span>
-                    <input type="file" id="upload-ref" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'file-name-ref', 'clear-file-ref')">
-                </div>
+        <!-- 1. 頂部標題與動態台灣時間 -->
+        <header class="bg-gradient-to-r from-slate-800 to-blue-900 text-white px-5 py-4 text-center relative">
+            <h1 class="text-xl sm:text-2xl font-black tracking-wide">
+                115年選舉_萬華區計票中心
+            </h1>
+            <div class="mt-2 flex items-center justify-center gap-2 text-blue-100 font-mono text-base sm:text-lg font-bold">
+                <span id="live-date">----/--/--</span>
+                <span id="live-clock" class="text-yellow-300 tracking-wider">--:--:--</span>
             </div>
+            <button type="button" onclick="fetchPortalConfig(true)" id="btn-refresh"
+                class="mt-2.5 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 text-xs font-bold text-white border border-white/25 transition">
+                🔄 同步最新時段設定
+            </button>
+        </header>
 
-            <button id="btn-submit" class="action-btn btn-blue" style="height: 40px; margin-bottom: 2px;">傳送資料(含A3報表圖)</button>
-            
-            <!-- 查看結果與成功提示 (方案 A：開啟本票所雲端查詢視窗) -->
-            <div class="flex flex-col items-center justify-end gap-1 mb-0.5">
-                <span id="success-text" class="text-red-600 font-black text-xl animate-bounce opacity-0 transition-opacity duration-300 pointer-events-none">傳送成功！</span>
-                <button id="btn-view-result" type="button" onclick="openResultModal()" class="action-btn bg-purple-500 text-white border-purple-600 shadow-md text-lg px-6 py-1 hover:bg-purple-600 transition-colors">查看結果</button>
-            </div>
+        <!-- 主內容區 -->
+        <main class="p-4 flex flex-col gap-4">
+
+            <!-- 2. 核心大按鈕（自動偵測當下開放中的回報項目） -->
+            <section id="hero-action-section">
+                <div class="w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-5 text-center text-slate-500 font-bold">
+                    ⏳ 正在同步雲端時段設定...
+                </div>
+            </section>
+
+            <!-- 3. 5 大定時回報時段清單（場佈 + 4 次投票率） -->
+            <section class="bg-slate-50 rounded-xl border border-slate-200 p-3.5">
+                <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-slate-200">
+                    <h2 class="text-sm font-black text-slate-700 flex items-center gap-1.5">
+                        📋 回報時段狀態總覽
+                    </h2>
+                    <span id="open-count-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                        讀取中
+                    </span>
+                </div>
+                <div id="schedule-list" class="flex flex-col gap-2">
+                    <!-- 動態渲染 5 項時段 -->
+                </div>
+            </section>
+
+            <!-- 4. 底部 3 大功能文字圖示卡片（計算機 / 騎機車 / 圓形百分比） -->
+            <section class="pt-1">
+                <div class="grid grid-cols-3 gap-2.5">
+
+                    <!-- 左：報告表試算 (站內進入 calculator.html) -->
+                    <a href="./calculator.html"
+                       class="tool-card flex flex-col items-center justify-between rounded-xl bg-sky-100 hover:bg-sky-200 border-2 border-sky-300 p-2.5 shadow-sm text-center">
+                        <span class="text-sm font-black text-slate-800 leading-tight mb-1.5">報告表試算</span>
+                        <div class="w-16 h-16 flex items-center justify-center">
+                            <!-- 計算機＋表格 SVG 圖示 -->
+                            <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="6" y="34" width="68" height="36" rx="4" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+                                <line x1="6" y1="46" x2="74" y2="46" stroke="#cbd5e1" stroke-width="1.5"/>
+                                <line x1="6" y1="58" x2="74" y2="58" stroke="#cbd5e1" stroke-width="1.5"/>
+                                <line x1="24" y1="34" x2="24" y2="70" stroke="#cbd5e1" stroke-width="1.5"/>
+                                <line x1="56" y1="34" x2="56" y2="70" stroke="#cbd5e1" stroke-width="1.5"/>
+                                <g transform="rotate(-14 40 38)">
+                                    <rect x="20" y="10" width="38" height="52" rx="6" fill="#334155" stroke="#0f172a" stroke-width="2.5"/>
+                                    <rect x="25" y="15" width="28" height="12" rx="2.5" fill="#bae6fd"/>
+                                    <circle cx="30" cy="35" r="3.5" fill="#fb923c"/>
+                                    <circle cx="39" cy="35" r="3.5" fill="#ffffff"/>
+                                    <circle cx="48" cy="35" r="3.5" fill="#ffffff"/>
+                                    <circle cx="30" cy="45" r="3.5" fill="#ffffff"/>
+                                    <circle cx="39" cy="45" r="3.5" fill="#ffffff"/>
+                                    <circle cx="48" cy="45" r="3.5" fill="#38bdf8"/>
+                                    <rect x="27" y="52" width="14" height="5" rx="2" fill="#ffffff"/>
+                                    <rect x="44" y="52" width="8" height="5" rx="2" fill="#22c55e"/>
+                                </g>
+                            </svg>
+                        </div>
+                        <span class="mt-1 text-[11px] font-bold text-sky-800 bg-white/70 px-2 py-0.5 rounded-full">開啟試算</span>
+                    </a>
+
+                    <!-- 中：速報員出發 (依時段開啟黃底彈窗) -->
+                    <button type="button" id="btn-courier-card" onclick="handleCourierClick()"
+                       class="tool-card flex flex-col items-center justify-between rounded-xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 p-2.5 shadow-sm text-center relative">
+                        <span class="text-sm font-black text-slate-800 leading-tight mb-1.5">速報員出發</span>
+                        <div class="w-16 h-16 flex items-center justify-center">
+                            <!-- 騎機車人物 SVG 圖示 -->
+                            <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- 速度風線 -->
+                                <line x1="8" y1="28" x2="22" y2="28" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="4" y1="36" x2="18" y2="36" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+                                <!-- 騎士頭盔與身體 -->
+                                <circle cx="44" cy="20" r="8" fill="#3b82f6" stroke="#1e3a8a" stroke-width="2.5"/>
+                                <path d="M47 17 C51 17 52 21 51 23 L45 23 Z" fill="#fef08a"/>
+                                <path d="M41 29 L34 45 L46 47 L49 36 L58 35" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                <!-- 機車車身 -->
+                                <path d="M22 50 C25 43 37 43 44 48 L56 48 L60 33 L54 31" stroke="#0f172a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M24 52 C28 46 39 46 46 53 L58 53 C61 53 64 56 64 59 L22 59 Z" fill="#3b82f6" stroke="#1e3a8a" stroke-width="2"/>
+                                <!-- 前後車輪 -->
+                                <circle cx="26" cy="60" r="8" fill="#334155" stroke="#0f172a" stroke-width="2.5"/>
+                                <circle cx="26" cy="60" r="3" fill="#e2e8f0"/>
+                                <circle cx="60" cy="60" r="8" fill="#334155" stroke="#0f172a" stroke-width="2.5"/>
+                                <circle cx="60" cy="60" r="3" fill="#e2e8f0"/>
+                            </svg>
+                        </div>
+                        <span id="courier-status-pill" class="mt-1 text-[11px] font-bold text-amber-900 bg-white/75 px-2 py-0.5 rounded-full">讀取中</span>
+                    </button>
+
+                    <!-- 右：一二聯進度 (外部開啟 1.2聯一覽表) -->
+                    <a href="https://docs.google.com/spreadsheets/d/1zt8-UXYpZaMbd8YLBYhM_d0ZABDOn2VVPAETTnVtaVA/edit?pli=1&gid=1093824658#gid=1093824658"
+                       target="_blank" rel="noopener noreferrer"
+                       class="tool-card flex flex-col items-center justify-between rounded-xl bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 p-2.5 shadow-sm text-center">
+                        <span class="text-sm font-black text-slate-800 leading-tight mb-1.5">一二聯進度</span>
+                        <div class="w-16 h-16 flex items-center justify-center">
+                            <!-- 圓形百分比儀表 SVG 圖示 -->
+                            <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- 外圓環 -->
+                                <circle cx="40" cy="40" r="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="6"/>
+                                <!-- 進度扇形與圓弧 (75%) -->
+                                <circle cx="40" cy="40" r="28" fill="none" stroke="#16a34a" stroke-width="7"
+                                        stroke-dasharray="132 176" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                                <!-- 中心百分比文字 -->
+                                <text x="40" y="45" text-anchor="middle" font-size="18" font-weight="900" fill="#1e3a8a" font-family="sans-serif">%</text>
+                                <!-- 右下小綠點裝飾 -->
+                                <circle cx="62" cy="60" r="7" fill="#22c55e" stroke="#ffffff" stroke-width="2"/>
+                                <path d="M59 60 L61.2 62.2 L65.5 57.8" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span class="mt-1 text-[11px] font-bold text-emerald-800 bg-white/75 px-2 py-0.5 rounded-full">外部檢視 ↗</span>
+                    </a>
+
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="bg-slate-100 border-t border-slate-200 px-4 py-2.5 text-center text-[11px] text-slate-500 font-bold">
+            萬華區選務中心行動入口 PWA｜請於開放時段內完成各項回報
+        </footer>
+    </div>
+
+    <!-- ================= 黃底動態填報彈窗 ================= -->
+    <div id="report-modal-overlay" class="modal-overlay" onclick="if(event.target === this) closeReportModal()">
+        <div class="yellow-report-card p-6">
+            <!-- 右上角關閉按鈕 -->
+            <button type="button" onclick="closeReportModal()"
+                class="absolute top-3 right-3 w-9 h-9 rounded-full bg-amber-200/80 hover:bg-red-500 hover:text-white text-slate-700 font-black text-lg flex items-center justify-center transition">
+                ✖
+            </button>
+
+            <!-- 彈窗標題 -->
+            <h3 id="modal-title" class="text-xl sm:text-2xl font-black text-slate-900 text-center pr-6 mb-5">
+                填報視窗
+            </h3>
+
+            <!-- 動態表單欄位 -->
+            <form id="portal-report-form" onsubmit="submitPortalReport(event)" class="flex flex-col gap-4">
+                <!-- 票所編號（固定皆有，無首頁記憶） -->
+                <div class="flex items-center justify-center gap-2">
+                    <label for="modal-station-id" class="font-bold text-slate-800 text-base whitespace-nowrap w-32 text-right">
+                        投開票所編號：
+                    </label>
+                    <input type="number" id="modal-station-id" inputmode="numeric" min="1282" max="1419" required
+                        placeholder="1282~1419" class="report-input w-36">
+                </div>
+
+                <!-- 投票率專用欄位（僅 turnout_1 ~ turnout_4 顯示） -->
+                <div id="turnout-fields" class="hidden flex-col gap-3">
+                    <div class="flex items-center justify-center gap-2">
+                        <label for="modal-gov-count" class="font-bold text-slate-800 text-base whitespace-nowrap w-32 text-right">
+                            投票人數(公職)：
+                        </label>
+                        <input type="number" id="modal-gov-count" inputmode="numeric" min="1" step="1"
+                            placeholder="正整數" class="report-input w-28">
+                        <span class="font-bold text-slate-700 text-sm">人次</span>
+                    </div>
+                    <div class="flex items-center justify-center gap-2">
+                        <label for="modal-ref-count" class="font-bold text-slate-800 text-base whitespace-nowrap w-32 text-right">
+                            投票人數(公投)：
+                        </label>
+                        <input type="number" id="modal-ref-count" inputmode="numeric" min="1" step="1"
+                            placeholder="正整數" class="report-input w-28">
+                        <span class="font-bold text-slate-700 text-sm">人次</span>
+                    </div>
+                    <p class="text-xs text-amber-900 font-bold text-center bg-amber-200/70 rounded-lg py-1.5 px-2">
+                        💡 請填入大於 0 的正整數；開放時段內可重複送出覆蓋舊資料
+                    </p>
+                </div>
+
+                <!-- 即時狀態回饋區塊 -->
+                <div id="modal-feedback" class="hidden rounded-lg px-3 py-2 text-sm font-bold text-center"></div>
+
+                <!-- 按鈕列（依類型動態調整） -->
+                <div id="modal-actions" class="mt-2 flex items-center justify-center gap-3">
+                    <button type="submit" id="btn-modal-submit"
+                        class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition">
+                        送出回報
+                    </button>
+                    <a id="btn-modal-result"
+                        href="https://docs.google.com/spreadsheets/d/1zt8-UXYpZaMbd8YLBYhM_d0ZABDOn2VVPAETTnVtaVA/edit?pli=1&gid=1951877289#gid=1951877289"
+                        target="_blank" rel="noopener noreferrer"
+                        class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-base shadow-md transition inline-flex items-center gap-1">
+                        查看結果 &gt;
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
-<!-- 放大動態視窗 -->
-<div class="focus-modal-overlay" id="focus-modal-overlay">
-    <div class="focus-modal-content">
-        <div class="focus-modal-header">
-            <div class="focus-modal-title" id="fm-title">🔍 直轄市長</div>
-            <div class="focus-modal-close" onclick="closeFocusModal()">✖</div>
-        </div>
-        <div class="focus-modal-body">
-            <div class="focus-cand-grid" id="fm-cand-container"></div>
-            <div class="focus-stat-grid" id="fm-stat-container"></div>
-        </div>
-    </div>
-</div>
+    <div id="toast" class="toast-msg"></div>
 
-<!-- 本票所雲端回傳結果查詢彈窗 (方案 A 隔離檢視) -->
-<div class="result-modal-overlay" id="result-modal-overlay" onclick="if(event.target === this) closeResultModal()">
-    <div class="result-modal-box">
-        <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 bg-purple-700 text-white">
-            <div class="flex items-center gap-2">
-                <span class="text-xl font-black" id="rm-title">📋 本票所雲端回傳結果</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="refreshStationResult()" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-bold transition">🔄 重新抓取雲端</button>
-                <button type="button" onclick="closeResultModal()" class="px-3 py-1 bg-white/10 hover:bg-red-500 rounded-lg text-xl font-bold leading-none transition">✖</button>
-            </div>
-        </div>
-        <div class="px-5 py-2 bg-purple-50 border-b border-purple-200 flex flex-wrap justify-between items-center gap-2 text-xs sm:text-sm font-bold text-purple-900">
-            <span id="rm-summary">正在連線至 Google Sheet 資料庫查詢...</span>
-            <span id="rm-query-time" class="text-purple-600 font-mono"></span>
-        </div>
-        <div id="rm-body" class="flex-1 overflow-y-auto p-4 space-y-5">
-            <!-- 動態渲染查詢結果卡片 -->
-        </div>
-        <div class="px-5 py-2.5 bg-white border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
-            <span>💡 此畫面為即時向雲端資料庫查詢之結果，僅顯示本票所之有效紀錄（已自動排除作廢）。</span>
-            <button type="button" onclick="closeResultModal()" class="px-5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-lg text-sm transition">關閉視窗</button>
-        </div>
-    </div>
-</div>
+    <script>
+        // ⚠️ 與試算器共用同一支 GAS API 網址
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
+        const RESULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1zt8-UXYpZaMbd8YLBYhM_d0ZABDOn2VVPAETTnVtaVA/edit?pli=1&gid=1951877289#gid=1951877289';
 
-<!-- 懸浮控制鍵盤 -->
-<div class="control-panel" id="draggable-panel">
-    <div class="drag-handle-tab" id="drag-handle">
-        <div class="drag-indicator"></div>
-    </div>
-    
-    <div class="keyboard-body">
-        <div class="cp-header">
-            <label class="mode-toggle" id="mode-toggle-label">
-                <input type="checkbox" id="continuous-mode" class="hidden">
-                <span class="text-2xl">⚡</span> 
-                <span>連續模式</span>
-            </label>
-            <button class="voice-btn-small" id="voice-btn" title="點擊開始語音輸入">🎙️</button>
-        </div>
-        <div class="vk-layouts w-full">
-            <div class="vk-grid" id="layout-6x2">
-                <div class="vk-row">
-                    <button class="vk-btn num-btn">1</button>
-                    <button class="vk-btn num-btn">2</button>
-                    <button class="vk-btn num-btn">3</button>
-                    <button class="vk-btn num-btn">4</button>
-                    <button class="vk-btn num-btn">5</button>
-                    <button class="vk-action-btn vk-tab-btn" style="font-size: 18px;">tab</button>
-                </div>
-                <div class="vk-row">
-                    <button class="vk-btn num-btn">6</button>
-                    <button class="vk-btn num-btn">7</button>
-                    <button class="vk-btn num-btn">8</button>
-                    <button class="vk-btn num-btn">9</button>
-                    <button class="vk-btn num-btn">0</button>
-                    <button class="vk-action-btn vk-clear-btn" style="font-size: 16px;">清空</button>
-                </div>
-            </div>
-
-            <div class="vk-grid hidden" id="layout-4x3">
-                <div class="vk-row">
-                    <button class="vk-btn num-btn large-btn">1</button>
-                    <button class="vk-btn num-btn large-btn">2</button>
-                    <button class="vk-btn num-btn large-btn">3</button>
-                    <button class="vk-action-btn vk-tab-btn large-btn large-action-btn">tab</button>
-                </div>
-                <div class="vk-row">
-                    <button class="vk-btn num-btn large-btn">4</button>
-                    <button class="vk-btn num-btn large-btn">5</button>
-                    <button class="vk-btn num-btn large-btn">6</button>
-                    <button class="vk-btn num-btn large-btn">0</button>
-                </div>
-                <div class="vk-row">
-                    <button class="vk-btn num-btn large-btn">7</button>
-                    <button class="vk-btn num-btn large-btn">8</button>
-                    <button class="vk-btn num-btn large-btn">9</button>
-                    <button class="vk-action-btn vk-clear-btn large-btn large-action-btn">清空</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="toast-msg" id="toast"></div>
-
-<script>
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
-
-    // 💡 終極防護第二層：JS 強制攔截下拉重新整理行為 (相容 iOS Safari 與 LINE 內建瀏覽器)
-    let _lastTouchY = 0;
-    document.addEventListener('touchstart', function(e) {
-        if (e.touches.length > 0) _lastTouchY = e.touches[0].clientY;
-    }, { passive: false });
-
-    document.addEventListener('touchmove', function(e) {
-        if (e.touches.length === 0) return;
-        const currentY = e.touches[0].clientY;
-        const diffY = currentY - _lastTouchY;
-
-        // 當網頁捲軸在最頂端，且手勢是往下拉 (diffY > 0) 時
-        if (window.scrollY <= 0 && diffY > 0) {
-            let el = e.target;
-            let canScrollInternal = false;
-            
-            // 智慧判斷：如果手指是放在「表格或彈窗捲動區塊內」而且還能往上滾，就不阻擋
-            while (el && el !== document.body && el !== document.documentElement) {
-                if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) {
-                    canScrollInternal = true;
-                    break;
-                }
-                el = el.parentNode;
-            }
-            
-            if (!canScrollInternal) {
-                e.preventDefault(); // 強制封印下拉重整機制！
-            }
-        }
-    }, { passive: false });
-
-    let globalStationCache = null; 
-    let currentStationId = null;   
-    let currentResultStationId = null;
-
-    // === 💡 靜默操作軌跡追蹤 (Audit Log：完全免填、純記裝置代號 + IP) ===
-    const STORAGE_DEVICE_ID_KEY = 'election_calc_device_id_v1';
-    let cachedClientIp = null;
-
-    function getOrCreateDeviceId() {
-        try {
-            let id = localStorage.getItem(STORAGE_DEVICE_ID_KEY);
-            if (!id) {
-                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-                let rand = '';
-                for (let i = 0; i < 6; i++) {
-                    rand += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                id = 'DEV-' + rand;
-                localStorage.setItem(STORAGE_DEVICE_ID_KEY, id);
-            }
-            return id;
-        } catch (err) {
-            return 'DEV-TEMP';
-        }
-    }
-
-    function getDeviceEnvironment() {
-        const ua = navigator.userAgent || '';
-        let os = '其他系統';
-        if (/iPhone/i.test(ua)) os = 'iPhone (iOS)';
-        else if (/iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) os = 'iPad (iPadOS)';
-        else if (/Android/i.test(ua)) os = 'Android';
-        else if (/Windows/i.test(ua)) os = 'Windows';
-        else if (/Macintosh|Mac OS X/i.test(ua)) os = 'macOS';
-
-        let browser = '瀏覽器';
-        if (/Line\//i.test(ua)) browser = 'LINE內建';
-        else if (/FBAN|FBAV/i.test(ua)) browser = 'FB內建';
-        else if (/Edg/i.test(ua)) browser = 'Edge';
-        else if (/CriOS|Chrome/i.test(ua)) browser = 'Chrome';
-        else if (/Safari/i.test(ua)) browser = 'Safari';
-        else if (/Firefox/i.test(ua)) browser = 'Firefox';
-
-        const isPwa = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-        return `${os} / ${browser}${isPwa ? ' (PWA)' : ' (網頁)'}`;
-    }
-
-    async function fetchIpWithTimeout(url, timeoutMs = 3000) {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const res = await fetch(url, { signal: controller.signal });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            return data.ip || null;
-        } finally {
-            clearTimeout(timer);
-        }
-    }
-
-    // 啟動即於背景靜默抓取公網 IP (雙節點備援，失敗絕不影響系統)
-    const ipFetchPromise = (async () => {
-        const endpoints = [
-            'https://api.ipify.org?format=json',
-            'https://api64.ipify.org?format=json'
+        // 預設離線備援時段（首次連上雲端後將以 Google Sheet「入口設定」完全覆蓋）
+        let portalSchedules = [
+            { key: 'setup',     label: '11/27 場佈回報',     modalTitle: '11/27 場佈完成回報',      startTimeStr: '2026/11/27 12:00', endTimeStr: '2026/11/27 18:00', startMs: Date.parse('2026-11-27T12:00:00+08:00'), endMs: Date.parse('2026-11-27T18:00:00+08:00') },
+            { key: 'turnout_1', label: '09:30 投票率回報-1', modalTitle: '投票數回報(09:30)-1',     startTimeStr: '2026/11/28 09:00', endTimeStr: '2026/11/28 10:00', startMs: Date.parse('2026-11-28T09:00:00+08:00'), endMs: Date.parse('2026-11-28T10:00:00+08:00') },
+            { key: 'turnout_2', label: '11:30 投票率回報-2', modalTitle: '投票數回報(11:30)-2',     startTimeStr: '2026/11/28 11:00', endTimeStr: '2026/11/28 12:00', startMs: Date.parse('2026-11-28T11:00:00+08:00'), endMs: Date.parse('2026-11-28T12:00:00+08:00') },
+            { key: 'turnout_3', label: '13:30 投票率回報-3', modalTitle: '投票數回報(13:30)-3',     startTimeStr: '2026/11/28 13:00', endTimeStr: '2026/11/28 14:00', startMs: Date.parse('2026-11-28T13:00:00+08:00'), endMs: Date.parse('2026-11-28T14:00:00+08:00') },
+            { key: 'turnout_4', label: '15:30 投票率回報-4', modalTitle: '投票數回報(15:30)-4',     startTimeStr: '2026/11/28 15:00', endTimeStr: '2026/11/28 16:00', startMs: Date.parse('2026-11-28T15:00:00+08:00'), endMs: Date.parse('2026-11-28T16:00:00+08:00') },
+            { key: 'courier',   label: '速報員回報',         modalTitle: '速報員準備出發_回區公所', startTimeStr: '2026/11/28 16:00', endTimeStr: '2026/11/28 22:00', startMs: Date.parse('2026-11-28T16:00:00+08:00'), endMs: Date.parse('2026-11-28T22:00:00+08:00') }
         ];
-        for (const url of endpoints) {
+
+        const MAIN_LIST_KEYS = ['setup', 'turnout_1', 'turnout_2', 'turnout_3', 'turnout_4'];
+        let serverTimeOffsetMs = 0; // 伺服器時間 - 本機時間
+        let activeModalItem = null;
+        let lastRenderMinuteKey = '';
+
+        function getSyncedNowMs() {
+            return Date.now() + serverTimeOffsetMs;
+        }
+
+        function formatTaipeiParts(ms) {
+            const d = new Date(ms);
+            const parts = new Intl.DateTimeFormat('zh-TW', {
+                timeZone: 'Asia/Taipei',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            }).formatToParts(d);
+            const map = {};
+            parts.forEach(p => { map[p.type] = p.value; });
+            return {
+                dateStr: `${map.year}/${map.month}/${map.day}`,
+                timeStr: `${map.hour}:${map.minute}:${map.second}`,
+                minuteKey: `${map.year}${map.month}${map.day}${map.hour}${map.minute}`
+            };
+        }
+
+        function shortWindowText(str) {
+            if (!str) return '';
+            // "2026/11/28 09:00" -> "11/28 09:00"
+            return str.replace(/^\d{4}\//, '');
+        }
+
+        function getItemState(item, nowMs) {
+            if (!item || !item.startMs || !item.endMs) return 'locked';
+            if (nowMs < item.startMs) return 'upcoming';
+            if (nowMs > item.endMs) return 'closed';
+            return 'open';
+        }
+
+        function findScheduleByKey(key) {
+            return portalSchedules.find(s => s.key === key) || null;
+        }
+
+        // === 1. 從 GAS 抓取「入口設定」與伺服器校時 ===
+        async function fetchPortalConfig(manual = false) {
+            const btn = document.getElementById('btn-refresh');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳ 同步中...';
+            }
             try {
-                const ip = await fetchIpWithTimeout(url, 3000);
-                if (ip) {
-                    cachedClientIp = ip;
-                    return ip;
+                const res = await fetch(`${GAS_API_URL}?action=getPortalConfig&_t=${Date.now()}`);
+                const json = await res.json();
+                if (json.status === 'success' && Array.isArray(json.schedules) && json.schedules.length > 0) {
+                    portalSchedules = json.schedules;
+                    if (json.serverTimeMs) {
+                        serverTimeOffsetMs = json.serverTimeMs - Date.now();
+                    }
+                    if (manual) showToast('✅ 已同步最新「入口設定」時段！');
+                } else {
+                    throw new Error(json.message || '無法解析時段設定');
                 }
             } catch (err) {
-                // 靜默切換下一個備援節點
-            }
-        }
-        cachedClientIp = '無法取得(網路受限)';
-        return cachedClientIp;
-    })();
-
-    // 非同步射後不理寫入紀錄，0 延遲且靜默防錯
-    function sendAuditLog(eventAction, detail = '', overrideStationId = null) {
-        try {
-            const stationTarget = overrideStationId !== null ? String(overrideStationId) : (currentStationId || '');
-            const deviceId = getOrCreateDeviceId();
-            const deviceEnv = getDeviceEnvironment();
-
-            const dispatch = (ipVal) => {
-                const payload = {
-                    action: 'writeLog',
-                    deviceId: deviceId,
-                    ip: ipVal || '尚未取得',
-                    stationId: stationTarget,
-                    eventAction: eventAction,
-                    detail: detail,
-                    deviceEnv: deviceEnv
-                };
-                fetch(GAS_API_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    keepalive: true,
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                }).catch(() => {});
-            };
-
-            if (cachedClientIp) {
-                dispatch(cachedClientIp);
-            } else {
-                Promise.race([
-                    ipFetchPromise,
-                    new Promise(resolve => setTimeout(() => resolve('取得逾時'), 1500))
-                ]).then(dispatch).catch(() => dispatch('無法取得'));
-            }
-        } catch (err) {}
-    }
-
-    // === 💡 精簡極速版：本機 localStorage 自動暫存設定 (專防 iOS PWA 重啟清空) ===
-    const STORAGE_DRAFT_KEY = 'election_calc_draft_v1';
-    const STORAGE_KB_MODE_KEY = 'election_calc_kb_mode_v1';
-    const ELECTION_TYPES = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
-    let autoSaveTimer = null;
-    let isRestoringDraft = false;
-    let hasSubmittedCurrentDraft = false;
-
-    const candidateNamesMap = {
-        'mayor': ['郭璽', '林志成', '沈伯洋', '蕭文乾', '蔣萬安', '唐新民'],
-        'councilor': ['張延廷', '吳志剛', '陳力新', '吳怡萱', '徐立信', '馬郁雯', '鍾小平', '郭昭巖', '譚傳紹', '張銘祐', '王振庭', '洪婉臻', '劉耀仁', '應佳妤'],
-        'flatland': ['李芳儒', '林筱薇'],
-        'mountain': ['林家豪', '李傅鈺婷', '孔垂崢'],
-        'referendum': ['同意', '不同意']
-    };
-
-    // 主動申請瀏覽器永久儲存權限，避免系統空間不足時清理暫存
-    async function requestPersistentStorage() {
-        try {
-            if (navigator.storage && navigator.storage.persist) {
-                const isPersisted = await navigator.storage.persisted();
-                if (!isPersisted) await navigator.storage.persist();
-            }
-        } catch (err) {
-            console.warn('無法申請永久儲存權限:', err);
-        }
-    }
-
-    function updateAutoSaveBadge(text, isSubmitted = false) {
-        const badge = document.getElementById('autosave-status');
-        if (!badge) return;
-        if (!text) {
-            badge.classList.add('hidden');
-            return;
-        }
-        badge.textContent = text;
-        badge.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'bg-blue-50', 'text-blue-700', 'border-blue-300');
-        if (isSubmitted) {
-            badge.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-300');
-        } else {
-            badge.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
-        }
-    }
-
-    // 擷取目前畫面上的票所與所有已輸入數值
-    function collectCurrentDraft() {
-        if (!currentStationId) return null;
-        const formValues = {};
-        ELECTION_TYPES.forEach(type => {
-            const cands = [];
-            document.querySelectorAll(`.${type}-cand`).forEach(input => {
-                cands.push(input.classList.contains('locked-empty') ? '' : input.value);
-            });
-            formValues[type] = {
-                cands: cands,
-                invalid: document.getElementById(`${type}_invalid`)?.value || '',
-                issued_not_voted: document.getElementById(`${type}_issued_not_voted`)?.value || '',
-                remaining: document.getElementById(`${type}_remaining`)?.value || ''
-            };
-        });
-
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
-        return {
-            stationId: currentStationId,
-            isLocked: document.getElementById('table-wrapper')?.classList.contains('locked') || false,
-            submitted: hasSubmittedCurrentDraft,
-            savedAt: timeStr,
-            savedTs: now.getTime(),
-            values: formValues
-        };
-    }
-
-    // 立即寫入 localStorage
-    function saveDraftNow() {
-        if (isRestoringDraft || !currentStationId) return;
-        try {
-            const draft = collectCurrentDraft();
-            if (!draft) return;
-            localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(draft));
-            updateAutoSaveBadge(
-                draft.submitted ? `✅ 已送出並暫存 (${draft.savedAt})` : `💾 已自動暫存 (${draft.savedAt})`,
-                draft.submitted
-            );
-        } catch (err) {
-            console.warn('localStorage 暫存失敗:', err);
-        }
-    }
-
-    // 防抖動自動存檔 (停手 0.5 秒後寫入，不拖慢輸入流暢度)
-    function scheduleAutoSave() {
-        if (isRestoringDraft || !currentStationId) return;
-        if (autoSaveTimer) clearTimeout(autoSaveTimer);
-        autoSaveTimer = setTimeout(() => {
-            saveDraftNow();
-        }, 500);
-    }
-
-    function clearDraftFromLocalStorage() {
-        if (autoSaveTimer) clearTimeout(autoSaveTimer);
-        hasSubmittedCurrentDraft = false;
-        try {
-            localStorage.removeItem(STORAGE_DRAFT_KEY);
-        } catch (err) {
-            console.warn('清除 localStorage 暫存失敗:', err);
-        }
-        updateAutoSaveBadge('');
-    }
-
-    // 啟動時自動還原上次暫存草稿
-    function restoreDraftFromLocalStorage() {
-        try {
-            const raw = localStorage.getItem(STORAGE_DRAFT_KEY);
-            if (!raw) return false;
-            const draft = JSON.parse(raw);
-            if (!draft || !draft.stationId || !globalStationCache || !globalStationCache[draft.stationId]) {
-                return false;
-            }
-
-            isRestoringDraft = true;
-            if (stationIdInput) stationIdInput.value = draft.stationId;
-            loadStationById(draft.stationId, true);
-
-            if (draft.values) {
-                ELECTION_TYPES.forEach(type => {
-                    const typeData = draft.values[type];
-                    if (!typeData) return;
-
-                    const candInputs = document.querySelectorAll(`.${type}-cand`);
-                    if (Array.isArray(typeData.cands)) {
-                        candInputs.forEach((input, idx) => {
-                            if (!input.classList.contains('locked-empty') && typeData.cands[idx] !== undefined) {
-                                input.value = typeData.cands[idx];
-                            }
-                        });
-                    }
-
-                    ['invalid', 'issued_not_voted', 'remaining'].forEach(field => {
-                        const el = document.getElementById(`${type}_${field}`);
-                        if (el && !el.classList.contains('locked-empty') && typeData[field] !== undefined) {
-                            el.value = typeData[field];
-                        }
-                    });
-
-                    calculateTotals(type);
-                });
-            }
-
-            if (draft.isLocked) {
-                document.getElementById('table-wrapper').classList.add('locked');
-            }
-
-            hasSubmittedCurrentDraft = !!draft.submitted;
-            const successText = document.getElementById('success-text');
-            if (successText && hasSubmittedCurrentDraft) {
-                successText.classList.remove('opacity-0');
-                successText.classList.add('opacity-100');
-            }
-
-            updateAutoSaveBadge(
-                hasSubmittedCurrentDraft ? `✅ 已還原送出紀錄 (${draft.savedAt || ''})` : `💾 已還原暫存 (${draft.savedAt || ''})`,
-                hasSubmittedCurrentDraft
-            );
-            showToast(`♻️ 已自動還原第 ${draft.stationId} 票所上次暫存資料${draft.savedAt ? '（' + draft.savedAt + '）' : ''}`, 4000);
-            isRestoringDraft = false;
-            return true;
-        } catch (err) {
-            isRestoringDraft = false;
-            console.warn('還原暫存草稿失敗:', err);
-            return false;
-        }
-    }
-
-    // 💡 iOS 關鍵搶存機制：切去拍照、回 LINE 或 App 進入背景的瞬間立刻存檔
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') saveDraftNow();
-    });
-    window.addEventListener('pagehide', () => {
-        saveDraftNow();
-    });
-
-    window.addEventListener('DOMContentLoaded', () => {
-        requestPersistentStorage();
-        getOrCreateDeviceId(); // 預先建立裝置代號
-
-        // 啟動時立即套用上次記憶的浮動鍵盤模式（小鍵盤 / 大鍵盤 / 關閉）
-        try {
-            const savedKbMode = localStorage.getItem(STORAGE_KB_MODE_KEY);
-            if (savedKbMode && ['small', 'large', 'hidden'].includes(savedKbMode)) {
-                applyKeyboardMode(savedKbMode, false);
-            }
-        } catch (err) {}
-
-        document.querySelectorAll('input.data-cell').forEach((input, idx) => {
-            if(!input.id) input.id = 'cand_input_' + idx;
-        });
-
-        showToast("初次載入，正在將雲端資料庫快取至本地端...", 2000);
-        fetch(`${GAS_API_URL}?action=getAll`)
-            .then(res => res.json())
-            .then(json => {
-                if (json.status === 'success') {
-                    globalStationCache = json.data;
-                    const restored = restoreDraftFromLocalStorage();
-                    if (!restored) {
-                        showToast("⚡ 資料庫已全數快取，輸入票所可瞬間載入！", 3000);
-                    }
-                    sendAuditLog('開啟試算器', restored ? `自動還原票所 ${currentStationId} 暫存` : '初次開啟(無暫存)', restored ? currentStationId : '');
-                } else {
-                    throw new Error(json.message);
+                console.warn('讀取入口設定失敗，暫用預設值:', err);
+                if (manual) showToast('⚠️ 無法連線雲端，暫時顯示目前設定');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '🔄 同步最新時段設定';
                 }
-            })
-            .catch(err => {
-                console.error("快取失敗:", err);
-                globalStationCache = getFallbackData();
-                const restored = restoreDraftFromLocalStorage();
-                if (!restored) {
-                    showToast("⚠️ 網路連線失敗，已載入本機備用測試資料。", 4000);
-                }
-                sendAuditLog('開啟試算器(離線備用)', restored ? `還原票所 ${currentStationId} 暫存` : '無法連線主檔', restored ? currentStationId : '');
-            });
-    });
-
-    const stationIdInput = document.getElementById('station-id-input');
-    const btnLoadStation = document.getElementById('btn-load-station');
-
-    if(btnLoadStation && stationIdInput) {
-        btnLoadStation.addEventListener('click', () => { triggerLoadStation(); });
-        stationIdInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') triggerLoadStation(); });
-    }
-
-    function triggerLoadStation() {
-        const inputId = stationIdInput.value.trim();
-        if (inputId.length >= 4) {
-            loadStationById(inputId);
-        } else {
-            showToast('⚠️ 請輸入完整的票所編號');
-            lockTableStructure();
-        }
-    }
-
-    function loadStationById(inputId, fromRestore = false) {
-        if (!globalStationCache) {
-            showToast('資料庫尚未就緒，已載入備用測試資料');
-            globalStationCache = getFallbackData();
-        }
-
-        if (globalStationCache[inputId]) {
-            const isSwitchingStation = currentStationId && currentStationId !== inputId;
-            const prevStationId = currentStationId;
-            currentStationId = inputId;
-            applyStationData(globalStationCache[inputId]);
-            document.getElementById('table-wrapper').classList.remove('locked');
-            if (!fromRestore) {
-                if (isSwitchingStation) {
-                    hasSubmittedCurrentDraft = false;
-                    const successText = document.getElementById('success-text');
-                    if (successText) {
-                        successText.classList.add('opacity-0');
-                        successText.classList.remove('opacity-100');
-                    }
-                }
-                showToast(`⚡ 已成功載入第 ${inputId} 票所資料`);
-                saveDraftNow();
-                sendAuditLog('載入票所', isSwitchingStation ? `由 ${prevStationId} 切換至 ${inputId}` : '載入票所設定', inputId);
-            }
-        } else {
-            showToast('❌ 找不到該票所編號！');
-            lockTableStructure();
-            if (!fromRestore) {
-                sendAuditLog('載入票所(失敗)', `查無此編號: ${inputId}`, inputId);
-            }
-        }
-    }
-
-    function lockTableStructure() {
-        currentStationId = null;
-        document.getElementById('table-wrapper').classList.add('locked');
-    }
-
-    function applyStationData(data) {
-        const villageHeaderRow = document.getElementById('village-row-header');
-        const villageInputsRow = document.getElementById('village-row-inputs');
-        document.querySelectorAll('.village-name-cell, .village-empty-cell, .village-input-td').forEach(el => el.remove());
-
-        let candidates = data.villageCandidates || [];
-        const maxCols = 10;
-        let nameHtml = '', inputHtml = '';
-        
-        for (let i = 0; i < maxCols; i++) {
-            if (i < candidates.length) {
-                nameHtml += `<td class="candidate-cell village-name-cell"><div class="cand-number">${i+1}</div><div class="cand-name">${candidates[i]}</div></td>`;
-                inputHtml += `<td class="village-input-td"><input type="text" inputmode="numeric" class="village-input village-cand data-cell" id="cand_village_${i}"></td>`;
-            } else {
-                nameHtml += `<td class="empty-cell village-empty-cell"></td>`;
-                inputHtml += `<td class="empty-cell village-empty-cell"></td>`;
-            }
-        }
-        villageHeaderRow.firstElementChild.insertAdjacentHTML('afterend', nameHtml);
-        villageInputsRow.innerHTML = inputHtml;
-
-        const types = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
-        
-        types.forEach(type => {
-            const checkEl = document.getElementById(`${type}_check`);
-            const val = data.checkValues[type];
-            
-            if (!val || Number(val) === 0) {
-                if (checkEl) { checkEl.value = ""; checkEl.classList.add('locked-empty'); }
-                document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
-                    if (el.tagName === 'INPUT') { el.value = ""; el.classList.add('locked-empty'); el.setAttribute('tabindex', '-1'); }
-                });
-                const btn = document.getElementById(`btn-modal-${type}`);
-                if (btn) btn.classList.add('locked-empty');
-            } else {
-                if (checkEl) { checkEl.value = val; checkEl.classList.remove('locked-empty'); }
-                document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
-                    if (el.tagName === 'INPUT') { el.classList.remove('locked-empty'); el.removeAttribute('tabindex'); }
-                });
-                const btn = document.getElementById(`btn-modal-${type}`);
-                if (btn) btn.classList.remove('locked-empty');
-            }
-        });
-
-        types.forEach(type => calculateTotals(type));
-    }
-
-    function calculateTotals(prefix) {
-        let validVotes = 0;
-        const candInputs = document.querySelectorAll(`.${prefix}-cand:not(.locked-empty)`);
-        candInputs.forEach(input => { validVotes += Number(input.value) || 0; });
-        document.getElementById(`${prefix}_valid`).value = validVotes;
-
-        const invalidVotes = Number(document.getElementById(`${prefix}_invalid`).value) || 0;
-        const totalVotes = validVotes + invalidVotes;
-        document.getElementById(`${prefix}_total`).value = totalVotes;
-
-        const issuedNotVoted = Number(document.getElementById(`${prefix}_issued_not_voted`).value) || 0;
-        const issuedVotes = totalVotes + issuedNotVoted;
-        document.getElementById(`${prefix}_issued`).value = issuedVotes;
-
-        const remainingVotes = Number(document.getElementById(`${prefix}_remaining`).value) || 0;
-        const electors = issuedVotes + remainingVotes;
-        document.getElementById(`${prefix}_electors`).value = electors;
-
-        const checkInput = document.getElementById(`${prefix}_check`);
-        if (checkInput && !checkInput.classList.contains('locked-empty')) {
-            const checkValue = Number(checkInput.value);
-            
-            checkInput.classList.remove('match-true', 'match-false');
-            if (electors === checkValue) {
-                checkInput.classList.add('match-true');
-            } else {
-                checkInput.classList.add('match-false');
-            }
-
-            if (checkValue > 0) {
-                const invalidEl = document.getElementById(`${prefix}_invalid`);
-                const issuedNotVotedEl = document.getElementById(`${prefix}_issued_not_voted`);
-                const remainingEl = document.getElementById(`${prefix}_remaining`);
-                const validEl = document.getElementById(`${prefix}_valid`);
-                
-                if (invalidEl) invalidEl.classList.remove('warn-bg');
-                if (issuedNotVotedEl) issuedNotVotedEl.classList.remove('warn-bg');
-                if (remainingEl) remainingEl.classList.remove('warn-bg');
-                if (validEl) validEl.classList.remove('warn-bg');
-                
-                if (invalidEl && invalidVotes > checkValue * 0.015) invalidEl.classList.add('warn-bg');
-                if (issuedNotVotedEl && issuedNotVoted > 2) issuedNotVotedEl.classList.add('warn-bg');
-                if (remainingEl && remainingVotes > checkValue * 0.35) remainingEl.classList.add('warn-bg');
-                
-                const diff = Math.abs(electors - checkValue);
-                if ((diff >= 98 && diff <= 102) || (diff >= 196 && diff <= 204)) {
-                    if (validEl) validEl.classList.add('warn-bg');
-                    if (remainingEl) remainingEl.classList.add('warn-bg');
-                }
-
-                if (prefix === 'mayor') {
-                    const mayorCands = document.querySelectorAll('.mayor-cand:not(.locked-empty)');
-                    mayorCands.forEach(el => el.classList.remove('warn-bg'));
-                    
-                    let votes = [];
-                    mayorCands.forEach(el => votes.push(Number(el.value) || 0));
-                    
-                    if (votes.length >= 6) {
-                        let sorted = [...votes].sort((a, b) => b - a);
-                        let threshold = sorted[1]; 
-                        
-                        if (votes[2] < threshold && mayorCands[2]) mayorCands[2].classList.add('warn-bg');
-                        if (votes[4] < threshold && mayorCands[4]) mayorCands[4].classList.add('warn-bg');
-                    }
-                }
-            }
-        }
-        
-        if (typeof syncMainToModal === 'function' && !document.getElementById('focus-modal-overlay').classList.contains('hidden')) {
-            syncMainToModal(prefix);
-        }
-    }
-
-    const tableWrapper = document.getElementById('table-wrapper');
-    let currentFocusedInput = null;
-
-    tableWrapper.addEventListener('input', function(e) {
-        if (e.target.tagName.toLowerCase() === 'input') {
-            let prefix = e.target.className.match(/(mayor|councilor|flatland|mountain|village|referendum)-input/);
-            if (prefix) calculateTotals(prefix[1]);
-            hasSubmittedCurrentDraft = false;
-            scheduleAutoSave();
-        }
-    });
-
-    tableWrapper.addEventListener('click', function(e) {
-        if (e.target.tagName.toLowerCase() === 'input' && !e.target.classList.contains('stats-input') && !e.target.classList.contains('locked-empty')) {
-            document.querySelectorAll('input').forEach(el => el.classList.remove('focused-cell'));
-            e.target.classList.add('focused-cell');
-            currentFocusedInput = e.target;
-        }
-    });
-    
-    document.querySelectorAll('input[type="text"]').forEach(input => {
-        input.addEventListener('focus', function(e) {
-            const isContinuous = document.getElementById('continuous-mode')?.checked;
-            if (isContinuous && !e.target.classList.contains('modal-input')) {
-                e.target.blur(); 
-            }
-        });
-    });
-
-    function autoTabToNextCell(currentInput) {
-        if (!currentInput) return;
-        const isContinuous = document.getElementById('continuous-mode')?.checked;
-
-        if (currentInput.classList.contains('fm-input')) {
-            const validModalInputs = Array.from(document.querySelectorAll('#focus-modal-overlay .fm-input:not(.modal-readonly)'));
-            const currentIndex = validModalInputs.indexOf(currentInput);
-            
-            if (currentIndex >= 0 && currentIndex < validModalInputs.length - 1) {
-                let nextInput = validModalInputs[currentIndex + 1];
-                document.querySelectorAll('input').forEach(el => el.classList.remove('focused-cell'));
-                nextInput.classList.add('focused-cell');
-                currentFocusedInput = nextInput;
-                
-                if (!isContinuous) { nextInput.focus(); }
-                nextInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            return;
-        }
-
-        let section = "";
-        if (currentInput.classList.contains('mayor-input')) section = 'mayor';
-        else if (currentInput.classList.contains('councilor-input')) section = 'councilor';
-        else if (currentInput.classList.contains('flatland-input')) section = 'flatland';
-        else if (currentInput.classList.contains('mountain-input')) section = 'mountain';
-        else if (currentInput.classList.contains('village-input')) section = 'village';
-        else if (currentInput.classList.contains('referendum-input')) section = 'referendum';
-
-        if (!section) return;
-
-        let orderedInputs = [];
-        orderedInputs.push(...Array.from(document.querySelectorAll(`.${section}-cand:not(.locked-empty)`)));
-        orderedInputs.push(document.getElementById(`${section}_invalid`));
-        orderedInputs.push(document.getElementById(`${section}_issued_not_voted`));
-        orderedInputs.push(document.getElementById(`${section}_remaining`));
-        
-        let currentIndex = orderedInputs.indexOf(currentInput);
-        let nextInput = null;
-
-        if (currentIndex >= 0 && currentIndex < orderedInputs.length - 1) {
-            nextInput = orderedInputs[currentIndex + 1];
-        } else {
-            const sections = ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'];
-            let sectionIndex = sections.indexOf(section);
-            if (sectionIndex >= 0 && sectionIndex < sections.length - 1) {
-                let nextSection = sections[sectionIndex + 1];
-                nextInput = document.querySelector(`.${nextSection}-cand:not(.locked-empty)`);
+                renderAllUI();
             }
         }
 
-        if (nextInput) {
-            currentInput.classList.remove('focused-cell');
-            if (isContinuous) {
-                nextInput.classList.add('focused-cell');
-                currentFocusedInput = nextInput;
-            } else {
-                nextInput.click(); 
-                nextInput.focus();
-            }
-            nextInput.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-        }
-    }
-
-    let isDraggingPanel = false;
-    let pStartX, pStartY, initialLeft, initialTop;
-    const draggablePanel = document.getElementById('draggable-panel');
-    const dragHandles = [document.getElementById('drag-handle')];
-
-    dragHandles.forEach(handle => {
-        if(!handle) return;
-        handle.addEventListener('pointerdown', (e) => {
-            if(e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input' || e.target.closest('label')) return;
-            
-            isDraggingPanel = true;
-            draggablePanel.setPointerCapture(e.pointerId);
-
-            if (!draggablePanel.style.left || draggablePanel.style.left === '') {
-                const rect = draggablePanel.getBoundingClientRect();
-                draggablePanel.style.left = rect.left + 'px';
-                draggablePanel.style.top = rect.top + 'px';
-                draggablePanel.style.transform = 'none';
-                draggablePanel.style.bottom = 'auto';
-            }
-
-            pStartX = e.clientX;
-            pStartY = e.clientY;
-            initialLeft = parseFloat(draggablePanel.style.left);
-            initialTop = parseFloat(draggablePanel.style.top);
-            e.preventDefault();
-        });
-    });
-
-    if(draggablePanel) {
-        draggablePanel.addEventListener('pointermove', (e) => {
-            if (!isDraggingPanel) return;
-            const dx = e.clientX - pStartX;
-            const dy = e.clientY - pStartY;
-            draggablePanel.style.left = (initialLeft + dx) + 'px';
-            draggablePanel.style.top = (initialTop + dy) + 'px';
-        });
-
-        draggablePanel.addEventListener('pointerup', (e) => {
-            if(isDraggingPanel) {
-                isDraggingPanel = false;
-                draggablePanel.releasePointerCapture(e.pointerId);
-            }
-        });
-    }
-
-    const continuousModeCheckbox = document.getElementById('continuous-mode');
-    const modeToggleLabel = document.getElementById('mode-toggle-label');
-    
-    if (continuousModeCheckbox) {
-        continuousModeCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                modeToggleLabel.classList.add('active');
-                showToast('已開啟連續模式，點擊欄位直接語音或按鍵輸入。', 4000);
-                document.querySelectorAll('input.data-cell, input.editable-stat, input.fm-input:not(.modal-readonly)').forEach(el => {
-                    el.setAttribute('inputmode', 'none'); 
-                    el.setAttribute('readonly', 'true'); 
-                });
-            } else {
-                modeToggleLabel.classList.remove('active');
-                showToast('已關閉連續模式。');
-                document.querySelectorAll('input.data-cell, input.editable-stat, input.fm-input:not(.modal-readonly)').forEach(el => {
-                    el.setAttribute('inputmode', 'numeric');
-                    el.removeAttribute('readonly'); 
-                });
-            }
-        });
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'zh-TW';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        const voiceBtn = document.getElementById('voice-btn');
-        let isRecording = false;
-        let forceStop = false; 
-
-        if(voiceBtn) {
-            voiceBtn.addEventListener('click', () => {
-                if (isRecording) {
-                    forceStop = true;
-                    recognition.stop();
-                } else {
-                    forceStop = false;
-                    try { recognition.start(); } catch(e) {}
-                }
-            });
+        // === 2. 渲染首頁所有區塊（大按鈕 + 5 項清單 + 速報員狀態） ===
+        function renderAllUI() {
+            const nowMs = getSyncedNowMs();
+            renderHeroButton(nowMs);
+            renderScheduleList(nowMs);
+            renderCourierCard(nowMs);
         }
 
-        recognition.onstart = function() {
-            isRecording = true;
-            if(voiceBtn) voiceBtn.classList.add('recording');
-            showToast('⚡ 錄音中...請直接唸出「票數」');
-        };
+        function renderHeroButton(nowMs) {
+            const container = document.getElementById('hero-action-section');
+            const mainItems = MAIN_LIST_KEYS.map(k => findScheduleByKey(k)).filter(Boolean);
 
-        recognition.onend = function() {
-            if (continuousModeCheckbox && continuousModeCheckbox.checked && !forceStop) {
-                try { recognition.start(); } catch(e) {}
-            } else {
-                isRecording = false;
-                if(voiceBtn) voiceBtn.classList.remove('recording');
-            }
-        };
+            const openItems = mainItems.filter(item => getItemState(item, nowMs) === 'open');
 
-        function extractNumberFromText(text) {
-            let t = text.replace(/\s+/g, ''); 
-            t = t.replace(/零|洞|空|沒有|林|靈|凌|玲/g, '0');
-            t = t.replace(/一百|1百/g, '100').replace(/二百|兩百|2百/g, '200').replace(/三百|3百/g, '300')
-               .replace(/四百|4百/g, '400').replace(/五百|5百/g, '500').replace(/六百|6百/g, '600')
-               .replace(/七百|7百/g, '700').replace(/八百|8百/g, '800').replace(/九百|9百/g, '900')
-               .replace(/一千|1千/g, '1000');
-            const map2 = { '十一': '11', '十二': '12', '十三': '13', '十四': '14', '十五': '15', '十六': '16', '十七': '17', '十八': '18', '十九': '19', '二十': '20' };
-            for (let k in map2) { t = t.replace(new RegExp(k, 'g'), map2[k]); }
-            const map1 = { '一': '1', '二': '2', '兩': '2', '三': '3', '四': '4', '五': '5', '六': '6', '七': '7', '八': '8', '九': '9', '十': '10' };
-            for (let k in map1) { t = t.replace(new RegExp(k, 'g'), map1[k]); }
-            
-            let matches = t.match(/\d+/g);
-            if (matches && matches.length > 0) {
-                return parseInt(matches[matches.length - 1], 10);
-            }
-            return null;
-        }
+            if (openItems.length > 0) {
+                const active = openItems[0];
+                const idx = MAIN_LIST_KEYS.indexOf(active.key);
+                const prefixTag = active.key === 'setup'
+                    ? '【場佈階段】'
+                    : `【第 ${idx} 次】`;
 
-        recognition.onresult = function(event) {
-            const rawTranscript = event.results[0][0].transcript;
-            if (!currentFocusedInput) {
-                showToast(`❌ 請先點擊一個欄位！`);
-                return;
-            }
-            let votes = extractNumberFromText(rawTranscript);
-            if (votes === null) {
-                showToast(`❌ 沒聽到數字: "${rawTranscript}"`);
-                return;
-            }
-            currentFocusedInput.value = votes;
-            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-            showToast(`✅ 已填入: ${votes} 票`);
-
-            currentFocusedInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            if (continuousModeCheckbox && continuousModeCheckbox.checked) {
-                autoTabToNextCell(currentFocusedInput);
-            }
-        };
-
-        recognition.onerror = function(event) {
-            if (event.error !== 'no-speech') {
-                showToast('麥克風發生錯誤: ' + event.error);
-                isRecording = false;
-                if(voiceBtn) voiceBtn.classList.remove('recording');
-                forceStop = true;
-            }
-        };
-    }
-
-    document.querySelectorAll('.num-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!currentFocusedInput) { showToast('請先點擊一個欄位'); return; }
-            let currentVal = currentFocusedInput.value;
-            let start = (currentFocusedInput.selectionStart !== null) ? currentFocusedInput.selectionStart : currentVal.length;
-            if (currentVal === "0") currentVal = ""; 
-            const newVal = currentVal.slice(0, start) + e.target.textContent + currentVal.slice(start);
-            currentFocusedInput.value = newVal;
-            currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-            currentFocusedInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
-    });
-
-    document.querySelectorAll('.vk-clear-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (currentFocusedInput) {
-                currentFocusedInput.value = "";
-                currentFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        });
-    });
-
-    document.querySelectorAll('.vk-tab-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!currentFocusedInput) return;
-            autoTabToNextCell(currentFocusedInput);
-        });
-    });
-    
-    const btnToggleKeyboard = document.getElementById('btn-toggle-keyboard');
-    const layout6x2 = document.getElementById('layout-6x2');
-    const layout4x3 = document.getElementById('layout-4x3');
-    const KEYBOARD_MODES = ['small', 'large', 'hidden']; // 循環順序：小鍵盤 → 大鍵盤 → 關閉鍵盤
-    let currentKeyboardMode = 'small';
-
-    function applyKeyboardMode(mode, showFeedback = true) {
-        currentKeyboardMode = mode;
-        const kbBody = document.querySelector('.keyboard-body');
-        if (!draggablePanel || !kbBody || !btnToggleKeyboard) return;
-
-        if (mode === 'small') {
-            draggablePanel.style.display = 'flex';
-            layout6x2.classList.remove('hidden');
-            layout4x3.classList.add('hidden');
-            kbBody.classList.remove('large-mode');
-            btnToggleKeyboard.innerHTML = '⌨️ 切換大鍵盤';
-            btnToggleKeyboard.style.backgroundColor = '#fef08a';
-            btnToggleKeyboard.style.color = '#854d0e';
-            if (showFeedback) showToast('已切換至「6x2 小鍵盤」');
-        } else if (mode === 'large') {
-            draggablePanel.style.display = 'flex';
-            layout6x2.classList.add('hidden');
-            layout4x3.classList.remove('hidden');
-            kbBody.classList.add('large-mode');
-            btnToggleKeyboard.innerHTML = '⌨️ 關閉浮動鍵盤';
-            btnToggleKeyboard.style.backgroundColor = '#bbf7d0';
-            btnToggleKeyboard.style.color = '#166534';
-            if (showFeedback) showToast('已切換至「4x3 大鍵盤」');
-        } else {
-            draggablePanel.style.display = 'none';
-            // 若原本有開連續模式(會鎖住手機內建鍵盤)，關閉浮動鍵盤時自動解除，讓使用者可直接呼叫原生鍵盤
-            if (continuousModeCheckbox && continuousModeCheckbox.checked) {
-                continuousModeCheckbox.checked = false;
-                modeToggleLabel.classList.remove('active');
-                document.querySelectorAll('input.data-cell, input.editable-stat, input.fm-input:not(.modal-readonly)').forEach(el => {
-                    el.setAttribute('inputmode', 'numeric');
-                    el.removeAttribute('readonly');
-                });
-            }
-            btnToggleKeyboard.innerHTML = '⌨️ 開啟小鍵盤';
-            btnToggleKeyboard.style.backgroundColor = '#e2e8f0';
-            btnToggleKeyboard.style.color = '#334155';
-            if (showFeedback) showToast('已關閉浮動鍵盤，可直接點擊欄位使用手機鍵盤輸入', 3500);
-        }
-
-        try {
-            localStorage.setItem(STORAGE_KB_MODE_KEY, mode);
-        } catch (err) {}
-    }
-
-    if (btnToggleKeyboard) {
-        btnToggleKeyboard.addEventListener('click', () => {
-            const nextIdx = (KEYBOARD_MODES.indexOf(currentKeyboardMode) + 1) % KEYBOARD_MODES.length;
-            applyKeyboardMode(KEYBOARD_MODES[nextIdx], true);
-        });
-    }
-
-    let activeModalType = null;
-
-    window.openFocusModal = function(type) {
-        activeModalType = type;
-        const overlay = document.getElementById('focus-modal-overlay');
-        const candContainer = document.getElementById('fm-cand-container');
-        const statContainer = document.getElementById('fm-stat-container');
-        
-        const typeNames = { mayor: '直轄市長', councilor: '區域議員', flatland: '平地原住民', mountain: '山地原住民', village: '里長', referendum: '公投' };
-        document.getElementById('fm-title').innerHTML = `🔍 放大填寫：${typeNames[type]}`;
-        
-        candContainer.innerHTML = '';
-        statContainer.innerHTML = '';
-        
-        const isContinuous = document.getElementById('continuous-mode')?.checked;
-        const mainCandInputs = document.querySelectorAll(`.${type}-cand:not(.locked-empty)`);
-        
-        let names = [];
-        if (type === 'village') {
-            names = (globalStationCache && currentStationId && globalStationCache[currentStationId]) ? globalStationCache[currentStationId].villageCandidates : [];
-        } else {
-            names = candidateNamesMap[type] || [];
-        }
-
-        mainCandInputs.forEach((mainInput, idx) => {
-            let candName = names[idx] ? names[idx] : `候選人 ${idx+1}`;
-            let displayName = type === 'referendum' ? candName : `${idx+1} ${candName}`;
-            
-            let inputProps = isContinuous ? 'inputmode="none" readonly' : 'inputmode="numeric"';
-            
-            candContainer.innerHTML += `
-                <div class="focus-box" id="fm_box_${mainInput.id}">
-                    <div class="focus-box-title">${displayName}</div>
-                    <input type="text" ${inputProps} class="focus-input fm-input" data-target="${mainInput.id}" id="fm_${mainInput.id}" value="${mainInput.value}">
-                </div>
-            `;
-        });
-        
-        const stats = [
-            { id: `${type}_valid`, label: '有效票', readonly: true },
-            { id: `${type}_invalid`, label: '無效票', readonly: false },
-            { id: `${type}_issued_not_voted`, label: '已領未投', readonly: false },
-            { id: `${type}_remaining`, label: '用餘票', readonly: false },
-            { id: `${type}_electors`, label: '選舉人數', readonly: true },
-            { id: `${type}_check`, label: '檢查值', readonly: true }
-        ];
-        
-        stats.forEach(stat => {
-            const mainInput = document.getElementById(stat.id);
-            if (!mainInput) return;
-            
-            let inputClass = 'focus-input fm-input w-full text-center text-2xl font-bold py-3 outline-none cursor-pointer';
-            let inputProps = 'inputmode="numeric"';
-            
-            if (stat.readonly) {
-                inputClass += ' bg-gray-200 text-blue-800 cursor-not-allowed modal-readonly';
-                inputProps = 'inputmode="none" readonly tabindex="-1"';
-            } else {
-                inputClass += ' focus:bg-red-50 focus:border-red-500';
-                if (isContinuous) inputProps = 'inputmode="none" readonly';
-            }
-            
-            statContainer.innerHTML += `
-                <div class="focus-box ${stat.readonly ? 'readonly' : ''}" id="fm_box_${stat.id}">
-                    <div class="focus-box-title">${stat.label}</div>
-                    <input type="text" ${inputProps} class="${inputClass}" data-target="${stat.id}" id="fm_${stat.id}" value="${mainInput.value}">
-                </div>
-            `;
-        });
-        
-        overlay.style.display = 'flex';
-        syncMainToModal(type); 
-        
-        setTimeout(() => {
-            const firstInput = document.querySelector('#focus-modal-overlay .fm-input:not(.modal-readonly)');
-            if(firstInput) {
-                firstInput.click();
-                if(!isContinuous) firstInput.focus();
-            }
-        }, 100);
-    };
-
-    window.closeFocusModal = function() {
-        document.getElementById('focus-modal-overlay').style.display = 'none';
-        activeModalType = null;
-        if(currentFocusedInput && currentFocusedInput.classList.contains('fm-input')) {
-            currentFocusedInput.classList.remove('focused-cell');
-            currentFocusedInput = null;
-        }
-    };
-
-    document.getElementById('focus-modal-overlay').addEventListener('click', function(e) {
-        if (e.target.tagName.toLowerCase() === 'input' && !e.target.classList.contains('modal-readonly')) {
-            document.querySelectorAll('input').forEach(el => el.classList.remove('focused-cell'));
-            e.target.classList.add('focused-cell');
-            currentFocusedInput = e.target;
-            
-            const isContinuous = document.getElementById('continuous-mode')?.checked;
-            if(isContinuous) e.target.blur();
-        }
-    });
-
-    document.getElementById('focus-modal-overlay').addEventListener('input', function(e) {
-        if (e.target.classList.contains('fm-input')) {
-            const targetId = e.target.getAttribute('data-target');
-            const mainInput = document.getElementById(targetId);
-            if (mainInput) {
-                mainInput.value = e.target.value;
-                if (activeModalType) calculateTotals(activeModalType);
-                hasSubmittedCurrentDraft = false;
-                scheduleAutoSave();
-            }
-        }
-    });
-
-    window.syncMainToModal = function(type) {
-        if (activeModalType !== type) return;
-        
-        document.querySelectorAll(`.${type}-cand:not(.locked-empty)`).forEach(mainInput => {
-            const fmInput = document.getElementById(`fm_${mainInput.id}`);
-            const fmBox = document.getElementById(`fm_box_${mainInput.id}`);
-            if (fmInput && fmBox) {
-                if (fmInput.classList.contains('modal-readonly')) fmInput.value = mainInput.value;
-                if (mainInput.classList.contains('warn-bg')) {
-                    fmBox.style.backgroundColor = '#fef08a'; fmBox.style.borderColor = '#ca8a04';
-                } else {
-                    fmBox.style.backgroundColor = ''; fmBox.style.borderColor = '';
-                }
-            }
-        });
-        
-        const statFields = ['valid', 'invalid', 'issued_not_voted', 'remaining', 'electors', 'check'];
-        statFields.forEach(field => {
-            const mainInput = document.getElementById(`${type}_${field}`);
-            const fmInput = document.getElementById(`fm_${type}_${field}`);
-            const fmBox = document.getElementById(`fm_box_${type}_${field}`);
-            
-            if (mainInput && fmInput && fmBox) {
-                if (fmInput.classList.contains('modal-readonly')) {
-                    fmInput.value = mainInput.value;
-                }
-                
-                fmBox.style.backgroundColor = ''; fmBox.style.borderColor = '';
-                fmInput.style.backgroundColor = 'transparent'; fmInput.style.color = '';
-                
-                if (mainInput.classList.contains('warn-bg')) {
-                    fmBox.style.backgroundColor = '#fef08a'; fmBox.style.borderColor = '#ca8a04';
-                }
-                
-                if (field === 'check') {
-                    if (mainInput.classList.contains('match-true')) {
-                        fmInput.style.backgroundColor = 'rgb(37, 249, 44)'; fmInput.style.color = '#000';
-                    } else if (mainInput.classList.contains('match-false')) {
-                        fmInput.style.backgroundColor = 'rgb(247, 123, 138)'; fmInput.style.color = '#000';
-                    }
-                }
-            }
-        });
-    };
-
-    // === 方案 A「本票所雲端回傳結果查詢」核心邏輯 ===
-    window.openResultModal = function() {
-        const targetId = currentStationId || (stationIdInput ? stationIdInput.value.trim() : '');
-        if (!targetId || !/^\d{4}$/.test(targetId)) {
-            showToast('⚠️ 請先在左上角輸入正確的 4 碼票所編號，再查看結果！', 3500);
-            return;
-        }
-        currentResultStationId = targetId;
-        document.getElementById('rm-title').textContent = `📋 票所 ${targetId} 雲端回傳結果`;
-        document.getElementById('result-modal-overlay').style.display = 'flex';
-        sendAuditLog('查看雲端結果', `查詢票所 ${targetId} 雲端紀錄`, targetId);
-        fetchStationResult(targetId);
-    };
-
-    window.closeResultModal = function() {
-        document.getElementById('result-modal-overlay').style.display = 'none';
-    };
-
-    window.refreshStationResult = function() {
-        if (currentResultStationId) {
-            sendAuditLog('重新抓取雲端結果', `手動刷新票所 ${currentResultStationId}`, currentResultStationId);
-            fetchStationResult(currentResultStationId);
-        }
-    };
-
-    function renderStatusBadge(status) {
-        if (!status) {
-            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 border border-slate-300">尚未判定</span>`;
-        }
-        if (status.includes('紅')) {
-            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white shadow-sm">🔴 ${status}</span>`;
-        }
-        if (status.includes('黃')) {
-            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white shadow-sm">🟡 ${status}</span>`;
-        }
-        if (status.includes('一二聯')) {
-            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-700 text-white shadow-sm">🟢 ${status}</span>`;
-        }
-        if (status.includes('一聯')) {
-            return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white shadow-sm">🟢 ${status}</span>`;
-        }
-        return `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white shadow-sm">${status}</span>`;
-    }
-
-    function getVersionNumber(stId) {
-        const m = String(stId || '').match(/-(\d+)$/);
-        return m ? parseInt(m[1], 10) : 0;
-    }
-
-    function getCandLabel(typeName, idx, baseStationId) {
-        if (typeName === '公投') return idx === 0 ? '同意' : '不同意';
-        if (typeName === '市長') return `${idx + 1}.${candidateNamesMap.mayor[idx] || ''}`;
-        if (typeName === '區域議員') return `${idx + 1}.${candidateNamesMap.councilor[idx] || ''}`;
-        if (typeName === '平地原住民議員') return `${idx + 1}.${candidateNamesMap.flatland[idx] || ''}`;
-        if (typeName === '山地原住民議員') return `${idx + 1}.${candidateNamesMap.mountain[idx] || ''}`;
-        if (typeName === '里長') {
-            const vCands = (globalStationCache && globalStationCache[baseStationId]) ? globalStationCache[baseStationId].villageCandidates : [];
-            return vCands[idx] ? `${idx + 1}.${vCands[idx]}` : `${idx + 1}號`;
-        }
-        return `${idx + 1}號`;
-    }
-
-    async function fetchStationResult(stationId) {
-        const bodyEl = document.getElementById('rm-body');
-        const summaryEl = document.getElementById('rm-summary');
-        const timeEl = document.getElementById('rm-query-time');
-
-        summaryEl.textContent = `正在從雲端資料庫查詢票所 ${stationId} 的回傳紀錄...`;
-        bodyEl.innerHTML = `
-            <div class="py-12 flex flex-col items-center justify-center text-slate-500 gap-3">
-                <div class="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                <div class="font-bold text-base">連線 Google Sheet 資料庫中，請稍候...</div>
-            </div>
-        `;
-
-        try {
-            const res = await fetch(`${GAS_API_URL}?action=getStationResult&stationId=${encodeURIComponent(stationId)}`);
-            const json = await res.json();
-
-            const now = new Date();
-            timeEl.textContent = `查詢時間：${now.toLocaleTimeString('zh-TW', { hour12: false })}`;
-
-            if (json.status !== 'success') {
-                throw new Error(json.message || '查詢失敗');
-            }
-
-            const govList = json.data.govList || [];
-            const refList = json.data.refList || [];
-
-            // 依版本編號 (例如 1282、1282-1) 將同一次上傳的公職與公投整合在同一張卡片中
-            const versionMap = {};
-            const ensureBucket = (item) => {
-                const key = item.stationId;
-                if (!versionMap[key]) {
-                    versionMap[key] = {
-                        versionId: key,
-                        versionNum: getVersionNumber(key),
-                        timestamp: item.timestamp || '',
-                        gov: null,
-                        ref: null
-                    };
-                }
-                if (!versionMap[key].timestamp && item.timestamp) {
-                    versionMap[key].timestamp = item.timestamp;
-                }
-                return versionMap[key];
-            };
-
-            govList.forEach(item => { ensureBucket(item).gov = item; });
-            refList.forEach(item => { ensureBucket(item).ref = item; });
-
-            const versionGroups = Object.values(versionMap).sort((a, b) => {
-                if (b.versionNum !== a.versionNum) return b.versionNum - a.versionNum;
-                return (b.timestamp || '').localeCompare(a.timestamp || '');
-            });
-
-            if (versionGroups.length === 0) {
-                summaryEl.textContent = `票所 ${stationId} 目前查無有效回傳紀錄`;
-                bodyEl.innerHTML = `
-                    <div class="py-14 text-center bg-white rounded-xl border-2 border-dashed border-slate-300">
-                        <div class="text-4xl mb-3">📭</div>
-                        <div class="text-lg font-bold text-slate-700">雲端資料庫目前尚無票所 ${stationId} 的有效回傳資料</div>
-                        <div class="text-sm text-slate-500 mt-1">請確認是否已按下「傳送資料」，或點擊上方「🔄 重新抓取雲端」。</div>
-                    </div>
+                container.innerHTML = `
+                    <button type="button" onclick="openReportModal('${active.key}')"
+                        class="w-full text-left rounded-2xl border-3 border-emerald-500 bg-gradient-to-br from-emerald-50 via-white to-green-50 p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition cursor-pointer">
+                        <div class="flex items-center gap-2.5 mb-2">
+                            <span class="live-dot"></span>
+                            <span class="text-sm font-black text-emerald-700 tracking-wide">目前開放回報中</span>
+                            <span class="ml-auto text-xs font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                截止 ${shortWindowText(active.endTimeStr)}
+                            </span>
+                        </div>
+                        <div class="text-lg sm:text-xl font-black text-slate-900 pl-1">
+                            ${prefixTag}${active.label}
+                        </div>
+                        <div class="mt-3 w-full py-2.5 rounded-xl bg-emerald-600 text-white font-black text-center text-base shadow-sm flex items-center justify-center gap-2">
+                            <span>👉</span>
+                            <span>點此開始填報</span>
+                        </div>
+                    </button>
                 `;
                 return;
             }
 
-            summaryEl.innerHTML = `✅ 已從雲端查獲 <span class="text-purple-700 text-base">${versionGroups.length}</span> 筆有效回傳紀錄（最新在最上方，已自動排除作廢）`;
+            // 找出下一個即將開放的項目
+            const upcomingItems = mainItems
+                .filter(item => getItemState(item, nowMs) === 'upcoming')
+                .sort((a, b) => a.startMs - b.startMs);
 
-            const govOrder = ['市長', '區域議員', '平地原住民議員', '山地原住民議員', '里長'];
+            if (upcomingItems.length > 0) {
+                const next = upcomingItems[0];
+                container.innerHTML = `
+                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 text-center">
+                        <div class="flex items-center justify-center gap-2 text-slate-600 font-black text-base">
+                            <span>🔒</span>
+                            <span>目前非定時回報開放時段</span>
+                        </div>
+                        <div class="mt-2 text-sm font-bold text-slate-700">
+                            下一階段：<span class="text-blue-700">${next.label}</span>
+                        </div>
+                        <div class="mt-1 inline-block text-xs font-mono font-bold text-slate-600 bg-white border border-slate-300 px-3 py-1 rounded-full">
+                            將於 ${shortWindowText(next.startTimeStr)} 開放填報
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 text-center">
+                        <div class="flex items-center justify-center gap-2 text-slate-600 font-black text-base">
+                            <span>⏹️</span>
+                            <span>定時回報時段已全數結束</span>
+                        </div>
+                        <div class="mt-1 text-xs font-bold text-slate-500">
+                            請使用下方「報告表試算」或「速報員出發」功能
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderScheduleList(nowMs) {
+            const listEl = document.getElementById('schedule-list');
+            const badgeEl = document.getElementById('open-count-badge');
+            const mainItems = MAIN_LIST_KEYS.map(k => findScheduleByKey(k)).filter(Boolean);
+
+            let openCount = 0;
             let html = '';
 
-            versionGroups.forEach((group, groupIdx) => {
-                const isLatest = groupIdx === 0;
-                const uploadOrderLabel = group.versionNum === 0 ? '第 1 次上傳' : `第 ${group.versionNum + 1} 次上傳`;
+            mainItems.forEach(item => {
+                const state = getItemState(item, nowMs);
+                if (state === 'open') openCount++;
 
-                // 組合該版本的列資料（公職 + 公投）
-                let rowsHtml = '';
-
-                if (group.gov && group.gov.records) {
-                    const govStatusHtml = group.gov.status
-                        ? renderStatusBadge(group.gov.status)
-                        : `<span class="text-xs text-slate-400 font-bold">—</span>`;
-
-                    govOrder.forEach(typeName => {
-                        const rec = group.gov.records[typeName];
-                        if (!rec) return;
-                        rowsHtml += buildResultRowHtml(typeName, rec, govStatusHtml, stationId);
-                    });
-                }
-
-                if (group.ref && group.ref.records && group.ref.records['公投']) {
-                    const refStatusHtml = group.ref.status
-                        ? renderStatusBadge(group.ref.status)
-                        : `<span class="text-xs text-slate-400 font-bold">—</span>`;
-
-                    rowsHtml += buildResultRowHtml('公投', group.ref.records['公投'], refStatusHtml, stationId);
-                }
-
-                // 頂部燈號摘要（尚未判定前不顯示燈號，僅註記已上傳）
-                const govHeaderBadge = group.gov
-                    ? (group.gov.status ? renderStatusBadge(group.gov.status) : `<span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-300">已上傳（尚未判定燈號）</span>`)
-                    : `<span class="text-xs text-slate-400">無有效公職紀錄</span>`;
-
-                const refHeaderBadge = group.ref
-                    ? (group.ref.status ? renderStatusBadge(group.ref.status) : `<span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-300">已上傳（尚未判定燈號）</span>`)
-                    : `<span class="text-xs text-slate-400">無有效公投紀錄</span>`;
-
-                html += `
-                    <div class="bg-white rounded-xl border-2 ${isLatest ? 'border-purple-400 shadow-md' : 'border-slate-300 shadow-sm'} overflow-hidden">
-                        <div class="px-4 py-3 ${isLatest ? 'bg-purple-50' : 'bg-slate-100'} border-b border-slate-200 flex flex-wrap justify-between items-center gap-2">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="px-2.5 py-0.5 rounded-md font-black text-sm ${isLatest ? 'bg-purple-600 text-white' : 'bg-slate-600 text-white'}">${group.versionId}</span>
-                                <span class="font-bold text-slate-700 text-sm">${uploadOrderLabel}</span>
-                                ${isLatest ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">最新</span>' : ''}
-                                <span class="text-xs sm:text-sm font-mono text-slate-600 ml-1">🕒 ${group.timestamp || '無時間紀錄'}</span>
+                if (state === 'open') {
+                    html += `
+                        <button type="button" onclick="openReportModal('${item.key}')"
+                            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-400 text-left transition active:scale-[0.98]">
+                            <span class="live-dot"></span>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-black text-slate-900 text-sm sm:text-base truncate">${item.label}</div>
+                                <div class="text-[11px] font-mono font-bold text-emerald-700">
+                                    開放中（${shortWindowText(item.startTimeStr)} ～ ${shortWindowText(item.endTimeStr)}）
+                                </div>
                             </div>
-                            <div class="flex flex-wrap items-center gap-3 text-xs font-bold">
-                                <div class="flex items-center gap-1"><span class="text-slate-600">公職檢核：</span>${govHeaderBadge}</div>
-                                <div class="flex items-center gap-1"><span class="text-slate-600">公投檢核：</span>${refHeaderBadge}</div>
+                            <span class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-black whitespace-nowrap">填報 ▸</span>
+                        </button>
+                    `;
+                } else if (state === 'upcoming') {
+                    html += `
+                        <button type="button" onclick="showToast('🔒【${item.label}】尚未開放，將於 ${shortWindowText(item.startTimeStr)} 開放填報！')"
+                            class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-white border border-slate-200 text-left opacity-80 hover:opacity-100 transition">
+                            <span class="text-lg leading-none">🔒</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-slate-700 text-sm truncate">${item.label}</div>
+                                <div class="text-[11px] font-mono text-slate-500">
+                                    ${shortWindowText(item.startTimeStr)} 開放
+                                </div>
                             </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="result-table">
-                                <thead>
-                                    <tr>
-                                        <th>選舉種類</th>
-                                        <th style="min-width: 240px;">各候選人得票數</th>
-                                        <th>有效票</th>
-                                        <th>無效票</th>
-                                        <th>投票數</th>
-                                        <th>已領未投</th>
-                                        <th>發出票數</th>
-                                        <th>用餘票數</th>
-                                        <th>選舉人數</th>
-                                        <th>檢查值</th>
-                                        <th>檢核結果</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsHtml || '<tr><td colspan="11" class="py-4 text-slate-400">無明細資料</td></tr>'}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            });
-
-            bodyEl.innerHTML = html;
-
-        } catch (err) {
-            console.error('查詢失敗:', err);
-            summaryEl.textContent = `❌ 查詢票所 ${stationId} 失敗`;
-            bodyEl.innerHTML = `
-                <div class="py-10 text-center bg-red-50 rounded-xl border border-red-200 text-red-700 font-bold">
-                    <div class="text-3xl mb-2">⚠️</div>
-                    <div>無法讀取雲端資料：${err.message}</div>
-                    <div class="text-xs text-red-500 mt-2">請確認網路連線正常，且後端 GAS 已部署最新版本。</div>
-                </div>
-            `;
-        }
-    }
-
-    function buildResultRowHtml(typeName, rec, statusCellHtml, baseStationId) {
-        const cands = rec.candidates || [];
-        const s = rec.stats || {};
-
-        // 安全轉換數字（自動移除千分位逗號，避免破千票數比對異常）
-        const toNum = (v) => {
-            if (v === undefined || v === null) return 0;
-            const cleaned = String(v).replace(/,/g, '').trim();
-            if (cleaned === '') return 0;
-            const n = Number(cleaned);
-            return isNaN(n) ? 0 : n;
-        };
-
-        let candChips = '';
-        let candSum = 0;
-        cands.forEach((val, idx) => {
-            if (val !== undefined && val !== null && String(val).trim() !== '') {
-                candSum += toNum(val);
-                const label = getCandLabel(typeName, idx, baseStationId);
-                candChips += `<span class="inline-block bg-slate-100 border border-slate-300 rounded px-1.5 py-0.5 text-xs font-mono m-0.5"><span class="text-slate-500 font-sans">${label}</span> <strong class="text-slate-900">${val}</strong></span>`;
-            }
-        });
-
-        const validNum = toNum(s.valid);
-        const invalidNum = toNum(s.invalid);
-        const totalNum = toNum(s.total);
-        const issuedNotVotedNum = toNum(s.issuedNotVoted);
-        const issuedNum = toNum(s.issued);
-        const remainingNum = toNum(s.remaining);
-        const electorsNum = toNum(s.electors);
-        const checkNum = toNum(s.check);
-
-        const okClass = 'bg-green-100 text-green-900 font-black';
-        const errClass = 'bg-red-100 text-red-800 font-black';
-        const hasNumericRow = (checkNum > 0 || validNum > 0 || totalNum > 0 || issuedNum > 0 || electorsNum > 0 || candSum > 0);
-
-        // 1. 候選人得票數加總 vs 有效票
-        const validClass = hasNumericRow
-            ? (candSum === validNum ? okClass : errClass)
-            : 'font-bold text-blue-800';
-
-        // 2. 有效票 + 無效票 vs 投票數
-        const totalClass = hasNumericRow
-            ? ((validNum + invalidNum === totalNum) ? okClass : errClass)
-            : 'font-bold text-blue-800';
-
-        // 3. 投票數 + 已領未投 vs 發出票數
-        const issuedClass = hasNumericRow
-            ? ((totalNum + issuedNotVotedNum === issuedNum) ? okClass : errClass)
-            : 'font-bold text-blue-800';
-
-        // 4. 發出票數 + 用餘票數 = 選舉人數，且 選舉人數 = 檢查值
-        const checkClass = (checkNum > 0)
-            ? ((issuedNum + remainingNum === electorsNum && electorsNum === checkNum) ? okClass : errClass)
-            : (hasNumericRow ? errClass : 'font-bold');
-
-        return `
-            <tr class="hover:bg-slate-50">
-                <td class="font-bold text-slate-800 bg-slate-50 whitespace-nowrap">${typeName}</td>
-                <td class="text-left leading-relaxed">${candChips || '<span class="text-slate-400">—</span>'}</td>
-                <td class="font-mono ${validClass}">${s.valid ?? ''}</td>
-                <td class="font-mono">${s.invalid ?? ''}</td>
-                <td class="font-mono ${totalClass}">${s.total ?? ''}</td>
-                <td class="font-mono">${s.issuedNotVoted ?? ''}</td>
-                <td class="font-mono ${issuedClass}">${s.issued ?? ''}</td>
-                <td class="font-mono">${s.remaining ?? ''}</td>
-                <td class="font-mono font-bold text-blue-800">${s.electors ?? ''}</td>
-                <td class="font-mono ${checkClass}">${s.check ?? ''}</td>
-                <td class="whitespace-nowrap">${statusCellHtml}</td>
-            </tr>
-        `;
-    }
-
-    function showCustomAlert(msg) {
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed'; overlay.style.top = '0'; overlay.style.left = '0';
-        overlay.style.width = '100%'; overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-        overlay.style.zIndex = '10000'; overlay.style.display = 'flex';
-        overlay.style.justifyContent = 'center'; overlay.style.alignItems = 'center';
-        
-        const box = document.createElement('div');
-        box.style.backgroundColor = 'white'; box.style.padding = '24px';
-        box.style.borderRadius = '12px'; box.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
-        box.style.textAlign = 'center'; box.style.minWidth = '300px'; box.style.maxWidth = '80vw';
-        
-        const text = document.createElement('div');
-        text.innerHTML = msg.replace(/\n/g, '<br>'); 
-        text.style.fontWeight = 'bold';
-        text.style.color = '#dc2626'; text.style.marginBottom = '20px'; text.style.fontSize = '18px';
-        text.style.textAlign = 'left'; 
-        text.style.lineHeight = '1.6';
-        
-        const btn = document.createElement('button');
-        btn.textContent = '我知道了'; btn.style.padding = '8px 32px';
-        btn.style.backgroundColor = '#3b82f6'; btn.style.color = 'white';
-        btn.style.borderRadius = '6px'; btn.style.fontWeight = 'bold';
-        btn.style.cursor = 'pointer';
-        btn.onclick = () => document.body.removeChild(overlay);
-        
-        box.appendChild(text); box.appendChild(btn); overlay.appendChild(box);
-        document.body.appendChild(overlay);
-    }
-
-    function handleFileSelect(input, textId, clearBtnId) {
-        const textSpan = document.getElementById(textId);
-        const clearBtn = document.getElementById(clearBtnId);
-        if (input.files && input.files[0]) {
-            textSpan.textContent = input.files[0].name;
-            clearBtn.style.display = 'inline-block';
-        } else {
-            textSpan.textContent = '未選擇檔案';
-            clearBtn.style.display = 'none';
-        }
-    }
-
-    function clearFileInput(inputId, textId, clearBtnId) {
-        const input = document.getElementById(inputId);
-        if(input) input.value = '';
-        const textSpan = document.getElementById(textId);
-        if(textSpan) textSpan.textContent = '未選擇檔案';
-        const clearBtn = document.getElementById(clearBtnId);
-        if(clearBtn) clearBtn.style.display = 'none';
-    }
-
-    if(document.getElementById('btn-submit')) {
-        document.getElementById('btn-submit').addEventListener('click', async () => {
-            if (!currentStationId) { showToast('⚠️ 請先輸入並載入票所編號！'); return; }
-            
-            const fileGov = document.getElementById('upload-gov').files[0];
-            const fileRef = document.getElementById('upload-ref').files[0];
-            
-            let hasData = false;
-            let errorMessages = [];
-            let calcErrors = [];
-            let emptyErrors = []; 
-            const payloadData = {};
-            
-            const typeNames = { mayor: '市長', councilor: '區域議員', flatland: '平地原住民', mountain: '山地原住民', village: '里長', referendum: '公投' };
-            
-            ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => {
-                const checkEl = document.getElementById(`${type}_check`);
-                if (checkEl && !checkEl.classList.contains('locked-empty')) {
-                    hasData = true;
-                    const electors = Number(document.getElementById(`${type}_electors`).value || 0);
-                    const checkVal = Number(checkEl.value || 0);
-                    
-                    if (electors !== checkVal || checkVal === 0) { calcErrors.push(typeNames[type]); }
-                    
-                    let typeHasEmpty = false;
-                    document.querySelectorAll(`.${type}-cand:not(.locked-empty)`).forEach(input => {
-                        if (input.value.trim() === "") typeHasEmpty = true;
-                    });
-                    ['invalid', 'issued_not_voted', 'remaining'].forEach(statName => {
-                        let el = document.getElementById(`${type}_${statName}`);
-                        if (el && !el.classList.contains('locked-empty') && el.value.trim() === "") { typeHasEmpty = true; }
-                    });
-
-                    if (typeHasEmpty) { emptyErrors.push(typeNames[type]); }
-                    
-                    const data = {
-                        candidates: {},
-                        valid: document.getElementById(`${type}_valid`)?.value || "",
-                        invalid: document.getElementById(`${type}_invalid`)?.value || "",
-                        total: document.getElementById(`${type}_total`)?.value || "",
-                        issuedNotVoted: document.getElementById(`${type}_issued_not_voted`)?.value || "",
-                        issued: document.getElementById(`${type}_issued`)?.value || "",
-                        remaining: document.getElementById(`${type}_remaining`)?.value || "",
-                        electors: document.getElementById(`${type}_electors`)?.value || "",
-                        check: checkEl.value || ""
-                    };
-                    document.querySelectorAll(`.${type}-cand`).forEach((input, index) => {
-                        data.candidates[index + 1] = input.value;
-                    });
-                    payloadData[type] = data;
+                            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[11px] font-bold whitespace-nowrap">未開放</span>
+                        </button>
+                    `;
+                } else {
+                    html += `
+                        <button type="button" onclick="showToast('⏹️【${item.label}】已於 ${shortWindowText(item.endTimeStr)} 截止填報！')"
+                            class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-left opacity-65">
+                            <span class="text-base leading-none">⏹️</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-slate-500 text-sm line-through truncate">${item.label}</div>
+                                <div class="text-[11px] font-mono text-slate-400">
+                                    已於 ${shortWindowText(item.endTimeStr)} 截止
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-500 text-[11px] font-bold whitespace-nowrap">已截止</span>
+                        </button>
+                    `;
                 }
             });
 
-            if (fileGov && fileRef) {
-                if (fileGov.name === fileRef.name && fileGov.size === fileRef.size) {
-                    errorMessages.push("❌ 公職與公投不能上傳「同一張」報表圖檔！請分別拍攝上傳。");
-                }
+            listEl.innerHTML = html;
+            if (openCount > 0) {
+                badgeEl.textContent = `${openCount} 項開放中`;
+                badgeEl.className = 'text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+            } else {
+                badgeEl.textContent = '目前皆未開放';
+                badgeEl.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600';
             }
+        }
 
-            if (!fileGov) errorMessages.push("❌ 未上傳【公職報表圖檔】");
-            if (!fileRef) errorMessages.push("❌ 未上傳【公投報表圖檔】");
-            if (calcErrors.length > 0) errorMessages.push(`❌ 以下選票試算錯誤：\n   👉 ${calcErrors.join('、')}`);
-            if (emptyErrors.length > 0) errorMessages.push(`❌ 以下選票有「漏填」欄位 (沒有得票也必須填 0)：\n   👉 ${emptyErrors.join('、')}`);
-            if (!hasData) errorMessages.push("❌ 沒有可傳送的票所資料");
+        function renderCourierCard(nowMs) {
+            const courier = findScheduleByKey('courier');
+            const cardBtn = document.getElementById('btn-courier-card');
+            const pill = document.getElementById('courier-status-pill');
+            if (!courier || !cardBtn || !pill) return;
 
-            if (errorMessages.length > 0) {
-                showCustomAlert("【資料無法傳送】請修正以下問題：\n\n" + errorMessages.join("\n"));
+            const state = getItemState(courier, nowMs);
+            if (state === 'open') {
+                cardBtn.classList.remove('opacity-65', 'grayscale-[40%]');
+                pill.textContent = '🟢 開放回報';
+                pill.className = 'mt-1 text-[11px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full';
+            } else if (state === 'upcoming') {
+                cardBtn.classList.add('opacity-65', 'grayscale-[40%]');
+                pill.textContent = '🔒 尚未開放';
+                pill.className = 'mt-1 text-[11px] font-bold text-slate-600 bg-white/80 px-2 py-0.5 rounded-full';
+            } else {
+                cardBtn.classList.add('opacity-65', 'grayscale-[40%]');
+                pill.textContent = '⏹️ 已截止';
+                pill.className = 'mt-1 text-[11px] font-bold text-slate-500 bg-white/80 px-2 py-0.5 rounded-full';
+            }
+        }
+
+        function handleCourierClick() {
+            const courier = findScheduleByKey('courier');
+            if (!courier) return;
+            const state = getItemState(courier, getSyncedNowMs());
+            if (state === 'open') {
+                openReportModal('courier');
+            } else if (state === 'upcoming') {
+                showToast(`🔒【速報員出發】尚未開放，開放時間：${shortWindowText(courier.startTimeStr)}`);
+            } else {
+                showToast(`⏹️【速報員出發】已於 ${shortWindowText(courier.endTimeStr)} 截止！`);
+            }
+        }
+
+        // === 3. 黃底動態填報彈窗控制 ===
+        function openReportModal(itemKey) {
+            const item = findScheduleByKey(itemKey);
+            if (!item) return;
+
+            const state = getItemState(item, getSyncedNowMs());
+            if (state !== 'open') {
+                showToast(state === 'upcoming'
+                    ? `🔒 尚未開放（開放時間：${shortWindowText(item.startTimeStr)}）`
+                    : `⏹️ 已超過截止時間（截止時間：${shortWindowText(item.endTimeStr)}）`);
+                renderAllUI();
                 return;
             }
 
-            const txIdGov = currentStationId + '-G-' + Math.floor(1000 + Math.random() * 9000);
-            const txIdRef = currentStationId + '-R-' + Math.floor(1000 + Math.random() * 9000);
+            activeModalItem = item;
+            document.getElementById('modal-title').textContent = item.modalTitle || item.label;
 
-            const toBase64 = file => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
+            const stationInput = document.getElementById('modal-station-id');
+            const govInput = document.getElementById('modal-gov-count');
+            const refInput = document.getElementById('modal-ref-count');
+            const turnoutBox = document.getElementById('turnout-fields');
+            const submitBtn = document.getElementById('btn-modal-submit');
+            const resultLink = document.getElementById('btn-modal-result');
+            const feedbackEl = document.getElementById('modal-feedback');
 
-            const submitBtn = document.getElementById('btn-submit');
-            submitBtn.textContent = "傳送中(含圖檔)..."; submitBtn.disabled = true;
+            // 每次開啟皆重置表單（不記憶票所）
+            stationInput.value = '';
+            govInput.value = '';
+            refInput.value = '';
+            feedbackEl.classList.add('hidden');
+            submitBtn.disabled = false;
+            resultLink.href = RESULT_SHEET_URL;
 
-            (async () => {
-                try {
-                    const govBase64 = await toBase64(fileGov);
-                    const refBase64 = await toBase64(fileRef);
-                    const govExt = fileGov.name.split('.').pop();
-                    const refExt = fileRef.name.split('.').pop();
+            if (itemKey === 'setup') {
+                turnoutBox.classList.add('hidden');
+                turnoutBox.classList.remove('flex');
+                govInput.required = false;
+                refInput.required = false;
+                submitBtn.textContent = '場佈已完成';
+                submitBtn.className = 'px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition';
+                resultLink.textContent = '回報結果 >';
+                resultLink.classList.remove('hidden');
+            } else if (itemKey === 'courier') {
+                turnoutBox.classList.add('hidden');
+                turnoutBox.classList.remove('flex');
+                govInput.required = false;
+                refInput.required = false;
+                submitBtn.textContent = '出發';
+                submitBtn.className = 'w-48 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-lg shadow-md transition';
+                resultLink.classList.add('hidden');
+            } else {
+                // turnout_1 ~ turnout_4
+                turnoutBox.classList.remove('hidden');
+                turnoutBox.classList.add('flex');
+                govInput.required = true;
+                refInput.required = true;
+                submitBtn.textContent = '回報';
+                submitBtn.className = 'px-7 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition';
+                resultLink.textContent = '查看結果 >';
+                resultLink.classList.remove('hidden');
+            }
 
-                    const payload = { 
-                        stationId: currentStationId, 
-                        txIdGov: txIdGov,
-                        txIdRef: txIdRef, 
-                        timestamp: new Date().toLocaleString('zh-TW'), 
-                        data: payloadData,
-                        imageGov: { base64: govBase64, ext: govExt },
-                        imageRef: { base64: refBase64, ext: refExt }
-                    };
+            document.getElementById('report-modal-overlay').classList.add('open');
+            setTimeout(() => stationInput.focus(), 120);
+        }
 
-                    const res = await fetch(GAS_API_URL, { method: 'POST', mode: 'cors', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
-                    const data = await res.json();
-                    
-                    if (data.status === 'success') {
-                        if (data.message.includes('⚠️')) showCustomAlert(data.message);
-                        else showToast(data.message, 4000);
-                        
-                        const successText = document.getElementById('success-text');
-                        if(successText) {
-                            successText.classList.remove('opacity-0');
-                            successText.classList.add('opacity-100');
-                        }
-                        hasSubmittedCurrentDraft = true;
-                        saveDraftNow();
-                        sendAuditLog('傳送資料(成功)', `公職:${txIdGov} / 公投:${txIdRef}`, currentStationId);
-                    } else {
-                        showCustomAlert("❌ 傳送失敗：\n" + data.message);
-                        sendAuditLog('傳送資料(失敗)', data.message || '後端回傳失敗', currentStationId);
-                    }
-                } catch (err) {
-                    showCustomAlert(`❌ 網路連線失敗或圖檔處理異常：\n${err}`);
-                    sendAuditLog('傳送資料(連線異常)', String(err), currentStationId);
-                } finally {
-                    submitBtn.textContent = "傳送資料(含A3報表圖)"; 
-                    submitBtn.disabled = false;
-                }
-            })();
-        });
-    }
+        function closeReportModal() {
+            document.getElementById('report-modal-overlay').classList.remove('open');
+            activeModalItem = null;
+        }
 
-    if(document.getElementById('btn-lock')) {
-        document.getElementById('btn-lock').addEventListener('click', () => {
-            const tableWrapper = document.getElementById('table-wrapper');
-            tableWrapper.classList.toggle('locked');
-            const isLockedNow = tableWrapper.classList.contains('locked');
-            if (isLockedNow) { showToast('🔒 表格已鎖定，避免誤觸修改。'); } 
-            else { showToast('🔓 表格已解鎖，開放編輯。'); }
-            scheduleAutoSave();
-            sendAuditLog(isLockedNow ? '鎖定表格' : '解鎖表格', '', currentStationId);
-        });
-    }
+        function showModalFeedback(type, text) {
+            const el = document.getElementById('modal-feedback');
+            el.textContent = text;
+            el.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-800', 'border', 'border-emerald-400', 'bg-red-100', 'text-red-800', 'border-red-400');
+            if (type === 'success') {
+                el.classList.add('bg-emerald-100', 'text-emerald-800', 'border', 'border-emerald-400');
+            } else {
+                el.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-400');
+            }
+        }
 
-    if(document.getElementById('btn-clear-all')) {
-        document.getElementById('btn-clear-all').addEventListener('click', () => {
-            const tableWrapper = document.getElementById('table-wrapper');
-            if (tableWrapper.classList.contains('locked')) {
-                showToast('🔒 表格已鎖定，無法清除資料！請先解鎖。', 3000);
+        // === 4. 送出回報至 GAS 寫入「回報_總接收區」 ===
+        async function submitPortalReport(e) {
+            e.preventDefault();
+            if (!activeModalItem) return;
+
+            const stationStr = document.getElementById('modal-station-id').value.trim();
+            const stationNum = parseInt(stationStr, 10);
+            if (!/^\d{4}$/.test(stationStr) || stationNum < 1282 || stationNum > 1419) {
+                showModalFeedback('error', '⚠️ 請輸入有效的 4 碼票所編號（1282～1419）！');
+                document.getElementById('modal-station-id').focus();
                 return;
             }
 
-            const clearedStationId = currentStationId;
-            document.querySelectorAll('input.data-cell:not(.locked-empty), input.editable-stat:not(.locked-empty)').forEach(input => { input.value = ""; });
-            ['mayor', 'councilor', 'flatland', 'mountain', 'village', 'referendum'].forEach(type => { calculateTotals(type); });
-            clearDraftFromLocalStorage();
-            showToast('🗑️ 已清除所有輸入資料與本機暫存。');
-            sendAuditLog('清除全部', '清除畫面數值與本機暫存', clearedStationId);
-            
-            const successText = document.getElementById('success-text');
-            if(successText) {
-                successText.classList.add('opacity-0');
-                successText.classList.remove('opacity-100');
+            // 前端再檢查一次是否還在時段內
+            const state = getItemState(activeModalItem, getSyncedNowMs());
+            if (state !== 'open') {
+                showModalFeedback('error', '⚠️ 目前已非開放填報時段，無法送出！');
+                renderAllUI();
+                return;
             }
-            
-            clearFileInput('upload-gov', 'file-name-gov', 'clear-file-gov');
-            clearFileInput('upload-ref', 'file-name-ref', 'clear-file-ref');
+
+            const payload = {
+                action: 'submitPortalReport',
+                itemKey: activeModalItem.key,
+                stationId: stationStr
+            };
+
+            const isTurnout = activeModalItem.key.startsWith('turnout_');
+            if (isTurnout) {
+                const govStr = document.getElementById('modal-gov-count').value.trim();
+                const refStr = document.getElementById('modal-ref-count').value.trim();
+                if (!/^[1-9]\d*$/.test(govStr) || !/^[1-9]\d*$/.test(refStr)) {
+                    showModalFeedback('error', '⚠️ 公職與公投投票人數皆必須為大於 0 的「正整數」！');
+                    return;
+                }
+                payload.govCount = parseInt(govStr, 10);
+                payload.refCount = parseInt(refStr, 10);
+            }
+
+            const submitBtn = document.getElementById('btn-modal-submit');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '傳送中...';
+            document.getElementById('modal-feedback').classList.add('hidden');
+
+            try {
+                const res = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+
+                if (json.status === 'success') {
+                    showModalFeedback('success', json.message);
+                    showToast(json.message, 4000);
+                } else {
+                    showModalFeedback('error', '❌ ' + (json.message || '送出失敗'));
+                }
+            } catch (err) {
+                showModalFeedback('error', '❌ 網路連線異常，請確認訊號後再試！');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // === 5. 動態時鐘與自動時段切換 ===
+        function tickClock() {
+            const parts = formatTaipeiParts(getSyncedNowMs());
+            document.getElementById('live-date').textContent = parts.dateStr;
+            document.getElementById('live-clock').textContent = parts.timeStr;
+
+            // 每跨越整分鐘自動重算一次按鈕開關狀態，準點自動解鎖／鎖定
+            if (parts.minuteKey !== lastRenderMinuteKey) {
+                lastRenderMinuteKey = parts.minuteKey;
+                renderAllUI();
+            }
+        }
+
+        let toastTimer = null;
+        function showToast(msg, duration = 3200) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+        }
+
+        // 啟動初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            tickClock();
+            setInterval(tickClock, 1000);
+            fetchPortalConfig(false);
+
+            // 每 2 分鐘靜默同步一次「入口設定」，確保現場臨時調整時段能自動生效
+            setInterval(() => fetchPortalConfig(false), 120000);
         });
-    }
 
-    function getFallbackData() {
-        return {
-            "1282": { checkValues: { mayor: 1000, councilor: 1000, flatland: 0, mountain: 0, village: 100, referendum: 1000 }, villageCandidates: ["李珮忻", "徐庭崇"] },
-            "1285": { checkValues: { mayor: 1200, councilor: 1200, flatland: 10, mountain: 20, village: 100, referendum: 1200 }, villageCandidates: ["吳美玫"] }
-        };
-    }
-
-    const toast = document.getElementById('toast');
-    function showToast(msg, duration = 3000) { toast.textContent = msg; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), duration); }
-    
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('✅ ServiceWorker 註冊成功'))
-                .catch(err => console.log('❌ ServiceWorker 註冊失敗: ', err));
-        });
-    }
-
-</script>
+        // 註冊 PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('✅ Portal ServiceWorker 註冊成功'))
+                    .catch(err => console.log('❌ ServiceWorker 註冊失敗:', err));
+            });
+        }
+    </script>
 </body>
 </html>

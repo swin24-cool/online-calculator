@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
     <title>115年地方公職暨公投選舉 - 投開票所報告表</title>
     
     <!-- 💡 PWA 相關設定 -->
@@ -13,10 +13,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        /* 💡 終極防護第一層：擴大禁用範圍並加上最高權限 !important */
+        /* 💡 解除下拉重新整理封鎖（已有 localStorage 自動暫存保護，允許下拉 F5 更新 PWA） */
         html, body {
-            overscroll-behavior-y: none !important;
-            overscroll-behavior-x: none !important;
+            overscroll-behavior-y: auto;
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
@@ -29,9 +28,10 @@
             background-color: white;
             padding: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            /* 💡 解除外層 overflow-x: auto 限制並保留真實表寬，讓手機可雙指自由縮小至全表一覽 */
+            min-width: 1440px;
             max-width: 1800px;
             margin: 0 auto;
-            overflow-x: auto;
             transition: all 0.3s;
         }
         
@@ -46,7 +46,10 @@
             background-color: #fef08a; color: #dc2626; font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 14px;
         }
         
-        .table-wrapper { min-width: 1400px; max-height: 70vh; overflow: auto; }
+        .table-wrapper { min-width: 1400px; overflow: visible; }
+        @media (min-width: 1025px) {
+            .table-wrapper { max-height: 70vh; overflow: auto; }
+        }
         
         /* 唯讀鎖定模式設計 */
         .table-wrapper.locked input, .table-wrapper.locked button.modal-trigger-btn { pointer-events: none; background-color: #f3f4f6 !important; color: #9ca3af !important; border-color: #cbd5e1 !important; box-shadow: none !important; }
@@ -567,34 +570,7 @@
 <script>
     const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec'; 
 
-    // 💡 終極防護第二層：JS 強制攔截下拉重新整理行為 (相容 iOS Safari 與 LINE 內建瀏覽器)
-    let _lastTouchY = 0;
-    document.addEventListener('touchstart', function(e) {
-        if (e.touches.length > 0) _lastTouchY = e.touches[0].clientY;
-    }, { passive: false });
-
-    document.addEventListener('touchmove', function(e) {
-        if (e.touches.length === 0) return;
-        const currentY = e.touches[0].clientY;
-        const diffY = currentY - _lastTouchY;
-
-        if (window.scrollY <= 0 && diffY > 0) {
-            let el = e.target;
-            let canScrollInternal = false;
-            
-            while (el && el !== document.body && el !== document.documentElement) {
-                if (el.scrollHeight > el.clientHeight && el.scrollTop > 0) {
-                    canScrollInternal = true;
-                    break;
-                }
-                el = el.parentNode;
-            }
-            
-            if (!canScrollInternal) {
-                e.preventDefault();
-            }
-        }
-    }, { passive: false });
+    // 💡 已解除 touchmove 攔截器：開放手機原生下拉更新 (F5) 與雙指自由縮放手勢
 
     let globalStationCache = null; 
     let currentStationId = null;   
@@ -882,6 +858,10 @@
         if (document.visibilityState === 'hidden') saveDraftNow();
     });
     window.addEventListener('pagehide', () => {
+        saveDraftNow();
+    });
+    // 💡 下拉刷新 (F5) 瞬間再次搶存草稿，確保所有已填票數 100% 不遺失
+    window.addEventListener('beforeunload', () => {
         saveDraftNow();
     });
 

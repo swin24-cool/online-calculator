@@ -294,8 +294,8 @@
                         <span id="courier-status-pill" class="text-[11px] font-bold text-amber-900 bg-white/85 px-2 py-0.5 rounded-full whitespace-nowrap">讀取中</span>
                     </button>
 
-                    <!-- 右：一二聯進度 (外部開啟 1.2聯一覽表) -->
-                    <a href="https://docs.google.com/spreadsheets/d/1zt8-UXYpZaMbd8YLBYhM_d0ZABDOn2VVPAETTnVtaVA/edit?pli=1&gid=1093824658#gid=1093824658"
+                    <!-- 右：一二聯進度 (💡 已更新為指定新試算表之 /htmlview 極速純網頁檢視模式) -->
+                    <a href="https://docs.google.com/spreadsheets/d/1z0rjJ1kMWtbdkGvcMUlhCnPLFxTnUOc-R5aQX8ZIX8Y/htmlview?gid=1982241340#gid=1982241340"
                        target="_blank" rel="noopener noreferrer"
                        class="tool-card flex flex-col items-center justify-between rounded-2xl bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 py-2 px-1.5 sm:py-2.5 sm:px-2 shadow-sm text-center">
                         <span class="text-[13px] sm:text-sm font-black text-slate-800 leading-tight">一二聯進度</span>
@@ -440,7 +440,6 @@
 
         function shortWindowText(str) {
             if (!str) return '';
-            // "2026/11/28 09:00" -> "11/28 09:00"
             return str.replace(/^\d{4}\//, '');
         }
 
@@ -497,7 +496,6 @@
         function renderHeroButton(nowMs) {
             const container = document.getElementById('hero-action-section');
             const mainItems = MAIN_LIST_KEYS.map(k => findScheduleByKey(k)).filter(Boolean);
-
             const openItems = mainItems.filter(item => getItemState(item, nowMs) === 'open');
 
             if (openItems.length > 0) {
@@ -529,7 +527,6 @@
                 return;
             }
 
-            // 找出下一個即將開放的項目
             const upcomingItems = mainItems
                 .filter(item => getItemState(item, nowMs) === 'upcoming')
                 .sort((a, b) => a.startMs - b.startMs);
@@ -651,241 +648,6 @@
                 cardBtn.classList.add('opacity-65', 'grayscale-[40%]');
                 pill.textContent = '⏹️ 已截止';
                 pill.className = 'text-[11px] font-bold text-slate-500 bg-white/85 px-2 py-0.5 rounded-full whitespace-nowrap';
-            }
-        }
-
-        // === 2. 渲染首頁所有區塊（大按鈕 + 5 項清單 + 速報員狀態） ===
-        function renderAllUI() {
-            const nowMs = getSyncedNowMs();
-            renderHeroButton(nowMs);
-            renderScheduleList(nowMs);
-            renderCourierCard(nowMs);
-        }
-
-        function renderHeroButton(nowMs) {
-            const container = document.getElementById('hero-action-section');
-            const mainItems = MAIN_LIST_KEYS.map(k => findScheduleByKey(k)).filter(Boolean);
-
-            const openItems = mainItems.filter(item => getItemState(item, nowMs) === 'open');
-
-            if (openItems.length > 0) {
-                const active = openItems[0];
-                const idx = MAIN_LIST_KEYS.indexOf(active.key);
-                const prefixTag = active.key === 'setup'
-                    ? '【場佈階段】'
-                    : `【第 ${idx} 次】`;
-
-                container.innerHTML = `
-                    <button type="button" onclick="openReportModal('${active.key}')"
-                        class="w-full text-left rounded-2xl border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 via-white to-green-50 p-4 sm:p-5 shadow-md hover:shadow-lg active:scale-[0.98] transition cursor-pointer">
-                        <div class="flex items-center gap-2.5 mb-2">
-                            <span class="live-dot"></span>
-                            <span class="text-base font-black text-emerald-700 tracking-wide">目前開放回報中</span>
-                            <span class="ml-auto text-xs sm:text-sm font-mono font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                                截止 ${shortWindowText(active.endTimeStr)}
-                            </span>
-                        </div>
-                        <div class="text-xl sm:text-2xl font-black text-slate-900 pl-1">
-                            ${prefixTag}${active.label}
-                        </div>
-                        <div class="mt-3.5 w-full py-3 rounded-xl bg-emerald-600 text-white font-black text-center text-lg shadow-sm flex items-center justify-center gap-2">
-                            <span>👉</span>
-                            <span>點此開始填報</span>
-                        </div>
-                    </button>
-                `;
-                return;
-            }
-
-            // 找出下一個即將開放的項目
-            const upcomingItems = mainItems
-                .filter(item => getItemState(item, nowMs) === 'upcoming')
-                .sort((a, b) => a.startMs - b.startMs);
-
-            if (upcomingItems.length > 0) {
-                const next = upcomingItems[0];
-                container.innerHTML = `
-                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 sm:p-5 text-center">
-                        <div class="flex items-center justify-center gap-2 text-slate-700 font-black text-lg">
-                            <span>🔒</span>
-                            <span>目前非定時回報開放時段</span>
-                        </div>
-                        <div class="mt-2 text-base font-bold text-slate-700">
-                            下一階段：<span class="text-blue-700">${next.label}</span>
-                        </div>
-                        <div class="mt-2 inline-block text-sm font-mono font-bold text-slate-600 bg-white border border-slate-300 px-3.5 py-1 rounded-full">
-                            將於 ${shortWindowText(next.startTimeStr)} 開放填報
-                        </div>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <div class="w-full rounded-2xl border-2 border-slate-300 bg-slate-100 p-4 sm:p-5 text-center">
-                        <div class="flex items-center justify-center gap-2 text-slate-700 font-black text-lg">
-                            <span>⏹️</span>
-                            <span>定時回報時段已全數結束</span>
-                        </div>
-                        <div class="mt-1.5 text-sm font-bold text-slate-500">
-                            請使用下方「報告表試算」或「速報員出發」功能
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function renderScheduleList(nowMs) {
-            const listEl = document.getElementById('schedule-list');
-            const badgeEl = document.getElementById('open-count-badge');
-            const mainItems = MAIN_LIST_KEYS.map(k => findScheduleByKey(k)).filter(Boolean);
-
-            let openCount = 0;
-            let html = '';
-
-            mainItems.forEach(item => {
-                const state = getItemState(item, nowMs);
-                if (state === 'open') openCount++;
-
-                if (state === 'open') {
-                    html += `
-                        <button type="button" onclick="openReportModal('${item.key}')"
-                            class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-400 text-left transition active:scale-[0.98]">
-                            <span class="live-dot"></span>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-black text-slate-900 text-base truncate">${item.label}</div>
-                                <div class="text-xs font-mono font-bold text-emerald-700 mt-0.5">
-                                    開放中（${shortWindowText(item.startTimeStr)} ～ ${shortWindowText(item.endTimeStr)}）
-                                </div>
-                            </div>
-                            <span class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-sm font-black whitespace-nowrap">填報 ▸</span>
-                        </button>
-                    `;
-                } else if (state === 'upcoming') {
-                    html += `
-                        <button type="button" onclick="showToast('🔒【${item.label}】尚未開放，將於 ${shortWindowText(item.startTimeStr)} 開放填報！')"
-                            class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-white border border-slate-200 text-left opacity-85 hover:opacity-100 transition">
-                            <span class="text-xl leading-none">🔒</span>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-bold text-slate-800 text-base truncate">${item.label}</div>
-                                <div class="text-xs font-mono text-slate-500 mt-0.5">
-                                    ${shortWindowText(item.startTimeStr)} 開放
-                                </div>
-                            </div>
-                            <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-500 text-xs font-bold whitespace-nowrap">未開放</span>
-                        </button>
-                    `;
-                } else {
-                    html += `
-                        <button type="button" onclick="showToast('⏹️【${item.label}】已於 ${shortWindowText(item.endTimeStr)} 截止填報！')"
-                            class="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl bg-slate-100 border border-slate-200 text-left opacity-65">
-                            <span class="text-lg leading-none">⏹️</span>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-bold text-slate-500 text-base line-through truncate">${item.label}</div>
-                                <div class="text-xs font-mono text-slate-400 mt-0.5">
-                                    已於 ${shortWindowText(item.endTimeStr)} 截止
-                                </div>
-                            </div>
-                            <span class="px-2.5 py-1 rounded-md bg-slate-200 text-slate-500 text-xs font-bold whitespace-nowrap">已截止</span>
-                        </button>
-                    `;
-                }
-            });
-
-            listEl.innerHTML = html;
-            if (openCount > 0) {
-                badgeEl.textContent = `${openCount} 項開放中`;
-                badgeEl.className = 'text-xs sm:text-sm font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
-            } else {
-                badgeEl.textContent = '目前皆未開放';
-                badgeEl.className = 'text-xs sm:text-sm font-bold px-3 py-1 rounded-full bg-slate-200 text-slate-600';
-            }
-        }
-
-        function renderScheduleList(nowMs) {
-            const listEl = document.getElementById('schedule-list');
-            const badgeEl = document.getElementById('open-count-badge');
-            const mainItems = MAIN_LIST_KEYS.map(k => findScheduleByKey(k)).filter(Boolean);
-
-            let openCount = 0;
-            let html = '';
-
-            mainItems.forEach(item => {
-                const state = getItemState(item, nowMs);
-                if (state === 'open') openCount++;
-
-                if (state === 'open') {
-                    html += `
-                        <button type="button" onclick="openReportModal('${item.key}')"
-                            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-400 text-left transition active:scale-[0.98]">
-                            <span class="live-dot"></span>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-black text-slate-900 text-sm sm:text-base truncate">${item.label}</div>
-                                <div class="text-[11px] font-mono font-bold text-emerald-700">
-                                    開放中（${shortWindowText(item.startTimeStr)} ～ ${shortWindowText(item.endTimeStr)}）
-                                </div>
-                            </div>
-                            <span class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-black whitespace-nowrap">填報 ▸</span>
-                        </button>
-                    `;
-                } else if (state === 'upcoming') {
-                    html += `
-                        <button type="button" onclick="showToast('🔒【${item.label}】尚未開放，將於 ${shortWindowText(item.startTimeStr)} 開放填報！')"
-                            class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-white border border-slate-200 text-left opacity-80 hover:opacity-100 transition">
-                            <span class="text-lg leading-none">🔒</span>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-bold text-slate-700 text-sm truncate">${item.label}</div>
-                                <div class="text-[11px] font-mono text-slate-500">
-                                    ${shortWindowText(item.startTimeStr)} 開放
-                                </div>
-                            </div>
-                            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[11px] font-bold whitespace-nowrap">未開放</span>
-                        </button>
-                    `;
-                } else {
-                    html += `
-                        <button type="button" onclick="showToast('⏹️【${item.label}】已於 ${shortWindowText(item.endTimeStr)} 截止填報！')"
-                            class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-left opacity-65">
-                            <span class="text-base leading-none">⏹️</span>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-bold text-slate-500 text-sm line-through truncate">${item.label}</div>
-                                <div class="text-[11px] font-mono text-slate-400">
-                                    已於 ${shortWindowText(item.endTimeStr)} 截止
-                                </div>
-                            </div>
-                            <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-500 text-[11px] font-bold whitespace-nowrap">已截止</span>
-                        </button>
-                    `;
-                }
-            });
-
-            listEl.innerHTML = html;
-            if (openCount > 0) {
-                badgeEl.textContent = `${openCount} 項開放中`;
-                badgeEl.className = 'text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
-            } else {
-                badgeEl.textContent = '目前皆未開放';
-                badgeEl.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600';
-            }
-        }
-
-        function renderCourierCard(nowMs) {
-            const courier = findScheduleByKey('courier');
-            const cardBtn = document.getElementById('btn-courier-card');
-            const pill = document.getElementById('courier-status-pill');
-            if (!courier || !cardBtn || !pill) return;
-
-            const state = getItemState(courier, nowMs);
-            if (state === 'open') {
-                cardBtn.classList.remove('opacity-65', 'grayscale-[40%]');
-                pill.textContent = '🟢 開放回報';
-                pill.className = 'mt-1 text-[11px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full';
-            } else if (state === 'upcoming') {
-                cardBtn.classList.add('opacity-65', 'grayscale-[40%]');
-                pill.textContent = '🔒 尚未開放';
-                pill.className = 'mt-1 text-[11px] font-bold text-slate-600 bg-white/80 px-2 py-0.5 rounded-full';
-            } else {
-                cardBtn.classList.add('opacity-65', 'grayscale-[40%]');
-                pill.textContent = '⏹️ 已截止';
-                pill.className = 'mt-1 text-[11px] font-bold text-slate-500 bg-white/80 px-2 py-0.5 rounded-full';
             }
         }
 

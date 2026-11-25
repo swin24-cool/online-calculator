@@ -1,4 +1,4 @@
-const CACHE_NAME = 'election-portal-v3.4';
+const CACHE_NAME = 'election-portal-v3.6';
 const urlsToCache = [
   './',
   './index.html',

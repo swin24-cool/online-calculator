@@ -164,7 +164,7 @@
             transform: scale(0.96);
         }
 
-        /* 💡 站內滿版純網頁報表檢視框（徹底繞過 Android 選取 Google 帳號攔截，關閉即釋放記憶體） */
+        /* 💡 站內滿版純網頁報表檢視框（免選帳號、支援 25%~250% 自由縮放與雙指捏合、關閉即釋放記憶體） */
         .sheet-viewer-overlay {
             position: fixed;
             inset: 0;
@@ -183,9 +183,33 @@
             min-height: 0;
             width: 100%;
             position: relative;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden;
             background: #ffffff;
+        }
+        .sheet-viewer-body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        .sheet-pinch-shield {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: none;
+            touch-action: none;
+            background: rgba(15, 23, 42, 0.08);
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 14px;
+        }
+        .sheet-pinch-shield.active {
+            display: flex;
+        }
+        .zoom-range {
+            accent-color: #2563eb;
+            height: 6px;
         }
 
         /* Toast 提示 */
@@ -410,8 +434,8 @@
                         class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition">
                         送出回報
                     </button>
-                    <!-- 💡 上方 5 次回報專用：同採站內滿版純網頁 iframe 檢視，免選 Google 帳號秒開 -->
-                    <button type="button" id="btn-modal-result" onclick="openSheetViewer('report')"
+                    <!-- 💡 上方 5 次回報專用：改以站內滿版純網頁檢視 gid=565701336，同樣免選 Google 帳號且支援縮放 -->
+                    <button type="button" id="btn-modal-result" onclick="openSheetViewer('result')"
                         class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-base shadow-md transition inline-flex items-center gap-1">
                         查看結果 &gt;
                     </button>
@@ -420,7 +444,7 @@
         </div>
     </div>
 
-    <!-- ================= 站內滿版純網頁報表檢視視窗（免選帳號、關閉即釋放記憶體） ================= -->
+    <!-- ================= 站內滿版純網頁報表檢視視窗（免選帳號、支援自由縮放、關閉即釋放記憶體） ================= -->
     <div id="sheet-viewer-overlay" class="sheet-viewer-overlay">
         <div class="safe-top-header bg-gradient-to-r from-slate-800 to-blue-900 text-white px-3 flex items-center justify-between gap-2 shadow-md shrink-0">
             <h3 id="sheet-viewer-title" class="text-base sm:text-lg font-black truncate">📊 即時檢視</h3>
@@ -435,12 +459,41 @@
                 </button>
             </div>
         </div>
+
+        <!-- 自由縮放工具列（支援單手滑桿、微調鈕、預設比例與雙指捏合模式） -->
+        <div class="bg-slate-100 border-b border-slate-300 px-2.5 py-2 flex items-center gap-1.5 sm:gap-2 shrink-0 select-none">
+            <button type="button" onclick="stepSheetZoom(-10)" aria-label="縮小"
+                class="w-9 h-8 rounded-lg bg-white hover:bg-slate-200 active:scale-95 border border-slate-300 font-black text-slate-800 text-base flex items-center justify-center shrink-0 shadow-sm">
+                －
+            </button>
+            <input type="range" id="sheet-zoom-slider" min="25" max="250" step="5" value="65"
+                oninput="setSheetZoom(this.value)" class="zoom-range flex-1 min-w-0 cursor-pointer">
+            <button type="button" onclick="stepSheetZoom(10)" aria-label="放大"
+                class="w-9 h-8 rounded-lg bg-white hover:bg-slate-200 active:scale-95 border border-slate-300 font-black text-slate-800 text-base flex items-center justify-center shrink-0 shadow-sm">
+                ＋
+            </button>
+            <button type="button" id="btn-zoom-preset" onclick="cycleSheetZoomPreset()" title="點擊快速切換常用比例"
+                class="min-w-[54px] h-8 px-2 rounded-lg bg-blue-50 hover:bg-blue-100 active:scale-95 border border-blue-300 text-blue-800 font-mono font-black text-xs shrink-0 transition">
+                65%
+            </button>
+            <button type="button" id="btn-pinch-mode" onclick="togglePinchMode()"
+                class="h-8 px-2.5 rounded-lg bg-white hover:bg-amber-50 active:scale-95 border border-slate-300 text-slate-700 font-bold text-xs shrink-0 transition whitespace-nowrap">
+                🤏 雙指
+            </button>
+        </div>
+
         <div class="sheet-viewer-frame-wrap">
             <div id="sheet-viewer-loading" class="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-slate-50 text-slate-600 font-bold text-sm z-10">
                 <div class="w-9 h-9 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                 <span>正在直接開啟最新公開報表...</span>
             </div>
-            <div id="sheet-viewer-body" class="w-full h-full"></div>
+            <!-- 雙指捏合感應遮罩（平時關閉不影響單指滑動看表；啟動後兩指捏合放開即自動結束） -->
+            <div id="sheet-pinch-shield" class="sheet-pinch-shield">
+                <div class="px-4 py-2 rounded-full bg-slate-900/90 text-white text-xs font-bold shadow-lg border border-white/20">
+                    🤏 請用雙指捏合自由縮放（放開自動恢復滑動，或點一下退出）
+                </div>
+            </div>
+            <div id="sheet-viewer-body" class="sheet-viewer-body"></div>
         </div>
     </div>
 
@@ -470,6 +523,16 @@
         let lastRenderMinuteKey = '';
         let currentViewerBaseUrl = '';
         let viewerFallbackTimer = null;
+
+        // 報表檢視器縮放狀態
+        const STORAGE_SHEET_ZOOM_KEY = 'portal_sheet_zoom_pct_v1';
+        const ZOOM_PRESETS = [50, 75, 100, 140];
+        let currentSheetZoomPct = 65;
+        let activeSheetIframe = null;
+        let isPinchMode = false;
+        let pinchStartDist = 0;
+        let pinchStartZoom = 65;
+        let didPinchMove = false;
 
         function getSyncedNowMs() {
             return Date.now() + serverTimeOffsetMs;
@@ -867,7 +930,122 @@
             }
         }
 
-        // === 5. 站內滿版純網頁報表檢視視窗（繞過 Android 選取帳戶、關閉立即釋放記憶體） ===
+        // === 5. 站內滿版純網頁報表檢視視窗（繞過 Android 選取帳戶、支援自由縮放與雙指捏合） ===
+        function getDefaultSheetZoomPct() {
+            try {
+                const saved = parseInt(localStorage.getItem(STORAGE_SHEET_ZOOM_KEY), 10);
+                if (!isNaN(saved) && saved >= 25 && saved <= 250) return saved;
+            } catch (e) {}
+            return window.innerWidth < 640 ? 65 : 100;
+        }
+
+        function applySheetZoomToIframe() {
+            const slider = document.getElementById('sheet-zoom-slider');
+            const presetBtn = document.getElementById('btn-zoom-preset');
+            if (slider) slider.value = String(currentSheetZoomPct);
+            if (presetBtn) presetBtn.textContent = `${currentSheetZoomPct}%`;
+
+            if (activeSheetIframe) {
+                const scale = currentSheetZoomPct / 100;
+                const invPct = (100 / scale).toFixed(4);
+                activeSheetIframe.style.width = `${invPct}%`;
+                activeSheetIframe.style.height = `${invPct}%`;
+                activeSheetIframe.style.transform = `scale(${scale})`;
+                activeSheetIframe.style.transformOrigin = '0 0';
+            }
+        }
+
+        function setSheetZoom(val) {
+            const parsed = Math.round(Number(val));
+            if (isNaN(parsed)) return;
+            currentSheetZoomPct = Math.max(25, Math.min(250, parsed));
+            applySheetZoomToIframe();
+            try {
+                localStorage.setItem(STORAGE_SHEET_ZOOM_KEY, String(currentSheetZoomPct));
+            } catch (e) {}
+        }
+
+        function stepSheetZoom(delta) {
+            setSheetZoom(currentSheetZoomPct + delta);
+        }
+
+        function cycleSheetZoomPreset() {
+            const nextPreset = ZOOM_PRESETS.find(p => p > currentSheetZoomPct) || ZOOM_PRESETS[0];
+            setSheetZoom(nextPreset);
+            showToast(`🔍 縮放比例已切換至 ${nextPreset}%`, 1600);
+        }
+
+        function setPinchMode(enabled) {
+            isPinchMode = Boolean(enabled);
+            const shield = document.getElementById('sheet-pinch-shield');
+            const btn = document.getElementById('btn-pinch-mode');
+            if (shield) shield.classList.toggle('active', isPinchMode);
+            if (btn) {
+                if (isPinchMode) {
+                    btn.className = 'h-8 px-2.5 rounded-lg bg-amber-500 text-white border border-amber-600 font-black text-xs shrink-0 transition whitespace-nowrap shadow-sm';
+                    btn.textContent = '🤏 縮放中';
+                } else {
+                    btn.className = 'h-8 px-2.5 rounded-lg bg-white hover:bg-amber-50 active:scale-95 border border-slate-300 text-slate-700 font-bold text-xs shrink-0 transition whitespace-nowrap';
+                    btn.textContent = '🤏 雙指';
+                }
+            }
+        }
+
+        function togglePinchMode() {
+            setPinchMode(!isPinchMode);
+            if (isPinchMode) {
+                showToast('🤏 請用兩根手指捏合縮放，放開自動恢復滑動瀏覽', 2400);
+            }
+        }
+
+        function initPinchShieldEvents() {
+            const shield = document.getElementById('sheet-pinch-shield');
+            if (!shield) return;
+
+            const getTouchDist = (t1, t2) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+            shield.addEventListener('touchstart', (e) => {
+                if (!isPinchMode) return;
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    pinchStartDist = getTouchDist(e.touches[0], e.touches[1]);
+                    pinchStartZoom = currentSheetZoomPct;
+                    didPinchMove = true;
+                }
+            }, { passive: false });
+
+            shield.addEventListener('touchmove', (e) => {
+                if (!isPinchMode || e.touches.length !== 2 || pinchStartDist <= 0) return;
+                e.preventDefault();
+                const dist = getTouchDist(e.touches[0], e.touches[1]);
+                const nextZoom = Math.round((pinchStartZoom * (dist / pinchStartDist)) / 5) * 5;
+                setSheetZoom(nextZoom);
+            }, { passive: false });
+
+            shield.addEventListener('touchend', (e) => {
+                if (!isPinchMode) return;
+                if (didPinchMove && e.touches.length < 2) {
+                    didPinchMove = false;
+                    pinchStartDist = 0;
+                    setPinchMode(false);
+                    showToast(`✅ 已固定在 ${currentSheetZoomPct}%，可直接滑動檢視`, 1800);
+                }
+            });
+
+            shield.addEventListener('touchcancel', () => {
+                didPinchMove = false;
+                pinchStartDist = 0;
+                setPinchMode(false);
+            });
+
+            // 若誤觸開啟雙指模式，單點一下即可關閉
+            shield.addEventListener('click', () => {
+                if (isPinchMode && !didPinchMove) {
+                    setPinchMode(false);
+                }
+            });
+        }
+
         function mountSheetIframe(baseUrl) {
             const body = document.getElementById('sheet-viewer-body');
             const loading = document.getElementById('sheet-viewer-loading');
@@ -875,17 +1053,20 @@
 
             loading.classList.remove('hidden');
             body.innerHTML = '';
+            activeSheetIframe = null;
+            setPinchMode(false);
 
             if (viewerFallbackTimer) clearTimeout(viewerFallbackTimer);
 
             const iframe = document.createElement('iframe');
             iframe.src = `${baseUrl}&widget=true&headers=false&_t=${Date.now()}`;
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
             iframe.style.border = '0';
             iframe.style.display = 'block';
             iframe.style.backgroundColor = '#ffffff';
             iframe.setAttribute('loading', 'eager');
+
+            activeSheetIframe = iframe;
+            applySheetZoomToIframe();
 
             iframe.onload = () => {
                 loading.classList.add('hidden');
@@ -903,6 +1084,9 @@
         function openSheetViewer(mode) {
             const overlay = document.getElementById('sheet-viewer-overlay');
             const titleEl = document.getElementById('sheet-viewer-title');
+
+            currentSheetZoomPct = getDefaultSheetZoomPct();
+            applySheetZoomToIframe();
 
             if (mode === 'progress') {
                 titleEl.textContent = '📊 一二聯進度一覽表';
@@ -926,9 +1110,11 @@
             const overlay = document.getElementById('sheet-viewer-overlay');
             const body = document.getElementById('sheet-viewer-body');
             if (viewerFallbackTimer) clearTimeout(viewerFallbackTimer);
+            setPinchMode(false);
             if (overlay) overlay.classList.remove('open');
             // 關閉時立即移除 iframe，徹底釋放手機記憶體
             if (body) body.innerHTML = '';
+            activeSheetIframe = null;
             currentViewerBaseUrl = '';
         }
 
@@ -958,14 +1144,15 @@
         window.addEventListener('DOMContentLoaded', () => {
             tickClock();
             setInterval(tickClock, 1000);
+            initPinchShieldEvents();
             fetchPortalConfig(false);
 
             // 每 2 分鐘靜默同步一次「入口設定」，確保現場臨時調整時段能自動生效
             setInterval(() => fetchPortalConfig(false), 120000);
         });
 
-        // 註冊 PWA Service Worker
-        if ('serviceWorker' in navigator) {
+        // 註冊 PWA Service Worker（僅於正式 HTTPS 或本機伺服器環境註冊，避免預覽沙盒報錯）
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then(() => console.log('✅ Portal ServiceWorker 註冊成功'))

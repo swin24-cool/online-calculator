@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>115年選舉_萬華區計票中心</title>
 
     <!-- 💡 PWA 設定 -->
@@ -52,12 +52,15 @@
             }
         }
 
-        /* 電腦大螢幕 (>=1024px) 維持精緻居中卡片比例 */
-        @media (min-width: 1024px) {
+        /* 電腦、平板或 Canvas 預覽視窗 (>=600px 且高度足夠) 維持精緻居中手機卡片比例；實際手機 (<600px) 維持 100% 滿版 */
+        @media (min-width: 600px) and (min-height: 580px) {
+            body {
+                justify-content: center;
+                padding: 12px;
+            }
             .app-shell {
-                max-width: 560px;
-                height: min(860px, 94dvh);
-                min-height: 680px;
+                max-width: 500px;
+                height: min(840px, calc(100dvh - 24px));
                 border-radius: 1rem;
                 box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
                 border: 1px solid #e2e8f0;
@@ -161,6 +164,30 @@
             transform: scale(0.96);
         }
 
+        /* 💡 站內滿版純網頁報表檢視框（徹底繞過 Android 選取 Google 帳號攔截，關閉即釋放記憶體） */
+        .sheet-viewer-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100dvh;
+            background: #ffffff;
+            z-index: 10002;
+            display: none;
+            flex-direction: column;
+        }
+        .sheet-viewer-overlay.open {
+            display: flex;
+        }
+        .sheet-viewer-frame-wrap {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            position: relative;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            background: #ffffff;
+        }
+
         /* Toast 提示 */
         .toast-msg {
             position: fixed;
@@ -187,7 +214,7 @@
         }
     </style>
 </head>
-<body class="min-h-[100dvh] w-full flex flex-col items-center lg:justify-center lg:py-4 lg:px-4">
+<body class="min-h-[100dvh] w-full flex flex-col items-center">
 
     <!-- 主容器：手機自動精準撐滿 100dvh 一頁畫面；電腦大螢幕自動置中呈現卡片感 -->
     <div class="app-shell bg-white">
@@ -294,9 +321,8 @@
                         <span id="courier-status-pill" class="text-[11px] font-bold text-amber-900 bg-white/85 px-2 py-0.5 rounded-full whitespace-nowrap">讀取中</span>
                     </button>
 
-                    <!-- 右：一二聯進度 (💡 已更新為「發布到網路」/pubhtml 公開純網頁連結 gid=1982241340，免選 Google 帳號秒開) -->
-                    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTjH-iDVr1hiDVCwiUwPI7tWTTt4ap7wWxu3GAPv0BzrfdZuCsd6fmF3B2lA8lN_RpFkfLJdUgxeR4v/pubhtml?gid=1982241340&single=true"
-                       target="_blank" rel="noopener noreferrer"
+                    <!-- 右：一二聯進度 (💡 改為站內滿版純網頁 iframe 檢視，100% 繞過 Android 選取 Google 帳號攔截) -->
+                    <button type="button" onclick="openSheetViewer('progress')"
                        class="tool-card flex flex-col items-center justify-between rounded-2xl bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 py-2 px-1.5 sm:py-2.5 sm:px-2 shadow-sm text-center">
                         <span class="text-[13px] sm:text-sm font-black text-slate-800 leading-tight">一二聯進度</span>
                         <div class="tool-svg-wrap my-1 flex items-center justify-center">
@@ -314,8 +340,8 @@
                                 <path d="M59 60 L61.2 62.2 L65.5 57.8" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <span class="text-[11px] font-bold text-emerald-800 bg-white/85 px-2 py-0.5 rounded-full whitespace-nowrap">外部檢視 ↗</span>
-                    </a>
+                        <span class="text-[11px] font-bold text-emerald-800 bg-white/85 px-2 py-0.5 rounded-full whitespace-nowrap">即時檢視</span>
+                    </button>
 
                 </div>
             </section>
@@ -384,15 +410,37 @@
                         class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition">
                         送出回報
                     </button>
-                    <!-- 💡 上方 5 次回報專用：發布到網路 /pubhtml 連結 gid=565701336 -->
-                    <a id="btn-modal-result"
-                        href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTjH-iDVr1hiDVCwiUwPI7tWTTt4ap7wWxu3GAPv0BzrfdZuCsd6fmF3B2lA8lN_RpFkfLJdUgxeR4v/pubhtml?gid=565701336&single=true"
-                        target="_blank" rel="noopener noreferrer"
+                    <!-- 💡 上方 5 次回報專用：同採站內滿版純網頁 iframe 檢視，免選 Google 帳號秒開 -->
+                    <button type="button" id="btn-modal-result" onclick="openSheetViewer('report')"
                         class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-base shadow-md transition inline-flex items-center gap-1">
                         查看結果 &gt;
-                    </a>
+                    </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ================= 站內滿版純網頁報表檢視視窗（免選帳號、關閉即釋放記憶體） ================= -->
+    <div id="sheet-viewer-overlay" class="sheet-viewer-overlay">
+        <div class="safe-top-header bg-gradient-to-r from-slate-800 to-blue-900 text-white px-3 flex items-center justify-between gap-2 shadow-md shrink-0">
+            <h3 id="sheet-viewer-title" class="text-base sm:text-lg font-black truncate">📊 即時檢視</h3>
+            <div class="flex items-center gap-2 shrink-0">
+                <button type="button" onclick="reloadSheetViewer()"
+                    class="px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 text-xs sm:text-sm font-bold text-white border border-white/25 transition">
+                    🔄 重整
+                </button>
+                <button type="button" onclick="closeSheetViewer()"
+                    class="px-3.5 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 active:scale-95 text-xs sm:text-sm font-black text-white shadow-sm transition">
+                    ✖ 關閉
+                </button>
+            </div>
+        </div>
+        <div class="sheet-viewer-frame-wrap">
+            <div id="sheet-viewer-loading" class="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-slate-50 text-slate-600 font-bold text-sm z-10">
+                <div class="w-9 h-9 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <span>正在直接開啟最新公開報表...</span>
+            </div>
+            <div id="sheet-viewer-body" class="w-full h-full"></div>
         </div>
     </div>
 
@@ -403,6 +451,8 @@
         const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
         // 💡 上方 5 次回報彈窗專用結果頁（發布到網路 /pubhtml，gid=565701336）
         const RESULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjH-iDVr1hiDVCwiUwPI7tWTTt4ap7wWxu3GAPv0BzrfdZuCsd6fmF3B2lA8lN_RpFkfLJdUgxeR4v/pubhtml?gid=565701336&single=true';
+        // 💡 右下角「一二聯進度」專用結果頁（發布到網路 /pubhtml，gid=1982241340）
+        const PROGRESS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjH-iDVr1hiDVCwiUwPI7tWTTt4ap7wWxu3GAPv0BzrfdZuCsd6fmF3B2lA8lN_RpFkfLJdUgxeR4v/pubhtml?gid=1982241340&single=true';
 
         // 預設離線備援時段（首次連上雲端後將以 Google Sheet「入口設定」完全覆蓋）
         let portalSchedules = [
@@ -418,6 +468,8 @@
         let serverTimeOffsetMs = 0; // 伺服器時間 - 本機時間
         let activeModalItem = null;
         let lastRenderMinuteKey = '';
+        let currentViewerBaseUrl = '';
+        let viewerFallbackTimer = null;
 
         function getSyncedNowMs() {
             return Date.now() + serverTimeOffsetMs;
@@ -688,7 +740,7 @@
             const refInput = document.getElementById('modal-ref-count');
             const turnoutBox = document.getElementById('turnout-fields');
             const submitBtn = document.getElementById('btn-modal-submit');
-            const resultLink = document.getElementById('btn-modal-result');
+            const resultBtn = document.getElementById('btn-modal-result');
             const feedbackEl = document.getElementById('modal-feedback');
 
             // 每次開啟皆重置表單（不記憶票所）
@@ -697,7 +749,6 @@
             refInput.value = '';
             feedbackEl.classList.add('hidden');
             submitBtn.disabled = false;
-            resultLink.href = RESULT_SHEET_URL;
 
             if (itemKey === 'setup') {
                 turnoutBox.classList.add('hidden');
@@ -706,8 +757,8 @@
                 refInput.required = false;
                 submitBtn.textContent = '場佈已完成';
                 submitBtn.className = 'px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition';
-                resultLink.textContent = '回報結果 >';
-                resultLink.classList.remove('hidden');
+                resultBtn.textContent = '回報結果 >';
+                resultBtn.classList.remove('hidden');
             } else if (itemKey === 'courier') {
                 turnoutBox.classList.add('hidden');
                 turnoutBox.classList.remove('flex');
@@ -715,7 +766,7 @@
                 refInput.required = false;
                 submitBtn.textContent = '出發';
                 submitBtn.className = 'w-48 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-lg shadow-md transition';
-                resultLink.classList.add('hidden');
+                resultBtn.classList.add('hidden');
             } else {
                 // turnout_1 ~ turnout_4
                 turnoutBox.classList.remove('hidden');
@@ -724,8 +775,8 @@
                 refInput.required = true;
                 submitBtn.textContent = '回報';
                 submitBtn.className = 'px-7 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition';
-                resultLink.textContent = '查看結果 >';
-                resultLink.classList.remove('hidden');
+                resultBtn.textContent = '查看結果 >';
+                resultBtn.classList.remove('hidden');
             }
 
             document.getElementById('report-modal-overlay').classList.add('open');
@@ -816,7 +867,72 @@
             }
         }
 
-        // === 5. 動態時鐘與自動時段切換 ===
+        // === 5. 站內滿版純網頁報表檢視視窗（繞過 Android 選取帳戶、關閉立即釋放記憶體） ===
+        function mountSheetIframe(baseUrl) {
+            const body = document.getElementById('sheet-viewer-body');
+            const loading = document.getElementById('sheet-viewer-loading');
+            if (!body || !loading) return;
+
+            loading.classList.remove('hidden');
+            body.innerHTML = '';
+
+            if (viewerFallbackTimer) clearTimeout(viewerFallbackTimer);
+
+            const iframe = document.createElement('iframe');
+            iframe.src = `${baseUrl}&widget=true&headers=false&_t=${Date.now()}`;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = '0';
+            iframe.style.display = 'block';
+            iframe.style.backgroundColor = '#ffffff';
+            iframe.setAttribute('loading', 'eager');
+
+            iframe.onload = () => {
+                loading.classList.add('hidden');
+                if (viewerFallbackTimer) clearTimeout(viewerFallbackTimer);
+            };
+
+            // 防呆：避免部分行動網路緩慢導致讀取罩久未消失
+            viewerFallbackTimer = setTimeout(() => {
+                loading.classList.add('hidden');
+            }, 6000);
+
+            body.appendChild(iframe);
+        }
+
+        function openSheetViewer(mode) {
+            const overlay = document.getElementById('sheet-viewer-overlay');
+            const titleEl = document.getElementById('sheet-viewer-title');
+
+            if (mode === 'progress') {
+                titleEl.textContent = '📊 一二聯進度一覽表';
+                currentViewerBaseUrl = PROGRESS_SHEET_URL;
+            } else {
+                titleEl.textContent = '📋 票所回報結果一覽表';
+                currentViewerBaseUrl = RESULT_SHEET_URL;
+            }
+
+            overlay.classList.add('open');
+            mountSheetIframe(currentViewerBaseUrl);
+        }
+
+        function reloadSheetViewer() {
+            if (!currentViewerBaseUrl) return;
+            mountSheetIframe(currentViewerBaseUrl);
+            showToast('🔄 已重新抓取最新報表資料');
+        }
+
+        function closeSheetViewer() {
+            const overlay = document.getElementById('sheet-viewer-overlay');
+            const body = document.getElementById('sheet-viewer-body');
+            if (viewerFallbackTimer) clearTimeout(viewerFallbackTimer);
+            if (overlay) overlay.classList.remove('open');
+            // 關閉時立即移除 iframe，徹底釋放手機記憶體
+            if (body) body.innerHTML = '';
+            currentViewerBaseUrl = '';
+        }
+
+        // === 6. 動態時鐘與自動時段切換 ===
         function tickClock() {
             const parts = formatTaipeiParts(getSyncedNowMs());
             document.getElementById('live-date').textContent = parts.dateStr;

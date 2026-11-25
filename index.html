@@ -294,8 +294,8 @@
                         <span id="courier-status-pill" class="text-[11px] font-bold text-amber-900 bg-white/85 px-2 py-0.5 rounded-full whitespace-nowrap">讀取中</span>
                     </button>
 
-                    <!-- 右：一二聯進度 (💡 已更新為指定新試算表之 /htmlview 極速純網頁檢視模式) -->
-                    <a href="https://docs.google.com/spreadsheets/d/1z0rjJ1kMWtbdkGvcMUlhCnPLFxTnUOc-R5aQX8ZIX8Y/htmlview?gid=1982241340#gid=1982241340"
+                    <!-- 右：一二聯進度 (💡 已更新為「發布到網路」/pubhtml 公開純網頁連結 gid=1982241340，免選 Google 帳號秒開) -->
+                    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTjH-iDVr1hiDVCwiUwPI7tWTTt4ap7wWxu3GAPv0BzrfdZuCsd6fmF3B2lA8lN_RpFkfLJdUgxeR4v/pubhtml?gid=1982241340&single=true"
                        target="_blank" rel="noopener noreferrer"
                        class="tool-card flex flex-col items-center justify-between rounded-2xl bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-300 py-2 px-1.5 sm:py-2.5 sm:px-2 shadow-sm text-center">
                         <span class="text-[13px] sm:text-sm font-black text-slate-800 leading-tight">一二聯進度</span>
@@ -384,8 +384,9 @@
                         class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base shadow-md transition">
                         送出回報
                     </button>
+                    <!-- 💡 上方 5 次回報專用：發布到網路 /pubhtml 連結 gid=565701336 -->
                     <a id="btn-modal-result"
-                        href="https://docs.google.com/spreadsheets/d/1z0rjJ1kMWtbdkGvcMUlhCnPLFxTnUOc-R5aQX8ZIX8Y/htmlview?gid=1982241340#gid=1982241340"
+                        href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTjH-iDVr1hiDVCwiUwPI7tWTTt4ap7wWxu3GAPv0BzrfdZuCsd6fmF3B2lA8lN_RpFkfLJdUgxeR4v/pubhtml?gid=565701336&single=true"
                         target="_blank" rel="noopener noreferrer"
                         class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-base shadow-md transition inline-flex items-center gap-1">
                         查看結果 &gt;
@@ -400,7 +401,8 @@
     <script>
         // ⚠️ 與試算器共用同一支 GAS API 網址
         const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw7-9Axst2b44keFWFllxzuLWGJPuWoVOijT1-C79K-6AkqPqEwQ6iL02zzjqlalNwhuA/exec';
-        const RESULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1z0rjJ1kMWtbdkGvcMUlhCnPLFxTnUOc-R5aQX8ZIX8Y/htmlview?gid=1982241340#gid=1982241340';
+        // 💡 上方 5 次回報彈窗專用結果頁（發布到網路 /pubhtml，gid=565701336）
+        const RESULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjH-iDVr1hiDVCwiUwPI7tWTTt4ap7wWxu3GAPv0BzrfdZuCsd6fmF3B2lA8lN_RpFkfLJdUgxeR4v/pubhtml?gid=565701336&single=true';
 
         // 預設離線備援時段（首次連上雲端後將以 Google Sheet「入口設定」完全覆蓋）
         let portalSchedules = [

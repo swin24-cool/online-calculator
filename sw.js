@@ -1,4 +1,4 @@
-const CACHE_NAME = 'election-portal-v3.3';
+const CACHE_NAME = 'election-portal-v3.4';
 const urlsToCache = [
   './',
   './index.html',
@@ -16,7 +16,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// 2. 啟動階段：清空舊版快取（如 v2.0）
+// 2. 啟動階段：清空舊版快取
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {

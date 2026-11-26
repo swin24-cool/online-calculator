@@ -14,8 +14,11 @@
     
     <style>
         /* 💡 解除下拉重新整理封鎖（已有 localStorage 自動暫存保護，允許下拉 F5 更新 PWA） */
+        /* 💡 關閉 Android Chrome 表格文字自動放大 (Font Boosting)，避免大字體擠壓右側欄位 */
         html, body {
             overscroll-behavior-y: auto;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', '微軟正黑體', sans-serif;
@@ -26,26 +29,19 @@
         }
         .report-container {
             background-color: white;
-            padding: 20px;
+            padding: 16px 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            /* 💡 解除外層 overflow-x: auto 限制並保留真實表寬，讓手機可雙指自由縮小至全表一覽 */
-            min-width: 1440px;
-            max-width: 1800px;
+            /* 💡 緊貼表格真實精緻寬度：不隨大螢幕盲目撐寬，也兼顧大字體裝置不擠扁 */
+            width: fit-content;
             margin: 0 auto;
             transition: all 0.3s;
-        }
-        /* 💡 手機 6 欄精簡模式：大幅縮減表寬，讓候選人與右側檢查值紅綠燈更容易同屏檢視 */
-        .report-container.compact-6col {
-            min-width: 1040px;
-            max-width: 1280px;
         }
         
         .station-input-area {
             display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
-            min-width: 1400px; 
-        }
-        .report-container.compact-6col .station-input-area {
-            min-width: 1000px;
+            /* 💡 width: 0 + min-width: 100% 讓工具列自動貼齊表格寬度並換行，絕不把表格往右撐胖 */
+            width: 0;
+            min-width: 100%;
         }
         .station-input {
             border: 2px solid #94a3b8; border-radius: 4px; padding: 4px 8px; font-size: 16px; width: 100px;
@@ -54,33 +50,73 @@
             background-color: #fef08a; color: #dc2626; font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 14px;
         }
         
-        .table-wrapper { min-width: 1400px; overflow: visible; }
-        .report-container.compact-6col .table-wrapper { min-width: 1000px; }
+        .table-wrapper { width: fit-content; overflow: visible; }
         @media (min-width: 1025px) {
-            .table-wrapper { max-height: 70vh; overflow: auto; }
+            .report-container { max-width: 98vw; }
+            .table-wrapper { max-width: 100%; max-height: 70vh; overflow: auto; }
         }
         
         /* 唯讀鎖定模式設計 */
         .table-wrapper.locked input, .table-wrapper.locked button.modal-trigger-btn { pointer-events: none; background-color: #f3f4f6 !important; color: #9ca3af !important; border-color: #cbd5e1 !important; box-shadow: none !important; }
         .table-wrapper.locked .check-val { background-color: #f3f4f6 !important; color: #9ca3af !important; }
 
-        /* 原住民無選票時的徹底鎖定設計 */
-        .locked-empty { background-color: #e2e8f0 !important; pointer-events: none !important; color: transparent !important; border-color: transparent !important; }
-        button.modal-trigger-btn.locked-empty { pointer-events: none !important; background-color: #e2e8f0 !important; color: #9ca3af !important; border-color: transparent !important; box-shadow: none !important; }
+        /* 原住民等「無該種選票」時的整列灰色停用設計（所有欄位與空白格皆呈現灰色且無輸入框） */
+        tr.row-disabled td,
+        tr.row-disabled td.empty-cell,
+        tr.row-disabled td.candidate-cell,
+        tr.row-disabled td.stat-col,
+        tr.row-disabled td.row-header {
+            background-color: #e2e8f0 !important;
+            color: #94a3b8 !important;
+        }
+        tr.row-disabled .cand-name,
+        tr.row-disabled .cand-number {
+            color: #94a3b8 !important;
+        }
+        .locked-empty {
+            background-color: transparent !important;
+            pointer-events: none !important;
+            color: transparent !important;
+            border-color: transparent !important;
+        }
+        button.modal-trigger-btn.locked-empty {
+            pointer-events: none !important;
+            background-color: #cbd5e1 !important;
+            color: #64748b !important;
+            border-color: #94a3b8 !important;
+            box-shadow: none !important;
+        }
 
         thead th { position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; text-align: center; }
+        table { width: auto; border-collapse: collapse; text-align: center; }
         th, td { border: 1px solid #333; padding: 4px; font-size: 14px; }
         th { background-color: #f9fafb; font-weight: bold; }
         
-        /* ==== 候選人欄位排版優化 ==== */
-        .candidate-cell { min-width: 70px; height: 38px; vertical-align: middle; text-align: center; white-space: nowrap; }
-        .cand-number { display: inline-block; font-size: 13px; font-weight: normal; color: #6b7280; margin-right: 4px; vertical-align: middle; }
-        .cand-name { display: inline-block; font-size: 16px; font-weight: 700; line-height: 1; vertical-align: middle; }
+        /* ==== 左側選舉種類與候選人欄位（鎖定精緻寬度，絕不隨頁面變寬被拉胖） ==== */
+        .type-col { min-width: 90px; width: 90px; }
+        .cand-col { min-width: 82px; width: 84px; }
+        .candidate-cell { min-width: 82px; width: 84px; height: 38px; vertical-align: middle; text-align: center; white-space: nowrap; }
+        .cand-number { display: inline-block; font-size: 13px; font-weight: normal; color: #6b7280; margin-right: 3px; vertical-align: middle; }
+        .cand-name { display: inline-block; font-size: 15px; font-weight: 700; line-height: 1; vertical-align: middle; }
+
+        /* 💡 右側 8 個統計與檢查值欄位：鎖定精緻最小寬度，維持緊湊全貌又不被 Android 大字體壓扁 */
+        .stat-col {
+            min-width: 66px;
+            width: 68px;
+        }
+        th.stat-col {
+            white-space: nowrap;
+            line-height: 1.25;
+        }
+        td.stat-col input {
+            min-width: 56px;
+            padding-left: 2px;
+            padding-right: 4px;
+        }
         
         /* ==== 填寫欄位視覺升級 ==== */
         input[type="text"][inputmode="numeric"], input[type="text"][inputmode="none"] {
-            width: 100%; height: 100%; min-height: 36px; box-sizing: border-box; text-align: right;
+            width: 100%; min-width: 0; height: 100%; min-height: 36px; box-sizing: border-box; text-align: right;
             border: 1px solid #94a3b8;
             background-color: #ffffff;
             border-radius: 6px;
@@ -91,7 +127,8 @@
             outline: none; border: 2px solid #ef4444 !important; background-color: #fef2f2 !important;
         }
         
-        .stats-input { color: #1e3a8a; font-size: 20px; cursor: not-allowed; pointer-events: none !important; }
+        /* 自動加總欄位（有效票數、投票數、發出票數、選舉人數、檢查值）：隱藏輸入框線與白底 */
+        .stats-input { color: #1e3a8a; font-size: 18px; cursor: not-allowed; pointer-events: none !important; }
         input.stats-input[readonly] { background-color: transparent !important; border: 1px solid transparent !important; }
         input.stats-input[readonly]:focus { outline: none !important; border: 1px solid transparent !important; background-color: transparent !important; }
 
@@ -102,8 +139,12 @@
 
         .empty-cell { background-color: #fdfdfd; }
         
-        .action-buttons-container { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc; min-width: 1400px; }
-        .report-container.compact-6col .action-buttons-container { min-width: 1000px; }
+        .action-buttons-container {
+            display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;
+            margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc;
+            width: 0;
+            min-width: 100%;
+        }
         .report-container.compact-6col .right-action-group { gap: 14px !important; }
         .action-btn { padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #333; transition: transform 0.1s; }
         .action-btn:active { transform: scale(0.95); }
@@ -184,7 +225,7 @@
             display: flex; align-items: center; justify-content: center; user-select: none; 
             box-shadow: 0 4px 0 #a16207; -webkit-tap-highlight-color: transparent; transition: transform 0.1s, box-shadow 0.1s;
         }
-        .vk-action-btn { font-size: 18px; }
+        .vk-action-btn { font-size: 15px; white-space: nowrap; }
         .vk-btn:active, .vk-action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #a16207; }
         .large-btn { height: 60px !important; font-size: 26px !important; }
         .large-action-btn { font-size: 22px !important; }
@@ -563,16 +604,16 @@
 
         thead.innerHTML = `
             <tr>
-                <th colspan="2" class="w-16">開票結果<br>選舉種類</th>
+                <th colspan="2" class="type-col whitespace-nowrap">開票結果<br>選舉種類</th>
                 <th colspan="${colsPerRow}">各 候 選 人 得 票 數</th>
-                <th class="w-20 text-blue-800">有效票數</th>
-                <th class="w-20">無效票數</th>
-                <th class="w-20 text-blue-800">投票數</th>
-                <th class="w-20">已領<br>未投</th>
-                <th class="w-20 text-blue-800">發出票數</th>
-                <th class="w-20">用餘票數</th>
-                <th class="w-20 text-blue-800">選舉人數</th>
-                <th class="w-20 text-green-700">檢查值</th>
+                <th class="stat-col text-blue-800">有效<br>票數</th>
+                <th class="stat-col">無效<br>票數</th>
+                <th class="stat-col text-blue-800">投票數</th>
+                <th class="stat-col">已領<br>未投</th>
+                <th class="stat-col text-blue-800">發出<br>票數</th>
+                <th class="stat-col">用餘<br>票數</th>
+                <th class="stat-col text-blue-800">選舉<br>人數</th>
+                <th class="stat-col text-green-700">檢查值</th>
             </tr>
         `;
 
@@ -601,11 +642,11 @@
             const totalRowSpan = rowsNeeded * 2;
 
             for (let r = 0; r < rowsNeeded; r++) {
-                // 名稱列
-                bodyHtml += '<tr>';
+                // 名稱列（加上 data-election-type 方便無該種選票時整列灰化）
+                bodyHtml += `<tr data-election-type="${sec.key}">`;
                 if (r === 0) {
                     bodyHtml += `
-                        <td colspan="2" rowspan="${totalRowSpan}" class="row-header" style="vertical-align: middle; padding: 4px;">
+                        <td colspan="2" rowspan="${totalRowSpan}" class="row-header type-col" style="vertical-align: middle; padding: 4px;">
                             <button type="button" id="btn-modal-${sec.key}" onclick="openFocusModal('${sec.key}')" class="modal-trigger-btn bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-400 rounded-lg ${sec.btnCls} py-2 shadow-sm transition active:scale-95 flex items-center justify-center w-full h-full font-bold whitespace-nowrap">
                                 ${sec.label}
                             </button>
@@ -618,34 +659,34 @@
                     if (idx < sec.cands.length) {
                         const nameCls = sec.isPlaceholder ? 'cand-name text-gray-400' : `cand-name ${sec.nameExtraCls || ''}`;
                         const numHtml = sec.showNum ? `<div class="cand-number">${idx + 1}</div>` : '';
-                        bodyHtml += `<td class="candidate-cell">${numHtml}<div class="${nameCls}">${sec.cands[idx]}</div></td>`;
+                        bodyHtml += `<td class="candidate-cell cand-col">${numHtml}<div class="${nameCls}">${sec.cands[idx]}</div></td>`;
                     } else {
-                        bodyHtml += `<td class="empty-cell"></td>`;
+                        bodyHtml += `<td class="empty-cell cand-col"></td>`;
                     }
                 }
 
                 if (r === 0) {
                     bodyHtml += `
-                        <td rowspan="${totalRowSpan}"><input type="text" inputmode="numeric" id="${sec.key}_valid" class="stats-input" readonly></td>
-                        <td rowspan="${totalRowSpan}"><input type="text" ${editableAttr} id="${sec.key}_invalid" class="${sec.key}-input editable-stat"></td>
-                        <td rowspan="${totalRowSpan}"><input type="text" inputmode="numeric" id="${sec.key}_total" class="stats-input" readonly></td>
-                        <td rowspan="${totalRowSpan}"><input type="text" ${editableAttr} id="${sec.key}_issued_not_voted" class="${sec.key}-input editable-stat"></td>
-                        <td rowspan="${totalRowSpan}"><input type="text" inputmode="numeric" id="${sec.key}_issued" class="stats-input" readonly></td>
-                        <td rowspan="${totalRowSpan}"><input type="text" ${editableAttr} id="${sec.key}_remaining" class="${sec.key}-input editable-stat"></td>
-                        <td rowspan="${totalRowSpan}"><input type="text" inputmode="numeric" id="${sec.key}_electors" class="stats-input" readonly></td>
-                        <td rowspan="${totalRowSpan}"><input type="text" inputmode="numeric" id="${sec.key}_check" class="stats-input font-bold check-val" readonly></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_valid" class="stats-input" readonly></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" ${editableAttr} id="${sec.key}_invalid" class="${sec.key}-input editable-stat"></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_total" class="stats-input" readonly></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" ${editableAttr} id="${sec.key}_issued_not_voted" class="${sec.key}-input editable-stat"></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_issued" class="stats-input" readonly></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" ${editableAttr} id="${sec.key}_remaining" class="${sec.key}-input editable-stat"></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_electors" class="stats-input" readonly></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_check" class="stats-input font-bold check-val" readonly></td>
                     `;
                 }
                 bodyHtml += '</tr>';
 
-                // 輸入列
-                bodyHtml += '<tr>';
+                // 輸入列（加上 data-election-type 方便無該種選票時整列灰化）
+                bodyHtml += `<tr data-election-type="${sec.key}">`;
                 for (let c = 0; c < colsPerRow; c++) {
                     const idx = r * colsPerRow + c;
                     if (idx < sec.cands.length) {
-                        bodyHtml += `<td><input type="text" ${editableAttr} class="${sec.key}-input ${sec.key}-cand data-cell" id="cand_${sec.key}_${idx}"></td>`;
+                        bodyHtml += `<td class="cand-col"><input type="text" size="4" ${editableAttr} class="${sec.key}-input ${sec.key}-cand data-cell" id="cand_${sec.key}_${idx}"></td>`;
                     } else {
-                        bodyHtml += `<td class="empty-cell"></td>`;
+                        bodyHtml += `<td class="empty-cell cand-col"></td>`;
                     }
                 }
                 bodyHtml += '</tr>';
@@ -950,8 +991,10 @@
         types.forEach(type => {
             const checkEl = document.getElementById(`${type}_check`);
             const val = data.checkValues[type];
+            const typeRows = document.querySelectorAll(`tr[data-election-type="${type}"]`);
             
             if (!val || Number(val) === 0) {
+                typeRows.forEach(tr => tr.classList.add('row-disabled'));
                 if (checkEl) { checkEl.value = ""; checkEl.classList.add('locked-empty'); }
                 document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
                     if (el.tagName === 'INPUT') { el.value = ""; el.classList.add('locked-empty'); el.setAttribute('tabindex', '-1'); }
@@ -959,6 +1002,7 @@
                 const btn = document.getElementById(`btn-modal-${type}`);
                 if (btn) btn.classList.add('locked-empty');
             } else {
+                typeRows.forEach(tr => tr.classList.remove('row-disabled'));
                 if (checkEl) { checkEl.value = val; checkEl.classList.remove('locked-empty'); }
                 document.querySelectorAll(`.${type}-input, [id^="${type}_"]`).forEach(el => {
                     if (el.tagName === 'INPUT') { el.classList.remove('locked-empty'); el.removeAttribute('tabindex'); }
@@ -987,6 +1031,9 @@
     }
 
     function calculateTotals(prefix) {
+        const checkInput = document.getElementById(`${prefix}_check`);
+        if (checkInput && checkInput.classList.contains('locked-empty')) return;
+
         let validVotes = 0;
         const candInputs = document.querySelectorAll(`.${prefix}-cand:not(.locked-empty)`);
         candInputs.forEach(input => { validVotes += Number(input.value) || 0; });
@@ -1004,7 +1051,6 @@
         const electors = issuedVotes + remainingVotes;
         document.getElementById(`${prefix}_electors`).value = electors;
 
-        const checkInput = document.getElementById(`${prefix}_check`);
         if (checkInput && !checkInput.classList.contains('locked-empty')) {
             const checkValue = Number(checkInput.value);
             

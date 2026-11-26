@@ -70,13 +70,39 @@
         .void-row { background-color: #fef08a !important; text-decoration: line-through; text-decoration-color: #dc2626; text-decoration-thickness: 2px; }
         .void-row .font-mono { text-decoration: line-through; text-decoration-color: #dc2626; text-decoration-thickness: 2px; }
 
-        /* 列印專用隱藏區塊 */
+        /* 列印專用隱藏區塊（改由 CSS 控制，避免行內 style="display:none" 蓋過 @media print） */
+        #print-area { display: none; }
+
         @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-            #print-area img { max-width: 100%; max-height: 100vh; object-fit: contain; }
             @page { size: A3 landscape; margin: 0; }
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+            }
+            #login-overlay, #app-wrapper, #toast { display: none !important; }
+            #print-area {
+                display: flex !important;
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                justify-content: center !important;
+                align-items: center !important;
+                background: #ffffff !important;
+                z-index: 99999 !important;
+            }
+            #print-area img {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+                display: block !important;
+            }
         }
 
         /* 提示框 */
@@ -232,7 +258,8 @@
     </div>
 </div>
 
-<div id="print-area" style="display:none;"><img id="print-img" src=""></div>
+<!-- 💡 移除行內 style="display:none;"，改交給上方 CSS 控制，讓 @media print 能正確顯示圖檔 -->
+<div id="print-area"><img id="print-img" src="" alt="A3報表列印預覽"></div>
 <div class="toast-msg" id="toast"></div>
 
 <script>
@@ -625,6 +652,7 @@
 
     async function loadCanvasImage(stationId, type) {
         imgElement.style.display = 'none';
+        loadingMsg.textContent = "載入影像中，請稍候...";
         loadingMsg.classList.remove('hidden');
         resetZoom();
 
@@ -696,10 +724,69 @@
         }
     });
 
+    // 💡 若使用者於畫面有使用「旋轉微調」，同步將轉正後的完整解析度圖檔輸出供列印
+    function getPrintableImageDataUrl() {
+        const normalizedAngle = ((imgAngle % 360) + 360) % 360;
+        if (normalizedAngle === 0) {
+            return imgElement.src;
+        }
+        try {
+            const rad = normalizedAngle * Math.PI / 180;
+            const w = imgElement.naturalWidth;
+            const h = imgElement.naturalHeight;
+            const sin = Math.abs(Math.sin(rad));
+            const cos = Math.abs(Math.cos(rad));
+            const outW = Math.ceil(w * cos + h * sin);
+            const outH = Math.ceil(w * sin + h * cos);
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = outW;
+            offCanvas.height = outH;
+            const ctx = offCanvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, outW, outH);
+            ctx.translate(outW / 2, outH / 2);
+            ctx.rotate(rad);
+            ctx.drawImage(imgElement, -w / 2, -h / 2);
+            return offCanvas.toDataURL('image/jpeg', 0.95);
+        } catch (err) {
+            return imgElement.src;
+        }
+    }
+
     function printReport() {
-        if (!imgElement.src || imgElement.style.display === 'none') { showToast("⚠️ 請先載入報表圖檔才能列印！"); return; }
-        document.getElementById('print-img').src = imgElement.src;
-        window.print();
+        if (!imgElement.src || imgElement.style.display === 'none' || !imgElement.naturalWidth) {
+            showToast("⚠️ 請先載入報表圖檔才能列印！");
+            return;
+        }
+
+        const printImg = document.getElementById('print-img');
+        const targetSrc = getPrintableImageDataUrl();
+
+        const triggerPrint = () => {
+            const doPrint = () => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        window.print();
+                    });
+                });
+            };
+            if (typeof printImg.decode === 'function') {
+                printImg.decode().then(doPrint).catch(doPrint);
+            } else {
+                doPrint();
+            }
+        };
+
+        if (printImg.src === targetSrc && printImg.complete && printImg.naturalWidth > 0) {
+            triggerPrint();
+        } else {
+            printImg.onload = () => {
+                printImg.onload = null;
+                triggerPrint();
+            };
+            printImg.src = targetSrc;
+        }
     }
 
     // === 支援手機端 Pointer Events 的拖曳分隔線 ===

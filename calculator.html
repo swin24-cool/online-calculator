@@ -113,6 +113,18 @@
             padding-left: 2px;
             padding-right: 4px;
         }
+
+        /* 💡 檢查值欄位專屬加寬：確保 4 位數在大字體 Android 手機上依然完整不裁切 */
+        .check-col {
+            min-width: 86px;
+            width: 86px;
+        }
+        td.check-col input.check-val {
+            min-width: 74px;
+            text-align: center;
+            padding-left: 3px;
+            padding-right: 3px;
+        }
         
         /* ==== 填寫欄位視覺升級 ==== */
         input[type="text"][inputmode="numeric"], input[type="text"][inputmode="none"] {
@@ -613,7 +625,7 @@
                 <th class="stat-col text-blue-800">發出<br>票數</th>
                 <th class="stat-col">用餘<br>票數</th>
                 <th class="stat-col text-blue-800">選舉<br>人數</th>
-                <th class="stat-col text-green-700">檢查值</th>
+                <th class="stat-col check-col text-green-700">檢查值</th>
             </tr>
         `;
 
@@ -674,7 +686,7 @@
                         <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_issued" class="stats-input" readonly></td>
                         <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" ${editableAttr} id="${sec.key}_remaining" class="${sec.key}-input editable-stat"></td>
                         <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_electors" class="stats-input" readonly></td>
-                        <td rowspan="${totalRowSpan}" class="stat-col"><input type="text" size="4" inputmode="numeric" id="${sec.key}_check" class="stats-input font-bold check-val" readonly></td>
+                        <td rowspan="${totalRowSpan}" class="stat-col check-col"><input type="text" size="5" inputmode="numeric" id="${sec.key}_check" class="stats-input font-bold check-val" readonly></td>
                     `;
                 }
                 bodyHtml += '</tr>';

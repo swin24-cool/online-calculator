@@ -70,13 +70,39 @@
         .void-row { background-color: #fef08a !important; text-decoration: line-through; text-decoration-color: #dc2626; text-decoration-thickness: 2px; }
         .void-row .font-mono { text-decoration: line-through; text-decoration-color: #dc2626; text-decoration-thickness: 2px; }
 
-        /* 列印專用隱藏區塊 */
+        /* 列印專用隱藏區塊（改由 CSS 控制，避免行內 style="display:none" 蓋過 @media print） */
+        #print-area { display: none; }
+
         @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-            #print-area img { max-width: 100%; max-height: 100vh; object-fit: contain; }
             @page { size: A3 landscape; margin: 0; }
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+            }
+            #login-overlay, #app-wrapper, #toast { display: none !important; }
+            #print-area {
+                display: flex !important;
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                justify-content: center !important;
+                align-items: center !important;
+                background: #ffffff !important;
+                z-index: 99999 !important;
+            }
+            #print-area img {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+                display: block !important;
+            }
         }
 
         /* 提示框 */
@@ -121,7 +147,7 @@
                     <option value="F">檢核人員 F</option>
                     <option value="G">檢核人員 G</option>
                 </optgroup>
-                <optgroup label="系統管理者 (僅可強制解鎖)">
+                <optgroup label="系統管理者 (可判定一二聯ok、作廢、強制解鎖)">
                     <option value="AdminX">管理員 X</option>
                     <option value="AdminY">管理員 Y</option>
                     <option value="AdminZ">管理員 Z</option>
@@ -232,7 +258,8 @@
     </div>
 </div>
 
-<div id="print-area" style="display:none;"><img id="print-img" src=""></div>
+<!-- 💡 移除行內 style="display:none;"，改交給上方 CSS 控制，讓 @media print 能正確顯示圖檔 -->
+<div id="print-area"><img id="print-img" src="" alt="A3報表列印預覽"></div>
 <div class="toast-msg" id="toast"></div>
 
 <script>
@@ -320,7 +347,7 @@
                 if (!isSilent) showToast("✅ 清單已更新");
             } else { 
                 if (json.message.includes('憑證')) {
-                    alert('登入時效過期或無效，請重新整理網頁！');
+                    showToast('⚠️ 登入時效過期或無效，請重新整理網頁！');
                 } else if (!isSilent) {
                     showToast("❌ 讀取清單失敗：" + json.message); 
                 }
@@ -560,10 +587,11 @@
 
         let isAdmin = role.startsWith('Admin') || role.startsWith('管理員');
         
-        // 💡 權限管控：管理員只能「作廢」，一般人員不能「作廢」
+        // 💡 權限管控：系統管理者 X/Y/Z 具備「一二聯報表ok(綠)」、「作廢」與清除狀態權限；一般人員不可「作廢」
         if (isAdmin) {
-            if (newStatus !== '作廢' && newStatus !== '') {
-                showToast("⚠️ 系統管理員僅具備【純調閱】、【作廢】與【強制解鎖】權限，不可判定一般燈號。");
+            const adminAllowedStatuses = ['一二聯報表ok(綠)', '作廢', ''];
+            if (!adminAllowedStatuses.includes(newStatus)) {
+                showToast("⚠️ 系統管理員僅具備【調閱】、【一二聯報表ok】、【作廢】與【強制解鎖】權限，不可判定其他一般燈號。");
                 document.getElementById('status-select').value = currentRecord.status || '';
                 return;
             }
@@ -581,7 +609,7 @@
         }
 
         let lockedBy = role;
-        if (newStatus === '一二聯報表ok(綠)') lockedBy = ''; 
+        if (newStatus === '一二聯報表ok(綠)' || newStatus === '') lockedBy = ''; 
         if (newStatus === '作廢') lockedBy = role; // 記錄是哪位管理員作廢的
 
         try {
@@ -595,6 +623,8 @@
                 currentRecord.status = newStatus;
                 currentRecord.lockedBy = lockedBy;
                 renderList(currentListType);
+                // 同步更新管理員「強制解鎖」按鈕顯示狀態
+                document.getElementById('btn-unlock').style.display = (isAdmin && (lockedBy || newStatus)) ? 'block' : 'none';
                 showToast("✅ 狀態已更新並連動至主資料表");
             } else {
                 showToast("❌ 更新失敗：" + json.message);
@@ -625,6 +655,7 @@
 
     async function loadCanvasImage(stationId, type) {
         imgElement.style.display = 'none';
+        loadingMsg.textContent = "載入影像中，請稍候...";
         loadingMsg.classList.remove('hidden');
         resetZoom();
 
@@ -696,10 +727,69 @@
         }
     });
 
+    // 💡 若使用者於畫面有使用「旋轉微調」，同步將轉正後的完整解析度圖檔輸出供列印
+    function getPrintableImageDataUrl() {
+        const normalizedAngle = ((imgAngle % 360) + 360) % 360;
+        if (normalizedAngle === 0) {
+            return imgElement.src;
+        }
+        try {
+            const rad = normalizedAngle * Math.PI / 180;
+            const w = imgElement.naturalWidth;
+            const h = imgElement.naturalHeight;
+            const sin = Math.abs(Math.sin(rad));
+            const cos = Math.abs(Math.cos(rad));
+            const outW = Math.ceil(w * cos + h * sin);
+            const outH = Math.ceil(w * sin + h * cos);
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = outW;
+            offCanvas.height = outH;
+            const ctx = offCanvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, outW, outH);
+            ctx.translate(outW / 2, outH / 2);
+            ctx.rotate(rad);
+            ctx.drawImage(imgElement, -w / 2, -h / 2);
+            return offCanvas.toDataURL('image/jpeg', 0.95);
+        } catch (err) {
+            return imgElement.src;
+        }
+    }
+
     function printReport() {
-        if (!imgElement.src || imgElement.style.display === 'none') { showToast("⚠️ 請先載入報表圖檔才能列印！"); return; }
-        document.getElementById('print-img').src = imgElement.src;
-        window.print();
+        if (!imgElement.src || imgElement.style.display === 'none' || !imgElement.naturalWidth) {
+            showToast("⚠️ 請先載入報表圖檔才能列印！");
+            return;
+        }
+
+        const printImg = document.getElementById('print-img');
+        const targetSrc = getPrintableImageDataUrl();
+
+        const triggerPrint = () => {
+            const doPrint = () => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        window.print();
+                    });
+                });
+            };
+            if (typeof printImg.decode === 'function') {
+                printImg.decode().then(doPrint).catch(doPrint);
+            } else {
+                doPrint();
+            }
+        };
+
+        if (printImg.src === targetSrc && printImg.complete && printImg.naturalWidth > 0) {
+            triggerPrint();
+        } else {
+            printImg.onload = () => {
+                printImg.onload = null;
+                triggerPrint();
+            };
+            printImg.src = targetSrc;
+        }
     }
 
     // === 支援手機端 Pointer Events 的拖曳分隔線 ===
@@ -762,15 +852,15 @@
     window.addEventListener('DOMContentLoaded', () => {
         const roleSelect = document.getElementById('user-role');
         const savedRole = sessionStorage.getItem('userRole');
-        
-        // 恢復 F5 刷新前選擇的身分
-        if (savedRole) {
-            roleSelect.value = savedRole;
-        }
-        
-        // 綁定事件：當下拉選單改變身分時，自動存起來記住
+        // 綁定事件：當下拉選單改變身分時，自動存起來記住並同步更新管理員解鎖按鈕狀態
         roleSelect.addEventListener('change', (e) => {
-            sessionStorage.setItem('userRole', e.target.value);
+            const newRole = e.target.value;
+            sessionStorage.setItem('userRole', newRole);
+            const isAdminNow = newRole.startsWith('Admin') || newRole.startsWith('管理員');
+            const unlockBtn = document.getElementById('btn-unlock');
+            if (unlockBtn && currentRecord) {
+                unlockBtn.style.display = (isAdminNow && (currentRecord.lockedBy || currentRecord.status)) ? 'block' : 'none';
+            }
         });
 
         // 💡 核心修復：防呆檢查，確保不會讀到字串 "undefined" 或 "null"
